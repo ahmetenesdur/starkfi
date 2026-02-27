@@ -1,0 +1,353 @@
+import { z } from "zod";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+	handleGetAuthStatus,
+	handleGetBalance,
+	handleDeployAccount,
+	handleGetSwapQuote,
+	handleSwapTokens,
+	handleSendTokens,
+	handleGetTxStatus,
+	handleStakeTokens,
+	handleUnstakeTokens,
+	handleGetStakingInfo,
+	handleGetStakingOverview,
+	handleListPools,
+	handleListValidators,
+	handleCompoundRewards,
+	handleConfigAction,
+	handleListLendingPools,
+	handleGetLendingPosition,
+	handleSupplyAssets,
+	handleWithdrawAssets,
+	handleBorrowAssets,
+	handleRepayDebt,
+} from "./handlers/index.js";
+import { StarkfiError } from "../lib/errors.js";
+
+// Standardised error handling wrapper for all MCP tools.
+function withErrorHandling<
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	T extends (...args: any[]) => Promise<{ content: { type: "text"; text: string }[] }>,
+>(fn: T) {
+	return async (
+		...args: Parameters<T>
+	): Promise<{ content: { type: "text"; text: string }[] }> => {
+		try {
+			return await fn(...args);
+		} catch (error) {
+			const isStarkfiError = error instanceof StarkfiError;
+			const message = error instanceof Error ? error.message : String(error);
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(
+							{
+								success: false,
+								error: message,
+								code: isStarkfiError ? error.code : "UNKNOWN_ERROR",
+								...(isStarkfiError && error.details
+									? { details: error.details }
+									: {}),
+							},
+							null,
+							2
+						),
+					},
+				],
+			};
+		}
+	};
+}
+
+export function registerTools(server: McpServer): void {
+	// --- Auth & Generic Info ---
+
+	server.tool(
+		"get_auth_status",
+		"Check authentication status and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
+		{},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetAuthStatus)
+	);
+
+	server.tool(
+		"get_tx_status",
+		"Check Starknet transaction status by hash. Use this to verify if a recently submitted transaction has been accepted on L2 or L1.",
+		{
+			hash: z.string().describe("Transaction hash (0x...)"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetTxStatus)
+	);
+
+	// --- Wallet & Assets ---
+
+	server.tool(
+		"get_balance",
+		"Get native token and ERC-20 token balances on Starknet for the authorized user.",
+		{
+			token: z
+				.string()
+				.optional()
+				.describe(
+					"Specific token symbol (e.g. 'STRK', 'ETH', 'USDC'). Omit to fetch all balances."
+				),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetBalance)
+	);
+
+	server.tool(
+		"deploy_account",
+		"Deploy the Starknet smart contract account on-chain. Required once before sending transactions. Safe to call multiple times (idempotent) — returns status if already deployed.",
+		{},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+		withErrorHandling(handleDeployAccount)
+	);
+
+	server.tool(
+		"send_tokens",
+		"Transfer tokens to a recipient on Starknet. Simulates the transfer before broadcasting to catch insufficient funds early.",
+		{
+			amount: z.string().describe("Amount to send (e.g. '0.1', '100')"),
+			token: z.string().describe("Token symbol (e.g. 'STRK', 'ETH', 'USDC')"),
+			recipient: z.string().describe("Recipient Starknet address (0x...)"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleSendTokens)
+	);
+
+	// --- Trading (Fibrous API) ---
+
+	server.tool(
+		"get_swap_quote",
+		"Get an expected output and route from Fibrous *without* executing the swap. ALWAYS use this BEFORE calling swap_tokens so the user can review the expected output amount and slippage.",
+		{
+			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
+			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'USDC')"),
+			to_token: z.string().describe("Destination token symbol to buy (e.g. 'STRK', 'DAI')"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetSwapQuote)
+	);
+
+	server.tool(
+		"swap_tokens",
+		"Execute a token swap on Starknet using Fibrous aggregation. Finds optimal route and simulates before execution. ONLY call this after showing the user a quote via get_swap_quote.",
+		{
+			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
+			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'STRK')"),
+			to_token: z.string().describe("Destination token symbol to buy (e.g. 'USDC', 'DAI')"),
+			slippage: z.number().optional().describe("Slippage tolerance % (default: 0.5)"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleSwapTokens)
+	);
+
+	// --- Staking ---
+
+	server.tool(
+		"list_validators",
+		"List all known Starknet staking validators. Use this FIRST to see available validators and their names before trying to find pools.",
+		{},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleListValidators)
+	);
+
+	server.tool(
+		"list_pools",
+		"List delegation pools for a specific validator. Look up a validator name via list_validators first.",
+		{
+			validator: z
+				.string()
+				.describe(
+					"Validator name (e.g. 'Karnot', 'Kakarot') or staker address. Supports partial matches."
+				),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleListPools)
+	);
+
+	server.tool(
+		"get_staking_info",
+		"Get staking position info (staked balance, unclaimed rewards, total balance, commission, unpooling cooldown) for a specific pool contract.",
+		{
+			pool: z.string().describe("Staking pool contract address (0x...)"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetStakingInfo)
+	);
+
+	server.tool(
+		"get_staking_overview",
+		"Scan ALL known validators and pools to return a consolidated staking dashboard with total staked, total rewards, total value, and per-pool breakdown. Use this to give the user a full picture of their staking portfolio.",
+		{},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetStakingOverview)
+	);
+
+	server.tool(
+		"stake_tokens",
+		"Stake STRK in a delegation pool on Starknet. Smart stake: auto-detects whether the user needs to enter the pool or just add to an existing delegation.",
+		{
+			amount: z.string().describe("Amount of STRK to stake (e.g. '100')"),
+			pool: z.string().describe("Staking pool contract address (0x...)"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleStakeTokens)
+	);
+
+	server.tool(
+		"unstake_tokens",
+		"Unstake STRK from a pool. Unstaking is a TWO-STEP process: 1. call with action='intent', 2. wait for cooldown, 3. call with action='exit' to complete withdrawal.",
+		{
+			action: z
+				.enum(["intent", "exit"])
+				.describe(
+					"'intent' strictly starts the unstaking process, 'exit' completes withdrawal after cooldown."
+				),
+			pool: z.string().describe("Staking pool contract address (0x...)"),
+			amount: z
+				.string()
+				.optional()
+				.describe("Amount of STRK to unstake in STRK (ONLY required when action='intent')"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleUnstakeTokens)
+	);
+
+	server.tool(
+		"compound_rewards",
+		"Atomically claim staking rewards and re-stake them recursively into the same pool in a single transaction (compound interest).",
+		{
+			pool: z.string().describe("Staking pool contract address (0x...)"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleCompoundRewards)
+	);
+
+	// --- Config / Utilities ---
+
+	server.tool(
+		"config_action",
+		"View and modify starkfi global configuration such as active network, RPC URL, and Gas Payment mechanisms.",
+		{
+			action: z
+				.enum([
+					"list",
+					"set-rpc",
+					"get-rpc",
+					"set-network",
+					"set-gasfree",
+					"set-gas-token",
+					"set-gasless",
+				])
+				.describe(
+					"list: view all. set-gasfree: dev pays gas using AVNU credits. set-gas-token: user pays gas in ERC20 token instead of STRK."
+				),
+			value: z
+				.string()
+				.optional()
+				.describe(
+					"set-gasfree: 'on'/'off'. set-gas-token: symbol 'USDC'/'ETH' or 'off'. set-rpc: URL string. set-network: 'mainnet'/'sepolia'."
+				),
+		},
+		{ readOnlyHint: false, destructiveHint: false },
+		withErrorHandling(handleConfigAction)
+	);
+
+	// --- Lending (Vesu V2) ---
+
+	server.tool(
+		"list_lending_pools",
+		"List available Vesu V2 lending pools on Starknet with their supported collateral/debt pairs. Use this FIRST to discover available pools before supplying, borrowing, or checking positions.",
+		{
+			name: z
+				.string()
+				.optional()
+				.describe("Filter pools by name (partial match). Omit to list all."),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleListLendingPools)
+	);
+
+	server.tool(
+		"get_lending_position",
+		"Get the user's lending position (supplied collateral and outstanding debt) in a specific Vesu pool.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+			collateral_token: z.string().describe("Collateral token symbol (e.g. 'ETH', 'STRK')"),
+			debt_token: z.string().describe("Debt token symbol (e.g. 'USDC', 'USDT')"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetLendingPosition)
+	);
+
+	server.tool(
+		"supply_assets",
+		"Supply (lend) tokens into a Vesu V2 pool to earn interest. The tokens are deposited into the pool's ERC-4626 vToken vault.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+			amount: z.string().describe("Amount to supply (e.g. '100', '0.5')"),
+			token: z.string().describe("Token symbol to supply (e.g. 'STRK', 'ETH', 'USDC')"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleSupplyAssets)
+	);
+
+	server.tool(
+		"withdraw_assets",
+		"Withdraw previously supplied tokens from a Vesu V2 lending pool.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+			amount: z.string().describe("Amount to withdraw (e.g. '100', '0.5')"),
+			token: z.string().describe("Token symbol to withdraw (e.g. 'STRK', 'ETH', 'USDC')"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleWithdrawAssets)
+	);
+
+	server.tool(
+		"borrow_assets",
+		"Borrow tokens from a Vesu V2 pool by supplying collateral. Atomically deposits collateral and borrows the debt asset in a single transaction.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+			collateral_amount: z.string().describe("Collateral amount to deposit (e.g. '1000')"),
+			collateral_token: z.string().describe("Collateral token symbol (e.g. 'STRK', 'ETH')"),
+			borrow_amount: z.string().describe("Amount to borrow (e.g. '100')"),
+			borrow_token: z.string().describe("Token to borrow (e.g. 'USDC', 'USDT')"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleBorrowAssets)
+	);
+
+	server.tool(
+		"repay_debt",
+		"Repay borrowed tokens on an existing Vesu V2 lending position. Approves and repays the specified amount of debt.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+			amount: z.string().describe("Amount to repay (e.g. '50', '100')"),
+			token: z.string().describe("Debt token to repay (e.g. 'USDC', 'USDT')"),
+			collateral_token: z
+				.string()
+				.describe(
+					"Collateral token of the position (e.g. 'ETH', 'STRK'). Needed to identify the position."
+				),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleRepayDebt)
+	);
+}
