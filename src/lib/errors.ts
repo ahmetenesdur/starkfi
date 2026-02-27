@@ -1,0 +1,46 @@
+export enum ErrorCode {
+	AUTH_REQUIRED = "AUTH_REQUIRED",
+	AUTH_FAILED = "AUTH_FAILED",
+	SESSION_EXPIRED = "SESSION_EXPIRED",
+	WALLET_NOT_DEPLOYED = "WALLET_NOT_DEPLOYED",
+	WALLET_NOT_FOUND = "WALLET_NOT_FOUND",
+	INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
+	TX_FAILED = "TX_FAILED",
+	TX_NOT_FOUND = "TX_NOT_FOUND",
+	SIMULATION_FAILED = "SIMULATION_FAILED",
+	SWAP_FAILED = "SWAP_FAILED",
+	NO_ROUTE_FOUND = "NO_ROUTE_FOUND",
+	SLIPPAGE_EXCEEDED = "SLIPPAGE_EXCEEDED",
+	STAKING_FAILED = "STAKING_FAILED",
+	LENDING_FAILED = "LENDING_FAILED",
+	POOL_NOT_FOUND = "POOL_NOT_FOUND",
+	EXIT_NOT_READY = "EXIT_NOT_READY",
+	PAYMASTER_ERROR = "PAYMASTER_ERROR",
+	INVALID_CONFIG = "INVALID_CONFIG",
+	INVALID_ADDRESS = "INVALID_ADDRESS",
+	INVALID_AMOUNT = "INVALID_AMOUNT",
+	NETWORK_ERROR = "NETWORK_ERROR",
+	RATE_LIMITED = "RATE_LIMITED",
+	UNKNOWN = "UNKNOWN",
+}
+
+export class StarkfiError extends Error {
+	constructor(
+		public readonly code: ErrorCode,
+		message: string,
+		public readonly details?: unknown,
+		options?: { cause?: unknown }
+	) {
+		super(message, options);
+		this.name = "StarkfiError";
+	}
+
+	toJSON() {
+		return {
+			error: true,
+			code: this.code,
+			message: this.message,
+			...(this.details ? { details: this.details } : {}),
+		};
+	}
+}
