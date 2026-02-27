@@ -1,12 +1,23 @@
 {
 	"name": "starkfi",
 	"version": "0.1.0",
-	"description": "Starknet DeFi CLI + MCP Server — Token swaps, staking, gasless transactions",
+	"description": "Starknet DeFi CLI + MCP Server — Token swaps, staking, lending, gasless transactions",
 	"type": "module",
 	"bin": {
 		"starkfi": "./dist/index.js"
 	},
 	"main": "./dist/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"scripts": {
 		"build": "tsc",
 		"dev": "node --import tsx/esm src/index.ts",
@@ -17,20 +28,33 @@
 		"format:check": "prettier --check src/",
 		"start": "node dist/index.js",
 		"mcp-start": "node dist/index.js mcp-start",
-		"prepublishOnly": "npm run build"
+		"prepublishOnly": "pnpm run build"
 	},
 	"keywords": [
 		"starknet",
 		"defi",
 		"cli",
 		"mcp",
+		"mcp-server",
 		"starkzap",
 		"swap",
 		"staking",
-		"fibrous"
+		"lending",
+		"vesu",
+		"fibrous",
+		"web3",
+		"l2"
 	],
 	"author": "ahmetenesdur",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ahmetenesdur/starkfi.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ahmetenesdur/starkfi/issues"
+	},
+	"homepage": "https://github.com/ahmetenesdur/starkfi#readme",
 	"engines": {
 		"node": ">=18"
 	},
