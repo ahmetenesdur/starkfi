@@ -1,0 +1,60 @@
+{
+	"name": "starkfi",
+	"version": "0.1.0",
+	"description": "Starknet DeFi CLI + MCP Server — Token swaps, staking, gasless transactions",
+	"type": "module",
+	"bin": {
+		"starkfi": "./dist/index.js"
+	},
+	"main": "./dist/index.js",
+	"scripts": {
+		"build": "tsc",
+		"dev": "node --import tsx/esm src/index.ts",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint src/",
+		"lint:fix": "eslint src/ --fix",
+		"format": "prettier --write src/",
+		"format:check": "prettier --check src/",
+		"start": "node dist/index.js",
+		"mcp-start": "node dist/index.js mcp-start",
+		"prepublishOnly": "npm run build"
+	},
+	"keywords": [
+		"starknet",
+		"defi",
+		"cli",
+		"mcp",
+		"starkzap",
+		"swap",
+		"staking",
+		"fibrous"
+	],
+	"author": "ahmetenesdur",
+	"license": "MIT",
+	"engines": {
+		"node": ">=18"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.27.1",
+		"chalk": "^5.6.2",
+		"commander": "^14.0.3",
+		"env-paths": "^3.0.0",
+		"inquirer": "^13.3.0",
+		"ora": "^9.3.0",
+		"starknet": "^9.2.1",
+		"starkzap": "^1.0.0",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^22.19.11",
+		"eslint": "^10.0.2",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.3.0",
+		"jiti": "^2.6.1",
+		"prettier": "^3.8.1",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.56.1"
+	}
+}
