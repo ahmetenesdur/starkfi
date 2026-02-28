@@ -1,10 +1,10 @@
 # Model Context Protocol (MCP) Integration
 
-StarkFi features a built-in MCP server (`npx starkfi mcp-start`) over `stdio`, allowing AI assistants (Cursor, Claude Desktop, Antigravity) to execute DeFi operations seamlessly through natural language.
+StarkFi operates as a fully-featured Model Context Protocol (MCP) server. By executing `npx starkfi mcp-start` over the `stdio` transport layer, AI development environments such as Cursor, Claude Desktop, and Antigravity can interact with the Starknet blockchain and execute decentralized finance operations through natural language commands.
 
-## Editor Configuration
+## Client Configuration Instructions
 
-Add the following to your MCP client configuration (`.cursor/mcp.json`, `claude_desktop_config.json`, or `~/.gemini/antigravity/mcp_config.json`):
+To integrate StarkFi into your AI environment, configure your specific MCP client settings file (e.g., `.cursor/mcp.json`, `claude_desktop_config.json`, or `~/.gemini/antigravity/mcp_config.json`) with the following definition:
 
 ```json
 {
@@ -17,46 +17,48 @@ Add the following to your MCP client configuration (`.cursor/mcp.json`, `claude_
 }
 ```
 
-> **Note:** The CLI must be authenticated (`npx starkfi auth login` or `npx starkfi auth import`) before the MCP server can broadcast transactions.
+**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi auth login` or `npx starkfi auth import`) before the MCP server can execute any state-mutating transactions on behalf of the user.
 
-## Tool Registry
+## Comprehensive Tool Registry
 
-The server dynamically provides schema definitions to the client. The following tools are available:
+Upon initialization, the StarkFi server dynamically provisions the following tool schemas to the connected AI client.
 
-### Read-Only (Information Gathering)
+### Read-Only Tools (State Verification and Information Gathering)
 
-| Tool                   | Description                                                          |
-| ---------------------- | -------------------------------------------------------------------- |
-| `get_auth_status`      | Verifies active session and Fibrous API health.                      |
-| `get_balance`          | Fetches native and ERC-20 token balances.                            |
-| `get_tx_status`        | Retrieves L2 transaction status and receipt.                         |
-| `get_swap_quote`       | Calculates expected output and slippage _without_ executing a trade. |
-| `list_validators`      | Lists all known Starknet staking validators.                         |
-| `list_pools`           | Lists delegation pools for a specific validator.                     |
-| `get_staking_info`     | Retrieves user's staked balance, unclaimed rewards, and cooldowns.   |
-| `get_staking_overview` | Consolidated staking dashboard across all validators and pools.      |
-| `list_lending_pools`   | Lists available Vesu V2 lending pools with supported asset pairs.    |
-| `get_lending_position` | Retrieves the user's supply/borrow position in a specific pool.      |
+These tools do not mutate blockchain state or require user confirmation to execute.
 
-### Transactional (Destructive)
+| Tool Identifier        | Functional Description                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `get_auth_status`      | Validates the active CLI session and verifies Fibrous API connectivity.                   |
+| `get_balance`          | Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.    |
+| `get_tx_status`        | Queries the Starknet sequencer for transaction status and execution receipts.             |
+| `get_swap_quote`       | Calculates optimal routing, expected output, and slippage prior to execution.             |
+| `list_validators`      | Enumerates all officially recognized Starknet staking validators.                         |
+| `list_pools`           | Enumerates available delegation pools associated with a specific validator.               |
+| `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods.  |
+| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.               |
+| `list_lending_pools`   | Enumerates active Vesu V2 lending pools and their supported dual-asset pairs.             |
+| `get_lending_position` | Retrieves the user's current supply and outstanding debt position within a specific pool. |
 
-_These tools mutate state. The AI editor will prompt for user confirmation before broadcasting._
+### Transactional Tools (State Mutation)
 
-| Tool               | Description                                                             |
-| ------------------ | ----------------------------------------------------------------------- |
-| `deploy_account`   | Deploys the Starknet smart contract account (idempotent).               |
-| `swap_tokens`      | Executes optimal aggregated token swaps via Fibrous.                    |
-| `send_tokens`      | Transfers native or ERC-20 tokens.                                      |
-| `stake_tokens`     | Smart staking (handles both enter and add-to-pool logic).               |
-| `unstake_tokens`   | Handles the 2-step unstaking process (intent & exit).                   |
-| `compound_rewards` | Atomically claims rewards and restakes them.                            |
-| `supply_assets`    | Supplies tokens into a Vesu pool to earn interest (by name or address). |
-| `withdraw_assets`  | Withdraws previously supplied tokens from a Vesu lending pool.          |
-| `borrow_assets`    | Borrows tokens by supplying collateral (atomic deposit + borrow).       |
-| `repay_debt`       | Repays borrowed tokens on an existing Vesu lending position.            |
+These tools construct and broadcast transactions. The connecting AI client is strictly responsible for prompting the user for explicit confirmation before finalizing the execution.
 
-### Utilities
+| Tool Identifier    | Functional Description                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `deploy_account`   | Deploys the associated smart contract account to the Starknet network (idempotent operation).   |
+| `swap_tokens`      | Broadcasts an aggregated token swap transaction via the Fibrous router.                         |
+| `send_tokens`      | Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets.               |
+| `stake_tokens`     | Executes smart delegation logic, abstracting pool entry and sequential addition complexity.     |
+| `unstake_tokens`   | Manages the strict two-step Starknet unstaking lifecycle (Intent declaration followed by Exit). |
+| `compound_rewards` | Executes an atomic transaction to claim pending rewards and immediately restake them.           |
+| `supply_assets`    | Deposits specified assets into a Vesu V2 pool to generate yield.                                |
+| `withdraw_assets`  | Redeems supplied assets from a Vesu V2 pool.                                                    |
+| `borrow_assets`    | Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool.       |
+| `repay_debt`       | Processes the repayment of borrowed assets against an existing Vesu V2 position.                |
 
-| Tool            | Description                                                                           |
-| --------------- | ------------------------------------------------------------------------------------- |
-| `config_action` | Configures RPC endpoints, network selection, and Gas payment modes (Gasfree/Gasless). |
+### Configuration Utilities
+
+| Tool Identifier | Functional Description                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `config_action` | Modifies global CLI behavior including RPC routing, network selection, and Gas Abstraction rules (e.g., Sponsored Gasfree via AVNU Paymaster, or User-Pays Gasless in ERC-20). |
