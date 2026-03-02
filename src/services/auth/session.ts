@@ -14,14 +14,7 @@ export interface PrivySession {
 	serverUrl: string;
 }
 
-export interface LocalSession {
-	type: "local";
-	network: "mainnet" | "sepolia";
-	address: string;
-	privateKey: string;
-}
-
-export type Session = PrivySession | LocalSession;
+export type Session = PrivySession;
 
 const SESSION_FILE = join(DATA_DIR, "session.json");
 

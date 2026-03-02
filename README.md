@@ -18,21 +18,18 @@ StarkFi abstracts the complexities of the Starknet ecosystem through the followi
 
 - **Node.js:** v18.0.0+
 - **Starknet Auth Server:** Required _only_ for Email OTP (Privy TEE) or Gasless/Gasfree transactions (AVNU Paymaster).
-- **Local Mode:** Import a Starknet private key to run fully autonomously (without paymaster/gasless features).
 
 ## Quick Start Configuration
 
 ### 1. Secure Authentication
 
-StarkFi utilizes a dual-authentication model. You can utilize the remote Auth Server for email-based OTP, or run entirely local via private key import.
+StarkFi utilizes a remote Auth Server for email-based OTP.
 
 ```bash
 # Email OTP Authentication (Requires running starkfi-server)
 npx starkfi auth login <user@example.com>
 npx starkfi auth verify <user@example.com> <verification_code>
 
-# Local Environment Authentication (Private Key)
-npx starkfi auth import
 ```
 
 ### 2. Primary Command Reference

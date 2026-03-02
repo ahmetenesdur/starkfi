@@ -1,5 +1,5 @@
 import type { Wallet } from "starkzap";
-import { StarkZap, StarkSigner, PrivySigner, ArgentXV050Preset, type FeeMode } from "starkzap";
+import { StarkZap, PrivySigner, ArgentXV050Preset, type FeeMode } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import {
@@ -58,13 +58,6 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 	const gasfreeMode = configService.get("gasfreeMode") === true;
 	const gasToken = configService.get("gasToken") as string | undefined;
 	const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
-
-	if (session.type === "local") {
-		return sdk.connectWallet({
-			account: { signer: new StarkSigner(session.privateKey) },
-			feeMode,
-		});
-	}
 
 	const signer = new PrivySigner({
 		walletId: session.walletId,

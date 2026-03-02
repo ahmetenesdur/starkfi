@@ -10,7 +10,6 @@ const { version } = require("../package.json") as { version: string };
 
 import { registerLoginCommand } from "./commands/auth/login.js";
 import { registerVerifyCommand } from "./commands/auth/verify.js";
-import { registerImportCommand } from "./commands/auth/import.js";
 import { registerLogoutCommand } from "./commands/auth/logout.js";
 import { registerAddressCommand } from "./commands/wallet/address.js";
 import { registerBalanceCommand } from "./commands/wallet/balance.js";
@@ -47,7 +46,6 @@ program
 
 registerLoginCommand(program);
 registerVerifyCommand(program);
-registerImportCommand(program);
 registerLogoutCommand(program);
 
 registerAddressCommand(program);
