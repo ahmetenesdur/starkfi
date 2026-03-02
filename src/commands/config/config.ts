@@ -62,7 +62,7 @@ export function registerConfigCommand(program: Command): void {
 				configService.delete("gasToken");
 				console.log(success("Gasfree mode: on (developer sponsors gas via AVNU)"));
 			} else {
-				console.log(success("Gasfree mode: off"));
+				console.log(success("Gasfree mode: off — using gasless mode (default: STRK)"));
 			}
 		});
 
@@ -85,21 +85,21 @@ export function registerConfigCommand(program: Command): void {
 			console.log(success(`Gasfree mode: ${mode}`));
 		});
 
-	// Gasless mode: user pays gas in a non-STRK token
+	// Gas token selection: default is STRK, user can switch to any supported token
 	configCmd
 		.command("set-gas-token")
 		.description(
-			`Set gas payment token for Gasless mode — user pays gas in this token instead of STRK.\nSupported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}\nUse 'off' to disable Gasless mode.`
+			`Set gas payment token via AVNU Paymaster.\nDefault: STRK. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}\nUse 'reset' to revert to STRK.`
 		)
 		.argument(
 			"<token>",
-			`Token symbol or 'off'. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}`
+			`Token symbol or 'reset'. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}`
 		)
 		.action((token: string) => {
 			const configService = ConfigService.getInstance();
-			if (token.toLowerCase() === "off") {
+			if (["off", "reset", "default"].includes(token.toLowerCase())) {
 				configService.delete("gasToken");
-				console.log(success("Gasless mode disabled — reverting to default STRK gas"));
+				console.log(success("Gas token reset to default: STRK"));
 				return;
 			}
 			const upper = token.toUpperCase();
@@ -115,7 +115,9 @@ export function registerConfigCommand(program: Command): void {
 			configService.delete("gasfreeMode");
 			configService.set("gasToken", upper);
 			console.log(
-				success(`Gasless mode: on — gas will be paid in ${upper} (no STRK needed)`)
+				success(
+					`Gas token set to: ${upper} — gas will be paid in ${upper} via AVNU Paymaster`
+				)
 			);
 		});
 
@@ -134,9 +136,9 @@ export function registerConfigCommand(program: Command): void {
 			// Human-readable fee mode summary
 			const gasfreeMode = all.gasfreeMode === true;
 			const gasToken = all.gasToken as string | undefined;
-			let feeModeSummary = "default (pays STRK)";
+			let feeModeSummary = "gasless (pays STRK via AVNU Paymaster)";
 			if (gasfreeMode) feeModeSummary = "gasfree (developer-sponsored via AVNU)";
-			else if (gasToken) feeModeSummary = `gasless (user pays in ${gasToken})`;
+			else if (gasToken) feeModeSummary = `gasless (pays ${gasToken} via AVNU Paymaster)`;
 
 			console.log(
 				formatResult({

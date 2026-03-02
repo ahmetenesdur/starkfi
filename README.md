@@ -9,7 +9,7 @@ The toolkit integrates the StarkZap SDK, Privy authentication, Fibrous trade agg
 StarkFi abstracts the complexities of the Starknet ecosystem through the following core capabilities:
 
 - **Intelligent Trade Routing:** Seamless token swaps aggregated via Fibrous for optimal execution paths.
-- **Advanced Gas Abstraction:** Native Starknet fees (STRK) can be developer-sponsored (Gasfree) or abstracted into ERC-20 tokens like USDC (Gasless) via AVNU Paymaster.
+- **Advanced Gas Abstraction:** All transactions are routed through the AVNU Paymaster by default. Gas is paid in STRK (configurable to ETH, USDC, USDT, DAI). Developer-sponsored (Gasfree) mode is also available.
 - **Delegation and Staking Management:** Comprehensive lifecycle controls for staking, including entering pools, restaking, atomic compounding, and intent-based unstaking.
 - **Protocol-Level Lending:** Direct integration with Vesu V2 for supplying collateral, borrowing assets, and managing debt positions.
 - **Native AI Integration:** An embedded Model Context Protocol (MCP) server that exposes the entire toolkit to LLM-driven environments such as Cursor and Claude.
@@ -17,7 +17,7 @@ StarkFi abstracts the complexities of the Starknet ecosystem through the followi
 ## System Requirements
 
 - **Node.js:** v18.0.0+
-- **Starknet Auth Server:** Required _only_ for Email OTP (Privy TEE) or Gasless/Gasfree transactions (AVNU Paymaster).
+- **Starknet Auth Server:** Required for Email OTP (Privy TEE) and AVNU Paymaster gas abstraction.
 
 ## Quick Start Configuration
 
@@ -68,8 +68,8 @@ npx starkfi tx-status <hash>                  # Query transaction receipt and st
 npx starkfi config list                       # Display current environment configuration
 npx starkfi config set-rpc <url>              # Override default RPC endpoint
 npx starkfi config set-network <mainnet|sepolia> # Modify target network
-npx starkfi config set-gasfree <on|off>       # Toggle sponsored transaction fees
-npx starkfi config set-gas-token <token|off>  # Configure ERC-20 token for gas payments
+npx starkfi config set-gasfree <on|off>       # Toggle developer-sponsored gas (AVNU credits)
+npx starkfi config set-gas-token <token|reset> # Set gas payment token (default: STRK)
 ```
 
 #### Lending and Borrowing (Vesu V2)

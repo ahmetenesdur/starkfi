@@ -59,6 +59,6 @@ These tools construct and broadcast transactions. The connecting AI client is st
 
 ### Configuration Utilities
 
-| Tool Identifier | Functional Description                                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `config_action` | Modifies global CLI behavior including RPC routing, network selection, and Gas Abstraction rules (e.g., Sponsored Gasfree via AVNU Paymaster, or User-Pays Gasless in ERC-20). |
+| Tool Identifier | Functional Description                                                                                                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config_action` | Modifies global CLI behavior including RPC routing, network selection, and Gas Abstraction (default: gasless via AVNU Paymaster in STRK; configurable to ETH, USDC, USDT, DAI; or developer-sponsored Gasfree mode). |

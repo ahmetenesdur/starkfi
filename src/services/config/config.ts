@@ -7,7 +7,7 @@ export interface StarkfiConfig {
 	network?: "mainnet" | "sepolia";
 	// Gasfree mode: developer sponsors gas via AVNU API key (feeMode: "sponsored")
 	gasfreeMode?: boolean;
-	// Gasless mode: user pays gas in a non-STRK token e.g. "USDC", "ETH"
+	// Gas payment token for paymaster (default: "STRK"). Supported: STRK, ETH, USDC, USDT, DAI
 	gasToken?: string;
 	[key: string]: unknown;
 }

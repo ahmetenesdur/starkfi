@@ -10,7 +10,24 @@ import {
 
 export type StarkZapWallet = Wallet;
 
-// Fee mode priority: gasfreeMode (sponsored) → gasToken (gasless) → default (user pays STRK)
+/**
+ * Default gas token for paymaster transactions.
+ * All transactions go through AVNU Paymaster by default.
+ * Users can change this via `config set-gas-token`.
+ */
+const DEFAULT_GAS_TOKEN = "STRK";
+
+/**
+ * Resolve fee mode configuration.
+ *
+ * Priority:
+ *   1. gasfreeMode (developer-sponsored via AVNU credits)
+ *   2. gasToken (gasless — user pays in specified ERC-20 via AVNU Paymaster)
+ *
+ * All modes use the AVNU Paymaster. The difference is WHO pays:
+ *   - gasfree: developer credits (mode: 'sponsored')
+ *   - gasless: user pays in gasToken (mode: 'default', gasToken: address)
+ */
 export function resolveFeeModeConfig(
 	gasfreeMode: boolean,
 	gasToken: string | undefined
@@ -20,16 +37,54 @@ export function resolveFeeModeConfig(
 	needsPaymaster: boolean;
 } {
 	if (gasfreeMode) {
+		// Developer-sponsored: AVNU credits pay for gas
 		return { feeMode: "sponsored", gasTokenAddress: undefined, needsPaymaster: true };
 	}
-	if (gasToken) {
-		const gasTokenAddress = GAS_TOKEN_ADDRESSES[gasToken.toUpperCase()];
-		if (gasTokenAddress) {
-			// user_pays at wallet connect-level; gasToken is injected at execute-time
-			return { feeMode: "user_pays", gasTokenAddress, needsPaymaster: true };
-		}
+
+	// Gasless: user pays in gasToken via paymaster
+	// Always default to STRK if no gas token is specified
+	const resolvedToken = gasToken ?? DEFAULT_GAS_TOKEN;
+	const gasTokenAddress = GAS_TOKEN_ADDRESSES[resolvedToken.toUpperCase()];
+
+	if (gasTokenAddress) {
+		return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
 	}
-	return { feeMode: "user_pays", gasTokenAddress: undefined, needsPaymaster: false };
+
+	// Fallback (shouldn't happen when token is valid)
+	return {
+		feeMode: "sponsored",
+		gasTokenAddress: GAS_TOKEN_ADDRESSES["STRK"],
+		needsPaymaster: true,
+	};
+}
+
+/**
+ * Patch the paymaster fee mode for gasless transactions.
+ *
+ * StarkZap's `sponsoredDetails()` always creates `{ mode: 'sponsored' }`
+ * (developer pays). For gasless mode (user pays in ERC-20), we need
+ * `{ mode: 'default', gasToken: '0x...' }`.
+ *
+ * This function wraps `account.executePaymasterTransaction()` to replace
+ * the feeMode on-the-fly, routing gas payment through the specified token.
+ */
+function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
+	const account = wallet.getAccount();
+	const originalExecutePaymaster = (account as any).executePaymasterTransaction.bind(account);
+
+	(account as any).executePaymasterTransaction = async function (
+		calls: any[],
+		details: any,
+		...rest: any[]
+	) {
+		// Replace { mode: 'sponsored' } → { mode: 'default', gasToken }
+		const patchedDetails = {
+			...details,
+			feeMode: { mode: "default", gasToken: gasTokenAddress },
+		};
+
+		return originalExecutePaymaster(calls, patchedDetails, ...rest);
+	};
 }
 
 let sdkInstance: StarkZap | null = null;
@@ -57,7 +112,7 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 	const configService = ConfigService.getInstance();
 	const gasfreeMode = configService.get("gasfreeMode") === true;
 	const gasToken = configService.get("gasToken") as string | undefined;
-	const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
+	const { feeMode, gasTokenAddress } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
 	const signer = new PrivySigner({
 		walletId: session.walletId,
@@ -66,10 +121,18 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 		headers: { Authorization: `Bearer ${session.token}` },
 	});
 
-	return sdk.connectWallet({
+	const wallet = await sdk.connectWallet({
 		account: { signer, accountClass: ArgentXV050Preset },
 		feeMode,
 	});
+
+	// Gasless mode: patch paymaster feeMode from 'sponsored' to 'default' with gasToken
+	// Only apply when NOT in gasfree mode (gasfree = developer pays, keep 'sponsored')
+	if (!gasfreeMode && gasTokenAddress) {
+		patchGaslessMode(wallet, gasTokenAddress);
+	}
+
+	return wallet;
 }
 
 export interface SDKAndWallet {

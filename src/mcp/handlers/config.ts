@@ -45,17 +45,17 @@ export async function handleConfigAction(args: {
 				gasfreeMode: enabled,
 				note: enabled
 					? "Developer sponsors gas via AVNU Paymaster (requires API key + credits)"
-					: "Gasfree disabled",
+					: "Gasfree disabled — using gasless mode (default: STRK)",
 			});
 		}
 		case "set-gas-token": {
-			if (!args.value) return textResult("Token symbol or 'off' is required.");
-			if (args.value.toLowerCase() === "off") {
+			if (!args.value) return textResult("Token symbol or 'reset' is required.");
+			if (["off", "reset", "default"].includes(args.value.toLowerCase())) {
 				configService.delete("gasToken");
 				return jsonResult({
 					success: true,
-					gasToken: null,
-					note: "Reverted to default STRK gas",
+					gasToken: "STRK",
+					note: "Gas token reset to default: STRK",
 				});
 			}
 			const upper = args.value.toUpperCase();
@@ -69,16 +69,16 @@ export async function handleConfigAction(args: {
 			return jsonResult({
 				success: true,
 				gasToken: upper,
-				note: `Gasless mode: user pays gas in ${upper} (no STRK needed, no API key required)`,
+				note: `Gas paid in ${upper} via AVNU Paymaster`,
 			});
 		}
 		case "list": {
 			const all = configService.getAll();
 			const gasfreeMode = all.gasfreeMode === true;
 			const gasToken = all.gasToken as string | undefined;
-			let feeMode = "default (pays STRK)";
+			let feeMode = "gasless (pays STRK via AVNU Paymaster)";
 			if (gasfreeMode) feeMode = "gasfree (developer-sponsored via AVNU)";
-			else if (gasToken) feeMode = `gasless (user pays in ${gasToken})`;
+			else if (gasToken) feeMode = `gasless (pays ${gasToken} via AVNU Paymaster)`;
 			return jsonResult({ ...all, feeMode });
 		}
 		default:
