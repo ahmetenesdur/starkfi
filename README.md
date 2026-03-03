@@ -79,8 +79,8 @@ npx starkfi lend-pools                                   # Retrieve active lendi
 npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
 npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
 npx starkfi lend-borrow -p <pool> --collateral-amount <amount> --collateral-token <token> --borrow-amount <amount> --borrow-token <token> # Initiate collateralized borrow
-npx starkfi lend-repay <amount> -p <pool> -t <debt_token> --collateral-token <token>  # Repay outstanding debt
-npx starkfi lend-status -p <pool> --collateral-token <token> --debt-token <token> # Query active position status
+npx starkfi lend-repay <amount> -p <pool> -t <token> --collateral-token <token>  # Repay outstanding debt
+npx starkfi lend-status -p <pool> --collateral-token <token> --borrow-token <token> # Query active position status
 ```
 
 ## Artificial Intelligence Integration (MCP)

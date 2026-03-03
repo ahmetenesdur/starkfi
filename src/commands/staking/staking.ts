@@ -105,7 +105,7 @@ export function registerUnstakeCommand(program: Command): void {
 					}
 					const pools = await stakingService.getValidatorPools(
 						sdk,
-						validator!.stakerAddress.toString()
+						validator.stakerAddress.toString()
 					);
 					const matched = stakingService.resolvePoolForToken(pools, tokenSymbol);
 					poolAddress = matched.poolContract;
@@ -131,7 +131,7 @@ export function registerUnstakeCommand(program: Command): void {
 							amount: `${opts.amount} ${tokenSymbol}`,
 							txHash: result.hash,
 							explorer: result.explorerUrl,
-							note: "Wait for cooldown, then run: starkfi unstake exit --pool <address>",
+							note: "Wait for cooldown, then run: starkfi unstake exit --validator <name>",
 						})
 					);
 				} else if (action === "exit") {
@@ -191,7 +191,7 @@ export function registerRewardsCommand(program: Command): void {
 					}
 					const pools = await stakingService.getValidatorPools(
 						sdk,
-						validator!.stakerAddress.toString()
+						validator.stakerAddress.toString()
 					);
 					const matched = stakingService.resolvePoolForToken(pools, tokenSymbol);
 					poolAddress = matched.poolContract;

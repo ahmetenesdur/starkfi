@@ -292,7 +292,7 @@ export function registerTools(server: McpServer): void {
 				.string()
 				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
 			collateral_token: z.string().describe("Collateral token symbol (e.g. 'ETH', 'STRK')"),
-			debt_token: z.string().describe("Debt token symbol (e.g. 'USDC', 'USDT')"),
+			borrow_token: z.string().describe("Borrow token symbol (e.g. 'USDC', 'USDT')"),
 		},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetLendingPosition)

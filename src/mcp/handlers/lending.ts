@@ -31,7 +31,7 @@ export async function handleListLendingPools(args: { name?: string }) {
 export async function handleGetLendingPosition(args: {
 	pool: string;
 	collateral_token: string;
-	debt_token: string;
+	borrow_token: string;
 }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
@@ -41,7 +41,7 @@ export async function handleGetLendingPosition(args: {
 		wallet,
 		poolAddress,
 		args.collateral_token,
-		args.debt_token
+		args.borrow_token
 	);
 
 	if (!position) {

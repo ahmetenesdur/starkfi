@@ -244,7 +244,7 @@ export function registerLendStatusCommand(program: Command): void {
 			"Pool name (e.g. 'Genesis') or contract address"
 		)
 		.requiredOption("--collateral-token <symbol>", "Collateral token (e.g. 'ETH', 'STRK')")
-		.requiredOption("--debt-token <symbol>", "Debt token (e.g. 'USDC', 'USDT')")
+		.requiredOption("--borrow-token <symbol>", "Borrow token (e.g. 'USDC', 'USDT')")
 		.action(async (opts) => {
 			const spinner = createSpinner("Fetching lending position...").start();
 
@@ -257,7 +257,7 @@ export function registerLendStatusCommand(program: Command): void {
 					wallet,
 					poolAddress,
 					opts.collateralToken,
-					opts.debtToken
+					opts.borrowToken
 				);
 
 				if (!position) {
