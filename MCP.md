@@ -27,18 +27,18 @@ Upon initialization, the StarkFi server dynamically provisions the following too
 
 These tools do not mutate blockchain state or require user confirmation to execute.
 
-| Tool Identifier        | Functional Description                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------- |
-| `get_auth_status`      | Validates the active CLI session and verifies Fibrous API connectivity.                   |
-| `get_balance`          | Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.    |
-| `get_tx_status`        | Queries the Starknet sequencer for transaction status and execution receipts.             |
-| `get_swap_quote`       | Calculates optimal routing, expected output, and slippage prior to execution.             |
-| `list_validators`      | Enumerates all officially recognized Starknet staking validators.                         |
-| `list_pools`           | Enumerates available delegation pools associated with a specific validator.               |
-| `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods.  |
-| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.               |
-| `list_lending_pools`   | Enumerates active Vesu V2 lending pools and their supported dual-asset pairs.             |
-| `get_lending_position` | Retrieves the user's current supply and outstanding debt position within a specific pool. |
+| Tool Identifier        | Functional Description                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `get_auth_status`      | Validates the active CLI session and verifies Fibrous API connectivity.                  |
+| `get_balance`          | Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.   |
+| `get_tx_status`        | Queries the Starknet sequencer for transaction status and execution receipts.            |
+| `get_swap_quote`       | Calculates optimal routing, expected output, and slippage prior to execution.            |
+| `list_validators`      | Enumerates all officially recognized Starknet staking validators.                        |
+| `list_pools`           | Enumerates available delegation pools for a validator, including multi-token pools.      |
+| `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods. |
+| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.              |
+| `list_lending_pools`   | Enumerates active Vesu V2 lending pools and their supported dual-asset pairs.            |
+| `get_lending_position` | Retrieves the user's collateral and outstanding debt for a specific pool and token pair. |
 
 ### Transactional Tools (State Mutation)
 

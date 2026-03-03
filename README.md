@@ -10,7 +10,7 @@ StarkFi abstracts the complexities of the Starknet ecosystem through the followi
 
 - **Intelligent Trade Routing:** Seamless token swaps aggregated via Fibrous for optimal execution paths.
 - **Advanced Gas Abstraction:** All transactions are routed through the AVNU Paymaster by default. Gas is paid in STRK (configurable to ETH, USDC, USDT, DAI). Developer-sponsored (Gasfree) mode is also available.
-- **Delegation and Staking Management:** Comprehensive lifecycle controls for staking, including entering pools, restaking, atomic compounding, and intent-based unstaking.
+- **Delegation and Staking Management:** Multi-token staking lifecycle controls (STRK, WBTC, tBTC, SolvBTC, LBTC), including entering pools, restaking, atomic compounding, and intent-based unstaking.
 - **Protocol-Level Lending:** Direct integration with Vesu V2 for supplying collateral, borrowing assets, and managing debt positions.
 - **Native AI Integration:** An embedded Model Context Protocol (MCP) server that exposes the entire toolkit to LLM-driven environments such as Cursor and Claude.
 
@@ -29,7 +29,6 @@ StarkFi utilizes a remote Auth Server for email-based OTP.
 # Email OTP Authentication (Requires running starkfi-server)
 npx starkfi auth login <user@example.com>
 npx starkfi auth verify <user@example.com> <verification_code>
-
 ```
 
 ### 2. Primary Command Reference
@@ -78,9 +77,13 @@ npx starkfi config set-gas-token <token|reset> # Set gas payment token (default:
 npx starkfi lend-pools                                   # Retrieve active lending pools
 npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
 npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
-npx starkfi lend-borrow -p <pool> --collateral-amount <amount> --collateral-token <token> --borrow-amount <amount> --borrow-token <token> # Initiate collateralized borrow
-npx starkfi lend-repay <amount> -p <pool> -t <token> --collateral-token <token>  # Repay outstanding debt
-npx starkfi lend-status -p <pool> --collateral-token <token> --borrow-token <token> # Query active position status
+npx starkfi lend-borrow -p <pool> \                       # Initiate collateralized borrow
+  --collateral-amount <n> --collateral-token <token> \
+  --borrow-amount <n> --borrow-token <token>
+npx starkfi lend-repay <amount> -p <pool> -t <token> \     # Repay outstanding debt
+  --collateral-token <token>
+npx starkfi lend-status -p <pool> \                        # Query active position status
+  --collateral-token <token> --borrow-token <token>
 ```
 
 ## Artificial Intelligence Integration (MCP)

@@ -350,7 +350,7 @@ export function registerTools(server: McpServer): void {
 				.string()
 				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to repay (e.g. '50', '100')"),
-			token: z.string().describe("Debt token to repay (e.g. 'USDC', 'USDT')"),
+			token: z.string().describe("Token to repay (e.g. 'USDC', 'USDT')"),
 			collateral_token: z
 				.string()
 				.describe(

@@ -15,13 +15,12 @@ export interface TxResult {
 	explorerUrl: string;
 }
 
-// AmountDenomination::Assets = 1
+// Vesu V2 AmountDenomination: Native = 0, Assets = 1
 const DENOMINATION_ASSETS = 1;
 
 const POOL_FACTORY_ADDRESS = "0x05d1b22e63dc47c8b3b7d19a38e8fb3977069099f8dabb72bd0e5ff1f0b18e6c";
 
-// Vesu Amount struct: { denomination: enum, value: i257 }
-// i257 → (mag: u256(low128, high128), sign: bool) → 4 felts total.
+// Vesu Amount: { denomination: enum, value: i257 } → 4 felts.
 function encodeVesuAmount(denomination: number, value: bigint): string[] {
 	const isNegative = value < 0n;
 	const mag = isNegative ? -value : value;
@@ -39,7 +38,6 @@ function encodeZeroAmount(): string[] {
 	return encodeVesuAmount(DENOMINATION_ASSETS, 0n);
 }
 
-// Supply via vToken ERC-4626: approve + vToken.deposit(assets, receiver)
 export async function supply(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -66,7 +64,6 @@ export async function supply(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// Withdraw via vToken ERC-4626: vToken.withdraw(assets, receiver, owner)
 export async function withdraw(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -92,7 +89,6 @@ export async function withdraw(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// Borrow via pool.manage_position: approve collateral + positive collateral & positive debt.
 export async function borrow(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -130,7 +126,6 @@ export async function borrow(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// Repay via pool.manage_position: approve debt token + zero collateral & negative debt.
 export async function repay(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -166,7 +161,9 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// Query pool.position(collateral, debt, user) → extract last 4 felts as u256 pair.
+// Vesu position() returns (Position, u256, u256) = 8 felts:
+//   0-3: Position struct (collateral_shares + nominal_debt) — native
+//   4-7: collateral + debt amounts — asset denomination
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -183,16 +180,13 @@ export async function getPosition(
 		calldata: [collateralToken.address.toString(), debtToken.address.toString(), userAddress],
 	});
 
-	const feltCount = result.length;
-	if (feltCount < 4) return null;
+	// Expect exactly 8 felts: Position struct (4) + collateral u256 (2) + debt u256 (2)
+	if (result.length < 8) return null;
 
-	const collLow = BigInt(result[feltCount - 4]!);
-	const collHigh = BigInt(result[feltCount - 3]!);
-	const debtLow = BigInt(result[feltCount - 2]!);
-	const debtHigh = BigInt(result[feltCount - 1]!);
-
-	const collateralRaw = collLow + (collHigh << 128n);
-	const debtRaw = debtLow + (debtHigh << 128n);
+	// Asset-denominated collateral (felts 4-5)
+	const collateralRaw = BigInt(result[4]!) + (BigInt(result[5]!) << 128n);
+	// Asset-denominated debt (felts 6-7)
+	const debtRaw = BigInt(result[6]!) + (BigInt(result[7]!) << 128n);
 
 	if (collateralRaw === 0n && debtRaw === 0n) return null;
 
@@ -207,7 +201,6 @@ export async function getPosition(
 	};
 }
 
-// Queries PoolFactory for vToken address of a pool+asset pair.
 async function getVTokenAddress(
 	wallet: StarkZapWallet,
 	poolAddress: string,

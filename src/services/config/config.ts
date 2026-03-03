@@ -5,10 +5,8 @@ import { CONFIG_DIR } from "../../lib/config.js";
 export interface StarkfiConfig {
 	rpcUrl?: string;
 	network?: "mainnet" | "sepolia";
-	// Gasfree mode: developer sponsors gas via AVNU API key (feeMode: "sponsored")
-	gasfreeMode?: boolean;
-	// Gas payment token for paymaster (default: "STRK"). Supported: STRK, ETH, USDC, USDT, DAI
-	gasToken?: string;
+	gasfreeMode?: boolean; // developer-sponsored gas
+	gasToken?: string; // paymaster gas token (default: STRK)
 	[key: string]: unknown;
 }
 

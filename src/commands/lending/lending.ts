@@ -196,7 +196,7 @@ export function registerLendRepayCommand(program: Command): void {
 			"-p, --pool <name|address>",
 			"Pool name (e.g. 'Genesis') or contract address"
 		)
-		.requiredOption("-t, --token <symbol>", "Debt token symbol (e.g. 'USDC', 'USDT')")
+		.requiredOption("-t, --token <symbol>", "Token to repay (e.g. 'USDC', 'USDT')")
 		.requiredOption(
 			"--collateral-token <symbol>",
 			"Collateral token of the position (e.g. 'ETH', 'STRK')"

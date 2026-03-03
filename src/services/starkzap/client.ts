@@ -10,24 +10,10 @@ import {
 
 export type StarkZapWallet = Wallet;
 
-/**
- * Default gas token for paymaster transactions.
- * All transactions go through AVNU Paymaster by default.
- * Users can change this via `config set-gas-token`.
- */
+// Default gas token for AVNU Paymaster.
 const DEFAULT_GAS_TOKEN = "STRK";
 
-/**
- * Resolve fee mode configuration.
- *
- * Priority:
- *   1. gasfreeMode (developer-sponsored via AVNU credits)
- *   2. gasToken (gasless — user pays in specified ERC-20 via AVNU Paymaster)
- *
- * All modes use the AVNU Paymaster. The difference is WHO pays:
- *   - gasfree: developer credits (mode: 'sponsored')
- *   - gasless: user pays in gasToken (mode: 'default', gasToken: address)
- */
+// Resolve fee mode: gasfree (developer pays) vs gasless (user pays in ERC-20).
 export function resolveFeeModeConfig(
 	gasfreeMode: boolean,
 	gasToken: string | undefined
@@ -37,12 +23,9 @@ export function resolveFeeModeConfig(
 	needsPaymaster: boolean;
 } {
 	if (gasfreeMode) {
-		// Developer-sponsored: AVNU credits pay for gas
 		return { feeMode: "sponsored", gasTokenAddress: undefined, needsPaymaster: true };
 	}
 
-	// Gasless: user pays in gasToken via paymaster
-	// Always default to STRK if no gas token is specified
 	const resolvedToken = gasToken ?? DEFAULT_GAS_TOKEN;
 	const gasTokenAddress = GAS_TOKEN_ADDRESSES[resolvedToken.toUpperCase()];
 
@@ -50,7 +33,7 @@ export function resolveFeeModeConfig(
 		return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
 	}
 
-	// Fallback (shouldn't happen when token is valid)
+	// Fallback
 	return {
 		feeMode: "sponsored",
 		gasTokenAddress: GAS_TOKEN_ADDRESSES["STRK"],
@@ -58,16 +41,7 @@ export function resolveFeeModeConfig(
 	};
 }
 
-/**
- * Patch the paymaster fee mode for gasless transactions.
- *
- * StarkZap's `sponsoredDetails()` always creates `{ mode: 'sponsored' }`
- * (developer pays). For gasless mode (user pays in ERC-20), we need
- * `{ mode: 'default', gasToken: '0x...' }`.
- *
- * This function wraps `account.executePaymasterTransaction()` to replace
- * the feeMode on-the-fly, routing gas payment through the specified token.
- */
+// Patch paymaster feeMode: 'sponsored' → 'default' with gasToken for gasless mode.
 function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 	const account = wallet.getAccount();
 	const originalExecutePaymaster = (account as any).executePaymasterTransaction.bind(account);
@@ -77,7 +51,6 @@ function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 		details: any,
 		...rest: any[]
 	) {
-		// Replace { mode: 'sponsored' } → { mode: 'default', gasToken }
 		const patchedDetails = {
 			...details,
 			feeMode: { mode: "default", gasToken: gasTokenAddress },
@@ -126,8 +99,6 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 		feeMode,
 	});
 
-	// Gasless mode: patch paymaster feeMode from 'sponsored' to 'default' with gasToken
-	// Only apply when NOT in gasfree mode (gasfree = developer pays, keep 'sponsored')
 	if (!gasfreeMode && gasTokenAddress) {
 		patchGaslessMode(wallet, gasTokenAddress);
 	}
@@ -138,7 +109,6 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 export interface SDKAndWallet {
 	sdk: StarkZap;
 	wallet: Wallet;
-	// Token address if gasless mode is active (user pays gas in this token)
 	gasTokenAddress: string | undefined;
 }
 
