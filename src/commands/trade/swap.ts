@@ -14,7 +14,7 @@ export function registerSwapCommand(program: Command): void {
 		.argument("<amount>", "Amount to swap")
 		.argument("<from>", "Source token symbol")
 		.argument("<to>", "Destination token symbol")
-		.option("-s, --slippage <percent>", "Slippage tolerance %", "0.5")
+		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
 		.action(async (amount: string, from: string, to: string, opts) => {
 			const spinner = createSpinner("Finding best route...").start();
 

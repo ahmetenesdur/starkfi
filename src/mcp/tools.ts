@@ -141,7 +141,7 @@ export function registerTools(server: McpServer): void {
 			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
 			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'STRK')"),
 			to_token: z.string().describe("Destination token symbol to buy (e.g. 'USDC', 'DAI')"),
-			slippage: z.number().optional().describe("Slippage tolerance % (default: 0.5)"),
+			slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSwapTokens)

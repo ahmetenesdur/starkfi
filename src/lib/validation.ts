@@ -21,7 +21,7 @@ export const SlippageSchema = z
 	.number()
 	.min(0.01, "Slippage too low")
 	.max(50, "Slippage too high")
-	.default(0.5);
+	.default(1);
 
 export function validateAddress(address: string): string {
 	return StarknetAddressSchema.parse(address);

@@ -55,7 +55,7 @@ export async function handleSwapTokens(args: {
 		tokenIn,
 		tokenOut,
 		rawAmount,
-		args.slippage ?? 0.5,
+		args.slippage ?? 1,
 		session.address
 	);
 
@@ -79,6 +79,6 @@ export async function handleSwapTokens(args: {
 		explorerUrl: tx.explorerUrl,
 		amountIn: `${args.amount} ${tokenIn.symbol}`,
 		amountOut: `~${outputFormatted} ${tokenOut.symbol}`,
-		slippage: `${args.slippage ?? 0.5}%`,
+		slippage: `${args.slippage ?? 1}%`,
 	});
 }
