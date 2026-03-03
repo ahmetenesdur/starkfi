@@ -191,10 +191,16 @@ export function registerTools(server: McpServer): void {
 
 	server.tool(
 		"stake_tokens",
-		"Stake STRK in a delegation pool on Starknet. Smart stake: auto-detects whether the user needs to enter the pool or just add to an existing delegation.",
+		"Stake tokens in a delegation pool on Starknet. Smart stake: auto-detects whether the user needs to enter the pool or just add to an existing delegation. Supports STRK, WBTC, tBTC, SolvBTC, LBTC.",
 		{
-			amount: z.string().describe("Amount of STRK to stake (e.g. '100')"),
+			amount: z.string().describe("Amount to stake (e.g. '100', '0.01')"),
 			pool: z.string().describe("Staking pool contract address (0x...)"),
+			token: z
+				.string()
+				.optional()
+				.describe(
+					"Token symbol to stake (default: STRK). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC"
+				),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleStakeTokens)
@@ -202,7 +208,7 @@ export function registerTools(server: McpServer): void {
 
 	server.tool(
 		"unstake_tokens",
-		"Unstake STRK from a pool. Unstaking is a TWO-STEP process: 1. call with action='intent', 2. wait for cooldown, 3. call with action='exit' to complete withdrawal.",
+		"Unstake tokens from a pool. Unstaking is a TWO-STEP process: 1. call with action='intent', 2. wait for cooldown, 3. call with action='exit' to complete withdrawal.",
 		{
 			action: z
 				.enum(["intent", "exit"])
@@ -213,7 +219,11 @@ export function registerTools(server: McpServer): void {
 			amount: z
 				.string()
 				.optional()
-				.describe("Amount of STRK to unstake in STRK (ONLY required when action='intent')"),
+				.describe("Amount to unstake (ONLY required when action='intent')"),
+			token: z
+				.string()
+				.optional()
+				.describe("Token symbol (default: STRK). Must match the pool's token."),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleUnstakeTokens)

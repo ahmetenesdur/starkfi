@@ -26,6 +26,7 @@ export interface PositionInfo {
 export interface StakingOverviewPosition {
 	validator: string;
 	pool: string;
+	token: string;
 	staked: string;
 	rewards: string;
 	total: string;
@@ -37,16 +38,18 @@ export interface StakingOverviewPosition {
 export interface StakingOverview {
 	network: string;
 	address: string;
-	totalStaked: string;
-	totalRewards: string;
-	totalValue: string;
-	totalUnpooling: string;
 	positions: StakingOverviewPosition[];
 }
 
-// Resolve STRK once — only token stakeable on Starknet mainnet.
-async function resolveStrkToken(): Promise<Token> {
-	return resolveToken("STRK");
+// Find a pool matching a specific token symbol from a validator's pools.
+export function resolvePoolForToken(pools: PoolInfo[], tokenSymbol: string): PoolInfo {
+	const upper = tokenSymbol.toUpperCase();
+	const match = pools.find((p) => p.tokenSymbol.toUpperCase() === upper);
+	if (!match) {
+		const available = pools.map((p) => p.tokenSymbol).join(", ");
+		throw new Error(`No ${tokenSymbol} pool found for this validator. Available: ${available}`);
+	}
+	return match;
 }
 
 export async function getStakeableTokens(
@@ -84,9 +87,10 @@ export async function getValidatorPools(
 export async function stake(
 	wallet: StarkZapWallet,
 	poolAddress: string,
-	amount: string
+	amount: string,
+	tokenSymbol: string = "STRK"
 ): Promise<{ hash: string; explorerUrl: string }> {
-	const token = await resolveStrkToken();
+	const token = await resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.stake(fromAddress(poolAddress), parsedAmount);
 
@@ -146,9 +150,10 @@ export async function compoundRewards(
 export async function exitPoolIntent(
 	wallet: StarkZapWallet,
 	poolAddress: string,
-	amount: string
+	amount: string,
+	tokenSymbol: string = "STRK"
 ): Promise<{ hash: string; explorerUrl: string }> {
-	const token = await resolveStrkToken();
+	const token = await resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.exitPoolIntent(fromAddress(poolAddress), parsedAmount);
 
@@ -238,6 +243,7 @@ export async function getStakingOverview(
 			return {
 				validator,
 				pool: p.poolContract.toString(),
+				tokenSymbol: p.token.symbol,
 				staked: position.staked,
 				rewards: position.rewards,
 				total: position.total,
@@ -250,38 +256,21 @@ export async function getStakingOverview(
 
 	const activePositions = results.filter((r) => r !== null);
 
-	// Aggregate totals using raw Amount arithmetic.
-	const strk = await resolveStrkToken();
-	let totalStaked = Amount.parse("0", strk);
-	let totalRewards = Amount.parse("0", strk);
-	let totalValue = Amount.parse("0", strk);
-	let totalUnpooling = Amount.parse("0", strk);
-
-	const positions: StakingOverviewPosition[] = activePositions.map((p) => {
-		totalStaked = totalStaked.add(p.staked);
-		totalRewards = totalRewards.add(p.rewards);
-		totalValue = totalValue.add(p.total);
-		totalUnpooling = totalUnpooling.add(p.unpooling);
-
-		return {
-			validator: p.validator,
-			pool: p.pool,
-			staked: p.staked.toFormatted(true),
-			rewards: p.rewards.toFormatted(true),
-			total: p.total.toFormatted(true),
-			unpooling: p.unpooling.toFormatted(true),
-			cooldownEndsAt: p.unpoolTime ? p.unpoolTime.toISOString() : null,
-			commission: `${p.commissionPercent}%`,
-		};
-	});
+	const positions: StakingOverviewPosition[] = activePositions.map((p) => ({
+		validator: p.validator,
+		pool: p.pool,
+		token: p.tokenSymbol,
+		staked: p.staked.toFormatted(true),
+		rewards: p.rewards.toFormatted(true),
+		total: p.total.toFormatted(true),
+		unpooling: p.unpooling.toFormatted(true),
+		cooldownEndsAt: p.unpoolTime ? p.unpoolTime.toISOString() : null,
+		commission: `${p.commissionPercent}%`,
+	}));
 
 	return {
 		network,
 		address,
-		totalStaked: totalStaked.toFormatted(true),
-		totalRewards: totalRewards.toFormatted(true),
-		totalValue: totalValue.toFormatted(true),
-		totalUnpooling: totalUnpooling.toFormatted(true),
 		positions,
 	};
 }

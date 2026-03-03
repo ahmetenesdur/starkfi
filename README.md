@@ -54,11 +54,11 @@ npx starkfi trade <amount> <from> <to> # Execute aggregated token swap
 
 ```bash
 npx starkfi validators                        # Retrieve active validator set
-npx starkfi pools <validator>                 # Query delegation pools per validator
+npx starkfi pools <validator>                 # Query delegation pools per validator (multi-token)
 npx starkfi staking-stats                     # Display comprehensive staking dashboard
-npx starkfi stake <amount> --pool <pool>      # Initiate staking delegation
-npx starkfi rewards --pool <pool> [--claim|--compound] # Process outstanding rewards
-npx starkfi unstake <intent|exit> --pool <pool> [--amount <amount>] # Process unstaking lifecycle
+npx starkfi stake <amount> --validator <name> [--token <symbol>]  # Smart stake (default: STRK)
+npx starkfi rewards --validator <name> [--token <symbol>] [--claim|--compound]
+npx starkfi unstake <intent|exit> --validator <name> [--token <symbol>] [--amount <amount>]
 ```
 
 #### Environment Configuration

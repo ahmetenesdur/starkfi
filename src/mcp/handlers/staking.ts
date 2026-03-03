@@ -4,19 +4,20 @@ import * as stakingService from "../../services/staking/staking.js";
 import { getValidators, findValidator } from "../../services/staking/validators.js";
 import { jsonResult, textResult } from "./utils.js";
 
-export async function handleStakeTokens(args: { amount: string; pool: string }) {
+export async function handleStakeTokens(args: { amount: string; pool: string; token?: string }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
 
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const result = await stakingService.stake(wallet, args.pool, args.amount);
+	const tokenSymbol = (args.token ?? "STRK").toUpperCase();
+	const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol);
 
 	return jsonResult({
 		success: true,
 		txHash: result.hash,
 		explorerUrl: result.explorerUrl,
-		amount: `${args.amount} STRK`,
+		amount: `${args.amount} ${tokenSymbol}`,
 		pool: args.pool,
 	});
 }
@@ -25,6 +26,7 @@ export async function handleUnstakeTokens(args: {
 	action: "intent" | "exit";
 	pool: string;
 	amount?: string;
+	token?: string;
 }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
@@ -35,7 +37,13 @@ export async function handleUnstakeTokens(args: {
 		if (!args.amount) {
 			return textResult("Amount is required for exit intent.");
 		}
-		const result = await stakingService.exitPoolIntent(wallet, args.pool, args.amount);
+		const tokenSymbol = (args.token ?? "STRK").toUpperCase();
+		const result = await stakingService.exitPoolIntent(
+			wallet,
+			args.pool,
+			args.amount,
+			tokenSymbol
+		);
 		return jsonResult({
 			success: true,
 			action: "exit_intent",
