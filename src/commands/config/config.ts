@@ -43,12 +43,10 @@ export function registerConfigCommand(program: Command): void {
 			console.log(success(`Network set to: ${network}`));
 		});
 
-	// Gasfree mode: developer sponsors gas via AVNU API key
+	// Gasfree mode: developer sponsors gas via Paymaster API key
 	configCmd
 		.command("set-gasfree")
-		.description(
-			"Enable/disable Gasfree mode — developer sponsors all gas costs via AVNU Paymaster"
-		)
+		.description("Enable/disable Gasfree mode — developer sponsors all gas costs via Paymaster")
 		.argument("<mode>", "on or off")
 		.action((mode: string) => {
 			if (!["on", "off"].includes(mode)) {
@@ -60,7 +58,7 @@ export function registerConfigCommand(program: Command): void {
 			if (mode === "on") {
 				// Gasfree and Gasless are mutually exclusive
 				configService.delete("gasToken");
-				console.log(success("Gasfree mode: on (developer sponsors gas via AVNU)"));
+				console.log(success("Gasfree mode: on (developer sponsors gas via Paymaster)"));
 			} else {
 				console.log(success("Gasfree mode: off — using gasless mode (default: STRK)"));
 			}
@@ -89,7 +87,7 @@ export function registerConfigCommand(program: Command): void {
 	configCmd
 		.command("set-gas-token")
 		.description(
-			`Set gas payment token via AVNU Paymaster.\nDefault: STRK. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}\nUse 'reset' to revert to STRK.`
+			`Set gas payment token via Paymaster.\nDefault: STRK. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}\nUse 'reset' to revert to STRK.`
 		)
 		.argument(
 			"<token>",
@@ -115,9 +113,7 @@ export function registerConfigCommand(program: Command): void {
 			configService.delete("gasfreeMode");
 			configService.set("gasToken", upper);
 			console.log(
-				success(
-					`Gas token set to: ${upper} — gas will be paid in ${upper} via AVNU Paymaster`
-				)
+				success(`Gas token set to: ${upper} — gas will be paid in ${upper} via Paymaster`)
 			);
 		});
 
@@ -136,9 +132,9 @@ export function registerConfigCommand(program: Command): void {
 			// Human-readable fee mode summary
 			const gasfreeMode = all.gasfreeMode === true;
 			const gasToken = all.gasToken as string | undefined;
-			let feeModeSummary = "gasless (pays STRK via AVNU Paymaster)";
-			if (gasfreeMode) feeModeSummary = "gasfree (developer-sponsored via AVNU)";
-			else if (gasToken) feeModeSummary = `gasless (pays ${gasToken} via AVNU Paymaster)`;
+			let feeModeSummary = "gasless (pays STRK via Paymaster)";
+			if (gasfreeMode) feeModeSummary = "gasfree (developer-sponsored via Paymaster)";
+			else if (gasToken) feeModeSummary = `gasless (pays ${gasToken} via Paymaster)`;
 
 			console.log(
 				formatResult({

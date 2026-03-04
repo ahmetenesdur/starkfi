@@ -67,7 +67,6 @@ export function createSDK(
 	paymasterUrl?: string
 ): StarkZap {
 	const config: ConstructorParameters<typeof StarkZap>[0] = { network };
-
 	if (rpcUrl) config.rpcUrl = rpcUrl;
 
 	if (needsPaymaster) {

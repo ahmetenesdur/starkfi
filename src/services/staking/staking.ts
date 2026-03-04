@@ -1,4 +1,4 @@
-import { Amount, fromAddress, type Token, type StarkZap } from "starkzap";
+import { Amount, fromAddress, type StarkZap } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 
@@ -50,17 +50,6 @@ export function resolvePoolForToken(pools: PoolInfo[], tokenSymbol: string): Poo
 		throw new Error(`No ${tokenSymbol} pool found for this validator. Available: ${available}`);
 	}
 	return match;
-}
-
-export async function getStakeableTokens(
-	sdk: StarkZap
-): Promise<Array<{ name: string; symbol: string; address: string }>> {
-	const tokens = await sdk.stakingTokens();
-	return tokens.map((t: Token) => ({
-		name: t.name,
-		symbol: t.symbol,
-		address: t.address.toString(),
-	}));
 }
 
 export async function getValidatorPools(

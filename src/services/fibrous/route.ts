@@ -2,7 +2,7 @@ import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { Token } from "starkzap";
 
-export interface RouteToken {
+interface RouteToken {
 	name: string;
 	address: string;
 	decimals: number;
@@ -12,7 +12,7 @@ export interface RouteToken {
 	base?: boolean;
 }
 
-export interface RouteSwap {
+interface RouteSwap {
 	protocol: number;
 	poolName: string;
 	poolAddress: string;
@@ -22,7 +22,7 @@ export interface RouteSwap {
 	extraData?: Record<string, unknown>;
 }
 
-export interface RouteResponse {
+interface RouteResponse {
 	success: boolean;
 	routeId?: string;
 	inputToken: RouteToken;
@@ -39,7 +39,7 @@ export interface RouteResponse {
 	errorMessage?: string;
 }
 
-export interface CalldataResponse {
+interface CalldataResponse {
 	route: RouteResponse;
 	calldata: string[];
 }

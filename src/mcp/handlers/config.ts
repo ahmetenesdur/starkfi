@@ -44,7 +44,7 @@ export async function handleConfigAction(args: {
 				success: true,
 				gasfreeMode: enabled,
 				note: enabled
-					? "Developer sponsors gas via AVNU Paymaster (requires API key + credits)"
+					? "Developer sponsors gas via Paymaster (requires API key + credits)"
 					: "Gasfree disabled — using gasless mode (default: STRK)",
 			});
 		}
@@ -69,16 +69,16 @@ export async function handleConfigAction(args: {
 			return jsonResult({
 				success: true,
 				gasToken: upper,
-				note: `Gas paid in ${upper} via AVNU Paymaster`,
+				note: `Gas paid in ${upper} via Paymaster`,
 			});
 		}
 		case "list": {
 			const all = configService.getAll();
 			const gasfreeMode = all.gasfreeMode === true;
 			const gasToken = all.gasToken as string | undefined;
-			let feeMode = "gasless (pays STRK via AVNU Paymaster)";
-			if (gasfreeMode) feeMode = "gasfree (developer-sponsored via AVNU)";
-			else if (gasToken) feeMode = `gasless (pays ${gasToken} via AVNU Paymaster)`;
+			let feeMode = "gasless (pays STRK via Paymaster)";
+			if (gasfreeMode) feeMode = "gasfree (developer-sponsored via Paymaster)";
+			else if (gasToken) feeMode = `gasless (pays ${gasToken} via Paymaster)`;
 			return jsonResult({ ...all, feeMode });
 		}
 		default:

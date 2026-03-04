@@ -25,8 +25,3 @@ export async function resolveToken(symbol: string): Promise<Token> {
 
 	return token;
 }
-
-export async function resolveTokenByAddress(address: string): Promise<Token | null> {
-	const tokens = await fetchTokens();
-	return tokens.find((t) => t.address.toLowerCase() === address.toLowerCase()) ?? null;
-}

@@ -43,13 +43,13 @@ The server requires specific environment variables to function correctly. Ensure
 
 The RESTful API provides the necessary primitives for client authentication and transaction proxying.
 
-| Network Endpoint      | Auth Req. | Functional Description                                                            |
-| --------------------- | --------- | --------------------------------------------------------------------------------- |
-| `POST /auth/login`    | None      | Initiates the authentication flow by dispatching an Email OTP.                    |
-| `POST /auth/verify`   | None      | Validates the user-provided OTP, provisions a wallet context, and yields a JWT.   |
-| `POST /wallet/find`   | JWT       | Retrieves the associated Starknet wallet address for the authenticated session.   |
-| `POST /wallet/create` | JWT       | Provisions a new, app-managed Starknet wallet for the authenticated user.         |
-| `POST /sign/hash`     | JWT       | Proxies raw Starknet payload hashes securely to Privy for asymmetric signing.     |
-| `POST /sign/message`  | JWT       | Proxies strictly-formatted standard messages securely to Privy for signing.       |
-| `POST /paymaster`     | None      | Proxies gasless or sponsored transaction requests directly to the AVNU Paymaster. |
-| `GET /health`         | None      | Provides an unauthenticated basic uptime and system health monitoring response.   |
+| Network Endpoint      | Auth Req. | Functional Description                                                          |
+| --------------------- | --------- | ------------------------------------------------------------------------------- |
+| `POST /auth/login`    | None      | Initiates the authentication flow by dispatching an Email OTP.                  |
+| `POST /auth/verify`   | None      | Validates the user-provided OTP, provisions a wallet context, and yields a JWT. |
+| `POST /wallet/find`   | JWT       | Retrieves the associated Starknet wallet address for the authenticated session. |
+| `POST /wallet/create` | JWT       | Provisions a new, app-managed Starknet wallet for the authenticated user.       |
+| `POST /sign/hash`     | JWT       | Proxies raw Starknet payload hashes securely to Privy for asymmetric signing.   |
+| `POST /sign/message`  | JWT       | Proxies strictly-formatted standard messages securely to Privy for signing.     |
+| `POST /paymaster`     | None      | Proxies gasless or sponsored transaction requests directly to the Paymaster.    |
+| `GET /health`         | None      | Provides an unauthenticated basic uptime and system health monitoring response. |
