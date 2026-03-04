@@ -18,7 +18,7 @@ export interface TxResult {
 // Vesu V2 AmountDenomination: Native = 0, Assets = 1
 const DENOMINATION_ASSETS = 1;
 
-const POOL_FACTORY_ADDRESS = "0x05d1b22e63dc47c8b3b7d19a38e8fb3977069099f8dabb72bd0e5ff1f0b18e6c";
+const POOL_FACTORY_ADDRESS = "0x03760f903a37948f97302736f89ce30290e45f441559325026842b7a6fb388c0";
 
 // Vesu Amount: { denomination: enum, value: i257 } → 4 felts.
 function encodeVesuAmount(denomination: number, value: bigint): string[] {
@@ -208,7 +208,7 @@ async function getVTokenAddress(
 ): Promise<string> {
 	const result = await wallet.callContract({
 		contractAddress: POOL_FACTORY_ADDRESS,
-		entrypoint: "v_token",
+		entrypoint: "v_token_for_asset",
 		calldata: [poolAddress, token.address.toString()],
 	});
 
