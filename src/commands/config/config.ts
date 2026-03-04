@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { ConfigService } from "../../services/config/config.js";
 import { success, formatResult, warn } from "../../lib/format.js";
-import { GASLESS_SUPPORTED_TOKENS } from "../../lib/config.js";
+import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
 
 export function registerConfigCommand(program: Command): void {
 	const configCmd = program.command("config").description("Manage starkfi configuration");

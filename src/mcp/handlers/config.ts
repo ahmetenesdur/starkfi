@@ -1,5 +1,5 @@
 import { ConfigService } from "../../services/config/config.js";
-import { GASLESS_SUPPORTED_TOKENS } from "../../lib/config.js";
+import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
 import { jsonResult, textResult } from "./utils.js";
 
 export async function handleConfigAction(args: {

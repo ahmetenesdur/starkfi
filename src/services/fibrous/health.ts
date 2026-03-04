@@ -1,4 +1,4 @@
-import { FIBROUS_BASE_URL } from "../../lib/config.js";
+import { FIBROUS_BASE_URL } from "./config.js";
 
 export async function checkFibrousHealth(): Promise<{
 	ok: boolean;

@@ -1,4 +1,4 @@
-import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "../../lib/config.js";
+import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { Token } from "starkzap";
 

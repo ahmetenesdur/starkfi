@@ -6,12 +6,10 @@ import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
 	GAS_TOKEN_ADDRESSES,
-} from "../../lib/config.js";
+	DEFAULT_GAS_TOKEN,
+} from "./config.js";
 
 export type StarkZapWallet = Wallet;
-
-// Default gas token for AVNU Paymaster.
-const DEFAULT_GAS_TOKEN = "STRK";
 
 // Resolve fee mode: gasfree (developer pays) vs gasless (user pays in ERC-20).
 export function resolveFeeModeConfig(
