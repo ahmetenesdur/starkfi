@@ -73,8 +73,11 @@ npx starkfi config set-gas-token <token|reset> # Set gas payment token (default:
 
 #### Lending and Borrowing (Vesu V2)
 
+Pool data (assets, APY, pairs) is fetched dynamically from the Vesu API.
+
 ```bash
-npx starkfi lend-pools                                   # Retrieve active lending pools
+npx starkfi lend-pools                                   # Summary table (name, version, asset/pair counts)
+npx starkfi lend-pools <name>                            # Detail view (assets with APY, pairs, pool address)
 npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
 npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
 npx starkfi lend-borrow -p <pool> \                       # Initiate collateralized borrow

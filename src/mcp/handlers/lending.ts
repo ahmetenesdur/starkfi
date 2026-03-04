@@ -1,17 +1,22 @@
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as lendingService from "../../services/vesu/lending.js";
-import { getVesuPools, findVesuPool } from "../../services/vesu/pools.js";
+import { getVesuPools, findPoolEntry } from "../../services/vesu/pools.js";
 import { jsonResult } from "./utils.js";
 
-function resolvePool(poolQuery: string, network: "mainnet" | "sepolia"): string {
-	const found = findVesuPool(poolQuery, network);
-	return found ? found.poolContract : poolQuery;
+function resolvePool(
+	poolQuery: string,
+	network: "mainnet" | "sepolia"
+): { address: string; name: string | null } {
+	const found = findPoolEntry(poolQuery, network);
+	return found
+		? { address: found.address, name: found.name }
+		: { address: poolQuery, name: null };
 }
 
 export async function handleListLendingPools(args: { name?: string }) {
 	const session = requireSession();
-	let pools = getVesuPools(session.network);
+	let pools = await getVesuPools(session.network);
 
 	if (args.name) {
 		const lower = args.name.toLowerCase();
@@ -22,8 +27,11 @@ export async function handleListLendingPools(args: { name?: string }) {
 		success: true,
 		pools: pools.map((p) => ({
 			name: p.name,
-			poolContract: p.poolContract,
-			pairs: p.pairs.map((pair) => `${pair.collateral}/${pair.debt}`),
+			poolContract: p.address,
+			protocolVersion: p.protocolVersion,
+			isDeprecated: p.isDeprecated,
+			assets: p.assets.map((a) => a.symbol),
+			pairs: p.pairs.map((pair) => `${pair.collateralSymbol}/${pair.debtSymbol}`),
 		})),
 	});
 }
@@ -36,10 +44,10 @@ export async function handleGetLendingPosition(args: {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
 
-	const poolAddress = resolvePool(args.pool, session.network);
+	const pool = resolvePool(args.pool, session.network);
 	const position = await lendingService.getPosition(
 		wallet,
-		poolAddress,
+		pool.address,
 		args.collateral_token,
 		args.borrow_token
 	);
@@ -60,14 +68,15 @@ export async function handleSupplyAssets(args: { pool: string; amount: string; t
 	const { wallet } = await initSDKAndWallet(session);
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const poolAddress = resolvePool(args.pool, session.network);
-	const result = await lendingService.supply(wallet, poolAddress, args.token, args.amount);
+	const pool = resolvePool(args.pool, session.network);
+	const result = await lendingService.supply(wallet, pool.address, args.token, args.amount);
 
 	return jsonResult({
 		success: true,
 		action: "supply",
 		amount: `${args.amount} ${args.token.toUpperCase()}`,
-		pool: poolAddress,
+		pool: pool.address,
+		poolName: pool.name,
 		txHash: result.hash,
 		explorerUrl: result.explorerUrl,
 	});
@@ -78,14 +87,15 @@ export async function handleWithdrawAssets(args: { pool: string; amount: string;
 	const { wallet } = await initSDKAndWallet(session);
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const poolAddress = resolvePool(args.pool, session.network);
-	const result = await lendingService.withdraw(wallet, poolAddress, args.token, args.amount);
+	const pool = resolvePool(args.pool, session.network);
+	const result = await lendingService.withdraw(wallet, pool.address, args.token, args.amount);
 
 	return jsonResult({
 		success: true,
 		action: "withdraw",
 		amount: `${args.amount} ${args.token.toUpperCase()}`,
-		pool: poolAddress,
+		pool: pool.address,
+		poolName: pool.name,
 		txHash: result.hash,
 		explorerUrl: result.explorerUrl,
 	});
@@ -102,10 +112,10 @@ export async function handleBorrowAssets(args: {
 	const { wallet } = await initSDKAndWallet(session);
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const poolAddress = resolvePool(args.pool, session.network);
+	const pool = resolvePool(args.pool, session.network);
 	const result = await lendingService.borrow(
 		wallet,
-		poolAddress,
+		pool.address,
 		args.collateral_token,
 		args.collateral_amount,
 		args.borrow_token,
@@ -117,7 +127,8 @@ export async function handleBorrowAssets(args: {
 		action: "borrow",
 		collateral: `${args.collateral_amount} ${args.collateral_token.toUpperCase()}`,
 		borrowed: `${args.borrow_amount} ${args.borrow_token.toUpperCase()}`,
-		pool: poolAddress,
+		pool: pool.address,
+		poolName: pool.name,
 		txHash: result.hash,
 		explorerUrl: result.explorerUrl,
 	});
@@ -133,10 +144,10 @@ export async function handleRepayDebt(args: {
 	const { wallet } = await initSDKAndWallet(session);
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const poolAddress = resolvePool(args.pool, session.network);
+	const pool = resolvePool(args.pool, session.network);
 	const result = await lendingService.repay(
 		wallet,
-		poolAddress,
+		pool.address,
 		args.collateral_token,
 		args.token,
 		args.amount
@@ -146,7 +157,8 @@ export async function handleRepayDebt(args: {
 		success: true,
 		action: "repay",
 		repaid: `${args.amount} ${args.token.toUpperCase()}`,
-		pool: poolAddress,
+		pool: pool.address,
+		poolName: pool.name,
 		txHash: result.hash,
 		explorerUrl: result.explorerUrl,
 	});

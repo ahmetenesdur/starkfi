@@ -290,7 +290,7 @@ export function registerTools(server: McpServer): void {
 		{
 			pool: z
 				.string()
-				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			collateral_token: z.string().describe("Collateral token symbol (e.g. 'ETH', 'STRK')"),
 			borrow_token: z.string().describe("Borrow token symbol (e.g. 'USDC', 'USDT')"),
 		},
@@ -304,7 +304,7 @@ export function registerTools(server: McpServer): void {
 		{
 			pool: z
 				.string()
-				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to supply (e.g. '100', '0.5')"),
 			token: z.string().describe("Token symbol to supply (e.g. 'STRK', 'ETH', 'USDC')"),
 		},
@@ -318,7 +318,7 @@ export function registerTools(server: McpServer): void {
 		{
 			pool: z
 				.string()
-				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to withdraw (e.g. '100', '0.5')"),
 			token: z.string().describe("Token symbol to withdraw (e.g. 'STRK', 'ETH', 'USDC')"),
 		},
@@ -332,7 +332,7 @@ export function registerTools(server: McpServer): void {
 		{
 			pool: z
 				.string()
-				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			collateral_amount: z.string().describe("Collateral amount to deposit (e.g. '1000')"),
 			collateral_token: z.string().describe("Collateral token symbol (e.g. 'STRK', 'ETH')"),
 			borrow_amount: z.string().describe("Amount to borrow (e.g. '100')"),
@@ -348,7 +348,7 @@ export function registerTools(server: McpServer): void {
 		{
 			pool: z
 				.string()
-				.describe("Pool name (e.g. 'Genesis', 'Re7') or contract address (0x...)"),
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to repay (e.g. '50', '100')"),
 			token: z.string().describe("Token to repay (e.g. 'USDC', 'USDT')"),
 			collateral_token: z

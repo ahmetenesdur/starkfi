@@ -2,6 +2,7 @@ import { Amount, fromAddress, type Token } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { POOL_FACTORY_ADDRESS, DENOMINATION_ASSETS } from "./config.js";
 
 export interface LendingPosition {
 	collateralAsset: string;
@@ -15,23 +16,18 @@ export interface TxResult {
 	explorerUrl: string;
 }
 
-// Vesu V2 AmountDenomination: Native = 0, Assets = 1
-const DENOMINATION_ASSETS = 1;
+// u256 = (low: u128, high: u128)
+function splitU256(value: bigint): [string, string] {
+	const low = value & ((1n << 128n) - 1n);
+	const high = value >> 128n;
+	return [`0x${low.toString(16)}`, `0x${high.toString(16)}`];
+}
 
-const POOL_FACTORY_ADDRESS = "0x03760f903a37948f97302736f89ce30290e45f441559325026842b7a6fb388c0";
-
-// Vesu Amount: { denomination: enum, value: i257 } → 4 felts.
+// Vesu Amount: { denomination, value: i257 } → 4 felts.
 function encodeVesuAmount(denomination: number, value: bigint): string[] {
 	const isNegative = value < 0n;
 	const mag = isNegative ? -value : value;
-	const low = mag & ((1n << 128n) - 1n);
-	const high = mag >> 128n;
-	return [
-		`0x${denomination.toString(16)}`,
-		`0x${low.toString(16)}`,
-		`0x${high.toString(16)}`,
-		isNegative ? "0x1" : "0x0",
-	];
+	return [`0x${denomination.toString(16)}`, ...splitU256(mag), isNegative ? "0x1" : "0x0"];
 }
 
 function encodeZeroAmount(): string[] {
@@ -55,7 +51,7 @@ export async function supply(
 		.add({
 			contractAddress: fromAddress(vTokenAddress),
 			entrypoint: "deposit",
-			calldata: [parsedAmount.toBase().toString(), "0", userAddress],
+			calldata: [...splitU256(parsedAmount.toBase()), userAddress],
 		})
 		.send();
 
@@ -80,7 +76,7 @@ export async function withdraw(
 		.add({
 			contractAddress: fromAddress(vTokenAddress),
 			entrypoint: "withdraw",
-			calldata: [parsedAmount.toBase().toString(), "0", userAddress, userAddress],
+			calldata: [...splitU256(parsedAmount.toBase()), userAddress, userAddress],
 		})
 		.send();
 
@@ -161,9 +157,8 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// Vesu position() returns (Position, u256, u256) = 8 felts:
-//   0-3: Position struct (collateral_shares + nominal_debt) — native
-//   4-7: collateral + debt amounts — asset denomination
+// position() returns (Position, u256, u256) — 8 felts.
+// Felts 4-5: collateral amount, felts 6-7: debt amount (asset-denominated).
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -174,31 +169,36 @@ export async function getPosition(
 	const debtToken = await resolveToken(debtTokenSymbol);
 	const userAddress = wallet.address.toString();
 
-	const result = await wallet.callContract({
-		contractAddress: poolAddress,
-		entrypoint: "position",
-		calldata: [collateralToken.address.toString(), debtToken.address.toString(), userAddress],
-	});
+	try {
+		const result = await wallet.callContract({
+			contractAddress: poolAddress,
+			entrypoint: "position",
+			calldata: [
+				collateralToken.address.toString(),
+				debtToken.address.toString(),
+				userAddress,
+			],
+		});
 
-	// Expect exactly 8 felts: Position struct (4) + collateral u256 (2) + debt u256 (2)
-	if (result.length < 8) return null;
+		if (result.length < 8) return null;
 
-	// Asset-denominated collateral (felts 4-5)
-	const collateralRaw = BigInt(result[4]!) + (BigInt(result[5]!) << 128n);
-	// Asset-denominated debt (felts 6-7)
-	const debtRaw = BigInt(result[6]!) + (BigInt(result[7]!) << 128n);
+		const collateralRaw = BigInt(result[4]!) + (BigInt(result[5]!) << 128n);
+		const debtRaw = BigInt(result[6]!) + (BigInt(result[7]!) << 128n);
 
-	if (collateralRaw === 0n && debtRaw === 0n) return null;
+		if (collateralRaw === 0n && debtRaw === 0n) return null;
 
-	const collFormatted = Amount.fromRaw(collateralRaw, collateralToken).toFormatted(true);
-	const debtFormatted = Amount.fromRaw(debtRaw, debtToken).toFormatted(true);
+		const collFormatted = Amount.fromRaw(collateralRaw, collateralToken).toFormatted(true);
+		const debtFormatted = Amount.fromRaw(debtRaw, debtToken).toFormatted(true);
 
-	return {
-		collateralAsset: collateralTokenSymbol.toUpperCase(),
-		debtAsset: debtTokenSymbol.toUpperCase(),
-		collateralAmount: collFormatted,
-		debtAmount: debtFormatted,
-	};
+		return {
+			collateralAsset: collateralTokenSymbol.toUpperCase(),
+			debtAsset: debtTokenSymbol.toUpperCase(),
+			collateralAmount: collFormatted,
+			debtAmount: debtFormatted,
+		};
+	} catch {
+		return null;
+	}
 }
 
 async function getVTokenAddress(

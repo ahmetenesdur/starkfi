@@ -27,35 +27,35 @@ Upon initialization, the StarkFi server dynamically provisions the following too
 
 These tools do not mutate blockchain state or require user confirmation to execute.
 
-| Tool Identifier        | Functional Description                                                                   |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| `get_auth_status`      | Validates the active CLI session and verifies Fibrous API connectivity.                  |
-| `get_balance`          | Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.   |
-| `get_tx_status`        | Queries the Starknet sequencer for transaction status and execution receipts.            |
-| `get_swap_quote`       | Calculates optimal routing, expected output, and slippage prior to execution.            |
-| `list_validators`      | Enumerates all officially recognized Starknet staking validators.                        |
-| `list_pools`           | Enumerates available delegation pools for a validator, including multi-token pools.      |
-| `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods. |
-| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.              |
-| `list_lending_pools`   | Enumerates active Vesu V2 lending pools and their supported dual-asset pairs.            |
-| `get_lending_position` | Retrieves the user's collateral and outstanding debt for a specific pool and token pair. |
+| Tool Identifier        | Functional Description                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `get_auth_status`      | Validates the active CLI session and verifies Fibrous API connectivity.                                                                                                                                      |
+| `get_balance`          | Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.                                                                                                                       |
+| `get_tx_status`        | Queries the Starknet sequencer for transaction status and execution receipts.                                                                                                                                |
+| `get_swap_quote`       | Calculates optimal routing, expected output, and slippage prior to execution.                                                                                                                                |
+| `list_validators`      | Enumerates all officially recognized Starknet staking validators.                                                                                                                                            |
+| `list_pools`           | Enumerates available delegation pools for a validator, including multi-token pools.                                                                                                                          |
+| `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods.                                                                                                                     |
+| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.                                                                                                                                  |
+| `list_lending_pools`   | Enumerates active Vesu V2 lending pools with live data from the Vesu API — assets (with APY/APR), supported pairs, protocol version, and deprecation status. Accepts optional name filter for detailed view. |
+| `get_lending_position` | Retrieves the user's collateral and outstanding debt for a specific pool and token pair.                                                                                                                     |
 
 ### Transactional Tools (State Mutation)
 
 These tools construct and broadcast transactions. The connecting AI client is strictly responsible for prompting the user for explicit confirmation before finalizing the execution.
 
-| Tool Identifier    | Functional Description                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------------- |
-| `deploy_account`   | Deploys the associated smart contract account to the Starknet network (idempotent operation).        |
-| `swap_tokens`      | Broadcasts an aggregated token swap transaction via the Fibrous router.                              |
-| `send_tokens`      | Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets.                    |
-| `stake_tokens`     | Executes multi-token smart delegation (STRK, WBTC, tBTC, SolvBTC, LBTC). Auto-detects enter vs. add. |
-| `unstake_tokens`   | Manages the strict two-step Starknet unstaking lifecycle. Supports multi-token pools.                |
-| `compound_rewards` | Executes an atomic transaction to claim pending rewards and immediately restake them.                |
-| `supply_assets`    | Deposits specified assets into a Vesu V2 pool to generate yield.                                     |
-| `withdraw_assets`  | Redeems supplied assets from a Vesu V2 pool.                                                         |
-| `borrow_assets`    | Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool.            |
-| `repay_debt`       | Processes the repayment of borrowed assets against an existing Vesu V2 position.                     |
+| Tool Identifier    | Functional Description                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `deploy_account`   | Deploys the associated smart contract account to the Starknet network (idempotent operation).                              |
+| `swap_tokens`      | Broadcasts an aggregated token swap transaction via the Fibrous router.                                                    |
+| `send_tokens`      | Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets.                                          |
+| `stake_tokens`     | Executes multi-token smart delegation (STRK, WBTC, tBTC, SolvBTC, LBTC). Auto-detects enter vs. add.                       |
+| `unstake_tokens`   | Manages the strict two-step Starknet unstaking lifecycle. Supports multi-token pools.                                      |
+| `compound_rewards` | Executes an atomic transaction to claim pending rewards and immediately restake them.                                      |
+| `supply_assets`    | Deposits specified assets into a Vesu V2 pool to generate yield. Pool resolved by name (e.g. 'Prime') or contract address. |
+| `withdraw_assets`  | Redeems supplied assets from a Vesu V2 pool. Pool resolved by name or contract address.                                    |
+| `borrow_assets`    | Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool.                                  |
+| `repay_debt`       | Processes the repayment of borrowed assets against an existing Vesu V2 position.                                           |
 
 ### Configuration Utilities
 
