@@ -152,7 +152,7 @@ export async function handleCompoundRewards(args: { pool: string }) {
 	});
 }
 
-export async function handleGetStakingOverview() {
+export async function handleGetStakeStatus({ validator }: { validator?: string } = {}) {
 	const session = requireSession();
 	const { sdk, wallet } = await initSDKAndWallet(session);
 
@@ -160,7 +160,8 @@ export async function handleGetStakingOverview() {
 		sdk,
 		wallet,
 		session.network,
-		session.address
+		session.address,
+		validator
 	);
 
 	return jsonResult(overview);

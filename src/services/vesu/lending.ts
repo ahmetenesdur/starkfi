@@ -16,14 +16,12 @@ export interface TxResult {
 	explorerUrl: string;
 }
 
-// u256 = (low: u128, high: u128)
 function splitU256(value: bigint): [string, string] {
 	const low = value & ((1n << 128n) - 1n);
 	const high = value >> 128n;
 	return [`0x${low.toString(16)}`, `0x${high.toString(16)}`];
 }
 
-// Vesu Amount: { denomination, value: i257 } → 4 felts.
 function encodeVesuAmount(denomination: number, value: bigint): string[] {
 	const isNegative = value < 0n;
 	const mag = isNegative ? -value : value;
@@ -112,7 +110,7 @@ export async function borrow(
 		.approve(collateralToken, fromAddress(poolAddress), parsedCollateral)
 		.add({
 			contractAddress: fromAddress(poolAddress),
-			entrypoint: "manage_position",
+			entrypoint: "modify_position",
 			calldata,
 		})
 		.send();
@@ -147,7 +145,7 @@ export async function repay(
 		.approve(debtToken, fromAddress(poolAddress), parsedRepay)
 		.add({
 			contractAddress: fromAddress(poolAddress),
-			entrypoint: "manage_position",
+			entrypoint: "modify_position",
 			calldata,
 		})
 		.send();
@@ -157,8 +155,6 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// position() returns (Position, u256, u256) — 8 felts.
-// Felts 4-5: collateral amount, felts 6-7: debt amount (asset-denominated).
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -201,7 +197,7 @@ export async function getPosition(
 	}
 }
 
-async function getVTokenAddress(
+export async function getVTokenAddress(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	token: Token
@@ -221,4 +217,41 @@ async function getVTokenAddress(
 	}
 
 	return result[0]!;
+}
+
+export async function getSuppliedBalance(
+	wallet: StarkZapWallet,
+	poolAddress: string,
+	tokenSymbol: string
+): Promise<string | null> {
+	const token = await resolveToken(tokenSymbol);
+	const userAddress = wallet.address.toString();
+
+	try {
+		const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
+
+		const balResult = await wallet.callContract({
+			contractAddress: vTokenAddress,
+			entrypoint: "balance_of",
+			calldata: [userAddress],
+		});
+
+		if (!balResult || balResult.length === 0) return null;
+		const sharesRaw = BigInt(balResult[0]!) + (BigInt(balResult[1] || "0x0") << 128n);
+
+		if (sharesRaw === 0n) return "0";
+
+		const convertResult = await wallet.callContract({
+			contractAddress: vTokenAddress,
+			entrypoint: "convert_to_assets",
+			calldata: [...splitU256(sharesRaw)],
+		});
+
+		if (!convertResult || convertResult.length === 0) return null;
+		const assetsRaw = BigInt(convertResult[0]!) + (BigInt(convertResult[1] || "0x0") << 128n);
+
+		return Amount.fromRaw(assetsRaw, token).toFormatted(true);
+	} catch {
+		return null;
+	}
 }

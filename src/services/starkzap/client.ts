@@ -45,9 +45,9 @@ function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 	const originalExecutePaymaster = (account as any).executePaymasterTransaction.bind(account);
 
 	(account as any).executePaymasterTransaction = async function (
-		calls: any[],
-		details: any,
-		...rest: any[]
+		calls: unknown[],
+		details: Record<string, unknown>,
+		...rest: unknown[]
 	) {
 		const patchedDetails = {
 			...details,

@@ -160,13 +160,20 @@ export function registerUnstakeCommand(program: Command): void {
 export function registerRewardsCommand(program: Command): void {
 	program
 		.command("rewards")
-		.description("Show staking position and rewards, or claim / compound rewards")
-		.option("-p, --pool <address>", "Pool contract address")
-		.option("-v, --validator <name>", "Validator name (use with --token to find pool)")
+		.description("Claim or compound accumulated staking rewards")
+		.option("--validator <nameOrAddress>", "Validator name (e.g., Fibrous) or address")
+		.option("--pool <address>", "Specific staking pool address")
 		.option("-t, --token <symbol>", "Token symbol (default: STRK)", "STRK")
-		.option("-c, --claim", "Claim rewards to wallet")
-		.option("--compound", "Claim and re-stake rewards atomically (single tx)")
+		.option("--claim", "Claim rewards currently available in the pool")
+		.option("--compound", "Claim and immediately restake rewards")
 		.action(async (opts) => {
+			if (!opts.claim && !opts.compound) {
+				console.error(
+					"\n  Provide --claim or --compound. Use 'starkfi stake-status' to view positions.\n"
+				);
+				process.exit(1);
+			}
+
 			if (!opts.pool && !opts.validator) {
 				console.error("Provide --pool <address> or --validator <name>");
 				process.exit(1);
@@ -228,25 +235,10 @@ export function registerRewardsCommand(program: Command): void {
 					return;
 				}
 
-				const position = await stakingService.getPosition(wallet, poolAddress);
+				// The remaining code that used to show positions was removed because
+				// this command is now strictly for claiming/compounding.
 
-				spinner.stop();
-
-				if (!position) {
-					console.log("  Not a member of this pool.\n");
-					return;
-				}
-
-				console.log(
-					formatResult({
-						staked: position.staked,
-						rewards: position.rewards,
-						total: position.total,
-						unpooling: position.unpooling,
-						unpoolTime: position.unpoolTime?.toISOString() ?? "N/A",
-						commission: `${position.commissionPercent}%`,
-					})
-				);
+				// Error mapping is standard
 			} catch (error) {
 				spinner.fail("Failed to fetch staking info");
 				console.error(error instanceof Error ? error.message : error);
@@ -334,12 +326,13 @@ export function registerValidatorsCommand(program: Command): void {
 		});
 }
 
-export function registerStakingStatsCommand(program: Command): void {
+export function registerStakeStatusCommand(program: Command): void {
 	program
-		.command("staking-stats")
-		.description("Show a consolidated staking dashboard across all validators and pools")
-		.action(async () => {
-			const spinner = createSpinner("Scanning all validators and pools...").start();
+		.command("stake-status")
+		.description("Show a consolidated staking dashboard across validators and pools")
+		.argument("[validator]", "Optional validator name to filter results (e.g. Fibrous)")
+		.action(async (validatorTarget?: string) => {
+			const spinner = createSpinner("Scanning staking positions...").start();
 
 			try {
 				const session = requireSession();
@@ -349,7 +342,8 @@ export function registerStakingStatsCommand(program: Command): void {
 					sdk,
 					wallet,
 					session.network,
-					session.address
+					session.address,
+					validatorTarget
 				);
 
 				spinner.stop();

@@ -11,7 +11,7 @@ import {
 	handleStakeTokens,
 	handleUnstakeTokens,
 	handleGetStakingInfo,
-	handleGetStakingOverview,
+	handleGetStakeStatus,
 	handleListPools,
 	handleListValidators,
 	handleClaimRewards,
@@ -183,11 +183,16 @@ export function registerTools(server: McpServer): void {
 	);
 
 	server.tool(
-		"get_staking_overview",
+		"get_stake_status",
 		"Scan ALL known validators and pools to return a consolidated staking dashboard with total staked, total rewards, total value, and per-pool breakdown. Use this to give the user a full picture of their staking portfolio.",
-		{},
+		{
+			validator: z
+				.string()
+				.optional()
+				.describe("Optional validator name or staker address to strictly filter results."),
+		},
 		{ readOnlyHint: true, destructiveHint: false },
-		withErrorHandling(handleGetStakingOverview)
+		withErrorHandling(handleGetStakeStatus)
 	);
 
 	server.tool(
@@ -303,7 +308,10 @@ export function registerTools(server: McpServer): void {
 				.string()
 				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			collateral_token: z.string().describe("Collateral token symbol (e.g. 'ETH', 'STRK')"),
-			borrow_token: z.string().describe("Borrow token symbol (e.g. 'USDC', 'USDT')"),
+			borrow_token: z
+				.string()
+				.optional()
+				.describe("Borrow token symbol (e.g. 'USDC', 'USDT')"),
 		},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetLendingPosition)

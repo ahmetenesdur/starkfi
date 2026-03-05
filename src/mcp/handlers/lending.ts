@@ -39,28 +39,46 @@ export async function handleListLendingPools(args: { name?: string }) {
 export async function handleGetLendingPosition(args: {
 	pool: string;
 	collateral_token: string;
-	borrow_token: string;
+	borrow_token?: string;
 }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
 
 	const pool = resolvePool(args.pool, session.network);
-	const position = await lendingService.getPosition(
+
+	const suppliedBalance = await lendingService.getSuppliedBalance(
 		wallet,
 		pool.address,
-		args.collateral_token,
-		args.borrow_token
+		args.collateral_token
 	);
 
-	if (!position) {
+	let position = null;
+	if (args.borrow_token) {
+		position = await lendingService.getPosition(
+			wallet,
+			pool.address,
+			args.collateral_token,
+			args.borrow_token
+		);
+	}
+
+	if (!position && (!suppliedBalance || suppliedBalance === "0.0")) {
 		return jsonResult({
 			success: true,
 			position: null,
-			message: "No active position found for this pool and pair.",
+			suppliedYield: null,
+			message: "No active position or supply found for this pool and token.",
 		});
 	}
 
-	return jsonResult({ success: true, position });
+	return jsonResult({
+		success: true,
+		suppliedYield:
+			suppliedBalance && suppliedBalance !== "0.0"
+				? `${suppliedBalance} ${args.collateral_token.toUpperCase()}`
+				: null,
+		position,
+	});
 }
 
 export async function handleSupplyAssets(args: { pool: string; amount: string; token: string }) {

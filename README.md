@@ -55,9 +55,9 @@ npx starkfi trade <amount> <from> <to> # Execute aggregated token swap
 ```bash
 npx starkfi validators                        # Retrieve active validator set
 npx starkfi pools <validator>                 # Query delegation pools per validator (multi-token)
-npx starkfi staking-stats                     # Display comprehensive staking dashboard
+npx starkfi stake-status [validator]          # Display comprehensive or filtered staking dashboard
 npx starkfi stake <amount> --validator <name> [--token <symbol>]  # Smart stake (default: STRK)
-npx starkfi rewards --validator <name> [--token <symbol>] [--claim|--compound]
+npx starkfi rewards --validator <name> [--token <symbol>] <--claim|--compound>
 npx starkfi unstake <intent|exit> --validator <name> [--token <symbol>] [--amount <amount>]
 ```
 
@@ -81,13 +81,13 @@ npx starkfi lend-pools                                   # Summary table (name, 
 npx starkfi lend-pools <name>                            # Detail view (assets with APY, pairs, pool address)
 npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
 npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
-npx starkfi lend-borrow -p <pool> \                       # Initiate collateralized borrow
+npx starkfi lend-borrow -p <pool> \                      # Initiate collateralized borrow
   --collateral-amount <n> --collateral-token <token> \
   --borrow-amount <n> --borrow-token <token>
-npx starkfi lend-repay <amount> -p <pool> -t <token> \     # Repay outstanding debt
+npx starkfi lend-repay <amount> -p <pool> -t <token> \   # Repay outstanding debt
   --collateral-token <token>
-npx starkfi lend-status -p <pool> \                        # Query active position status
-  --collateral-token <token> --borrow-token <token>
+npx starkfi lend-status -p <pool> \                      # Query active position status
+  --collateral-token <token> [--borrow-token <token>]
 ```
 
 ## Artificial Intelligence Integration (MCP)

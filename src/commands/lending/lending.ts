@@ -40,7 +40,6 @@ export function registerLendPoolsCommand(program: Command): void {
 
 				spinner.succeed(`Found ${pools.length} pool(s)`);
 
-				// Detail view for filtered results (1-2 pools)
 				if (name && pools.length <= 2) {
 					for (const pool of pools) {
 						console.log("");
@@ -72,7 +71,6 @@ export function registerLendPoolsCommand(program: Command): void {
 							const pairStrs = pool.pairs.map(
 								(p) => `${p.collateralSymbol}/${p.debtSymbol}`
 							);
-							// Wrap at ~80 chars per line
 							const lines: string[] = [];
 							let current = "    ";
 							for (const pair of pairStrs) {
@@ -90,7 +88,6 @@ export function registerLendPoolsCommand(program: Command): void {
 					return;
 				}
 
-				// Summary table for all pools
 				console.log(
 					formatTable(
 						["Name", "Version", "Assets", "Pairs"],
@@ -291,10 +288,16 @@ export function registerLendRepayCommand(program: Command): void {
 export function registerLendStatusCommand(program: Command): void {
 	program
 		.command("lend-status")
-		.description("View your lending position in a Vesu V2 pool")
+		.description("View your lending position and supplied assets in a Vesu V2 pool")
 		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
-		.requiredOption("--collateral-token <symbol>", "Collateral token (e.g. 'ETH', 'STRK')")
-		.requiredOption("--borrow-token <symbol>", "Borrow token (e.g. 'USDC', 'USDT')")
+		.requiredOption(
+			"--collateral-token <symbol>",
+			"Token supplied to vToken and/or Pool (e.g. 'ETH', 'STRK')"
+		)
+		.option(
+			"--borrow-token <symbol>",
+			"Borrow token (e.g. 'USDC', 'USDT'), required to see debt position"
+		)
 		.action(async (opts) => {
 			const spinner = createSpinner("Fetching lending position...").start();
 
@@ -303,26 +306,45 @@ export function registerLendStatusCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 
 				const pool = resolvePoolAddress(opts.pool, session.network);
-				const position = await lendingService.getPosition(
+
+				const suppliedBalance = await lendingService.getSuppliedBalance(
 					wallet,
 					pool.address,
-					opts.collateralToken,
-					opts.borrowToken
+					opts.collateralToken
 				);
 
-				if (!position) {
-					spinner.info("No active position found in this pool");
+				let position = null;
+				if (opts.borrowToken) {
+					position = await lendingService.getPosition(
+						wallet,
+						pool.address,
+						opts.collateralToken,
+						opts.borrowToken
+					);
+				}
+
+				if (!position && (!suppliedBalance || suppliedBalance === "0.0")) {
+					spinner.info("No active position or supply found in this pool");
 					return;
 				}
 
 				spinner.succeed("Position found");
-				console.log(
-					formatResult({
-						pool: pool.name ?? pool.address,
-						collateral: `${position.collateralAmount} ${position.collateralAsset}`,
-						debt: `${position.debtAmount} ${position.debtAsset}`,
-					})
-				);
+				const resultObj: Record<string, string> = {
+					pool: pool.name ?? pool.address,
+				};
+
+				if (suppliedBalance && suppliedBalance !== "0.0") {
+					resultObj["suppliedYield"] =
+						`${suppliedBalance} ${opts.collateralToken.toUpperCase()}`;
+				}
+
+				if (position) {
+					resultObj["collateral"] =
+						`${position.collateralAmount} ${position.collateralAsset}`;
+					resultObj["debt"] = `${position.debtAmount} ${position.debtAsset}`;
+				}
+
+				console.log(formatResult(resultObj));
 			} catch (error) {
 				spinner.fail("Failed to fetch position");
 				console.error(error instanceof Error ? error.message : error);

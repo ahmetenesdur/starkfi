@@ -36,9 +36,9 @@ These tools do not mutate blockchain state or require user confirmation to execu
 | `list_validators`      | Enumerates all officially recognized Starknet staking validators.                                                                                                                                            |
 | `list_pools`           | Enumerates available delegation pools for a validator, including multi-token pools.                                                                                                                          |
 | `get_staking_info`     | Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods.                                                                                                                     |
-| `get_staking_overview` | Generates a consolidated staking portfolio dashboard across all validators.                                                                                                                                  |
+| `get_stake_status`     | Generates a consolidated staking dashboard across validators. Accepts an optional target validator name to explicitly filter the view.                                                                       |
 | `list_lending_pools`   | Enumerates active Vesu V2 lending pools with live data from the Vesu API — assets (with APY/APR), supported pairs, protocol version, and deprecation status. Accepts optional name filter for detailed view. |
-| `get_lending_position` | Retrieves the user's collateral and outstanding debt for a specific pool and token pair.                                                                                                                     |
+| `get_lending_position` | Retrieves the user's supplied yield and outstanding debt for a specific pool. The borrow token is optional if only checking supply balances.                                                                 |
 
 ### Transactional Tools (State Mutation)
 

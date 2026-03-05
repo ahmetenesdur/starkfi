@@ -24,7 +24,7 @@ import {
 	registerRewardsCommand,
 	registerPoolsCommand,
 	registerValidatorsCommand,
-	registerStakingStatsCommand,
+	registerStakeStatusCommand,
 } from "./commands/staking/staking.js";
 import { registerConfigCommand } from "./commands/config/config.js";
 import {
@@ -63,7 +63,7 @@ registerUnstakeCommand(program);
 registerRewardsCommand(program);
 registerPoolsCommand(program);
 registerValidatorsCommand(program);
-registerStakingStatsCommand(program);
+registerStakeStatusCommand(program);
 
 registerLendPoolsCommand(program);
 registerLendSupplyCommand(program);

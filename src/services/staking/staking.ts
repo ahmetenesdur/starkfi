@@ -212,14 +212,29 @@ export async function isPoolMember(wallet: StarkZapWallet, poolAddress: string):
 }
 
 // Scan all known validators & pools to build a consolidated staking dashboard.
+// If targetValidator is provided, it will strictly scan that validator's pools.
 export async function getStakingOverview(
 	sdk: StarkZap,
 	wallet: StarkZapWallet,
 	network: string,
-	address: string
+	address: string,
+	targetValidator?: string
 ): Promise<StakingOverview> {
-	const { getValidators } = await import("./validators.js");
-	const validators = getValidators(network as "mainnet" | "sepolia");
+	const { getValidators, findValidator } = await import("./validators.js");
+
+	let validators = getValidators(network as "mainnet" | "sepolia");
+
+	if (targetValidator) {
+		const found = findValidator(targetValidator, network as "mainnet" | "sepolia");
+		if (found) {
+			validators = [found];
+		} else {
+			throw new StarkfiError(
+				ErrorCode.VALIDATOR_NOT_FOUND,
+				`Validator '${targetValidator}' not found`
+			);
+		}
+	}
 
 	// Discover all pools across all validators concurrently.
 	const validatorPools = await Promise.all(
