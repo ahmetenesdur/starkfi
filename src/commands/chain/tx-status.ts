@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { requireSession } from "../../services/auth/session.js";
 import { createSDK } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
-import { createSpinner, formatResult } from "../../lib/format.js";
+import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { explorerUrl } from "../../lib/config.js";
 
 export function registerTxStatusCommand(program: Command): void {
@@ -40,7 +40,7 @@ export function registerTxStatusCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Failed to get transaction status");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

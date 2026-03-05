@@ -3,12 +3,16 @@ import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { POOL_FACTORY_ADDRESS, DENOMINATION_ASSETS } from "./config.js";
+import { getTokenUsdPrice } from "../fibrous/route.js";
+import { fetchPool } from "./api.js";
 
 export interface LendingPosition {
 	collateralAsset: string;
 	debtAsset: string;
 	collateralAmount: string;
 	debtAmount: string;
+	healthFactor?: number;
+	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "UNKNOWN";
 }
 
 export interface TxResult {
@@ -40,8 +44,21 @@ export async function supply(
 ): Promise<TxResult> {
 	const token = await resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
-	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
 	const userAddress = wallet.address.toString();
+
+	// Proactive Dust Limit Check
+	const usdPrice = await getTokenUsdPrice(token);
+	if (usdPrice > 0) {
+		const usdValue = parseFloat(amount) * usdPrice;
+		if (usdValue < 10.0) {
+			throw new StarkfiError(
+				ErrorCode.LENDING_FAILED,
+				`Amount is too small (dust limit). Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${usdValue.toFixed(2)}`
+			);
+		}
+	}
+
+	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
 
 	const tx = await wallet
 		.tx()
@@ -97,6 +114,29 @@ export async function borrow(
 	const parsedCollateral = Amount.parse(collateralAmount, collateralToken);
 	const parsedDebt = Amount.parse(debtAmount, debtToken);
 	const userAddress = wallet.address.toString();
+
+	// Proactive Dust Limit Check
+	const collateralUsdPrice = await getTokenUsdPrice(collateralToken);
+	if (collateralUsdPrice > 0) {
+		const collateralUsdValue = parseFloat(collateralAmount) * collateralUsdPrice;
+		if (collateralUsdValue < 10.0) {
+			throw new StarkfiError(
+				ErrorCode.LENDING_FAILED,
+				`dusty-collateral-balance: Collateral amount is too small. Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${collateralUsdValue.toFixed(2)}`
+			);
+		}
+	}
+
+	const debtUsdPrice = await getTokenUsdPrice(debtToken);
+	if (debtUsdPrice > 0) {
+		const debtUsdValue = parseFloat(debtAmount) * debtUsdPrice;
+		if (debtUsdValue < 10.0) {
+			throw new StarkfiError(
+				ErrorCode.LENDING_FAILED,
+				`dusty-debt-balance: Borrow amount is too small. Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${debtUsdValue.toFixed(2)}`
+			);
+		}
+	}
 
 	const calldata = [
 		collateralToken.address.toString(),
@@ -166,6 +206,49 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+export async function closePosition(
+	wallet: StarkZapWallet,
+	poolAddress: string,
+	collateralTokenSymbol: string,
+	debtTokenSymbol: string
+): Promise<TxResult> {
+	const position = await getPosition(wallet, poolAddress, collateralTokenSymbol, debtTokenSymbol);
+
+	if (!position) {
+		throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
+	}
+
+	const collateralToken = await resolveToken(collateralTokenSymbol);
+	const debtToken = await resolveToken(debtTokenSymbol);
+
+	const parsedCollateral = Amount.parse(position.collateralAmount, collateralToken);
+	const parsedDebt = Amount.parse(position.debtAmount, debtToken);
+	const userAddress = wallet.address.toString();
+
+	const calldata = [
+		collateralToken.address.toString(),
+		debtToken.address.toString(),
+		userAddress,
+		...encodeVesuAmount(DENOMINATION_ASSETS, -parsedCollateral.toBase()),
+		...encodeVesuAmount(DENOMINATION_ASSETS, -parsedDebt.toBase()),
+	];
+
+	const tx = await wallet
+		.tx()
+		// We only need to approve the debt token for repayment, withdrawing collateral doesn't need allowance
+		.approve(debtToken, fromAddress(poolAddress), parsedDebt)
+		.add({
+			contractAddress: fromAddress(poolAddress),
+			entrypoint: "modify_position",
+			calldata,
+		})
+		.send();
+
+	await tx.wait();
+
+	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
+}
+
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -197,11 +280,49 @@ export async function getPosition(
 		const collFormatted = Amount.fromRaw(collateralRaw, collateralToken).toFormatted(true);
 		const debtFormatted = Amount.fromRaw(debtRaw, debtToken).toFormatted(true);
 
+		// Calculate Health Factor
+		let healthFactor: number | undefined;
+		let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
+
+		try {
+			const poolData = await fetchPool(poolAddress);
+			const pair = poolData.pairs.find(
+				(p) =>
+					p.collateralAddress === collateralToken.address.toString() &&
+					p.debtAddress === debtToken.address.toString()
+			);
+
+			if (pair) {
+				const collUsdPrice = await getTokenUsdPrice(collateralToken);
+				const debtUsdPrice = await getTokenUsdPrice(debtToken);
+
+				if (collUsdPrice > 0 && debtUsdPrice > 0) {
+					const collUsdValue = parseFloat(collFormatted) * collUsdPrice;
+					const debtUsdValue = parseFloat(debtFormatted) * debtUsdPrice;
+					const maxBorrowUsd = collUsdValue * pair.maxLTV;
+
+					if (debtUsdValue > 0) {
+						healthFactor = maxBorrowUsd / debtUsdValue;
+						if (healthFactor > 1.5) riskLevel = "SAFE";
+						else if (healthFactor > 1.1) riskLevel = "WARNING";
+						else riskLevel = "DANGER";
+					} else {
+						healthFactor = Infinity; // No debt = infinitely safe
+						riskLevel = "SAFE";
+					}
+				}
+			}
+		} catch {
+			// Ignore if API or pricing fails, return basic position
+		}
+
 		return {
 			collateralAsset: collateralTokenSymbol.toUpperCase(),
 			debtAsset: debtTokenSymbol.toUpperCase(),
 			collateralAmount: collFormatted,
 			debtAmount: debtFormatted,
+			healthFactor,
+			riskLevel,
 		};
 	} catch {
 		return null;

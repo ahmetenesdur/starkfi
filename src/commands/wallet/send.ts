@@ -3,7 +3,7 @@ import { Amount, fromAddress } from "starkzap";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import { createSpinner, formatResult } from "../../lib/format.js";
+import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 
 export function registerSendCommand(program: Command): void {
@@ -56,7 +56,7 @@ export function registerSendCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Transfer failed");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

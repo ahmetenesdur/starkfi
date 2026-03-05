@@ -199,3 +199,30 @@ export async function handleRepayDebt(args: {
 		explorerUrl: result.explorerUrl,
 	});
 }
+
+export async function handleClosePosition(args: {
+	pool: string;
+	collateral_token: string;
+	debt_token: string;
+}) {
+	const session = requireSession();
+	const { wallet } = await initSDKAndWallet(session);
+	await wallet.ensureReady({ deploy: "if_needed" });
+
+	const pool = resolvePool(args.pool, session.network);
+	const result = await lendingService.closePosition(
+		wallet,
+		pool.address,
+		args.collateral_token,
+		args.debt_token
+	);
+
+	return jsonResult({
+		success: true,
+		action: "close_position",
+		pool: pool.address,
+		poolName: pool.name,
+		txHash: result.hash,
+		explorerUrl: result.explorerUrl,
+	});
+}

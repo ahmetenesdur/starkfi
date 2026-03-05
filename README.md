@@ -89,6 +89,8 @@ npx starkfi lend-repay <amount> -p <pool> -t <token> \   # Repay outstanding deb
   --collateral-token <token>
 npx starkfi lend-status -p <pool> \                      # Query active position status
   --collateral-token <token> [--borrow-token <token>]
+npx starkfi lend-close -p <pool> \                       # Atomically repay debt and withdraw collateral
+  --collateral-token <token> --borrow-token <token>
 ```
 
 ## Artificial Intelligence Integration (MCP)

@@ -23,6 +23,7 @@ import {
 	handleWithdrawAssets,
 	handleBorrowAssets,
 	handleRepayDebt,
+	handleClosePosition,
 } from "./handlers/index.js";
 import { StarkfiError } from "../lib/errors.js";
 
@@ -64,7 +65,7 @@ function withErrorHandling<
 }
 
 export function registerTools(server: McpServer): void {
-	// --- Auth & Generic Info ---
+	// Auth & Generic Info
 
 	server.tool(
 		"get_auth_status",
@@ -84,7 +85,7 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleGetTxStatus)
 	);
 
-	// --- Wallet & Assets ---
+	// Wallet & Assets
 
 	server.tool(
 		"get_balance",
@@ -121,7 +122,7 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleSendTokens)
 	);
 
-	// --- Trading (Fibrous API) ---
+	// Trading (Fibrous API)
 
 	server.tool(
 		"get_swap_quote",
@@ -148,7 +149,7 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleSwapTokens)
 	);
 
-	// --- Staking ---
+	// Staking
 
 	server.tool(
 		"list_validators",
@@ -255,7 +256,7 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleCompoundRewards)
 	);
 
-	// --- Config / Utilities ---
+	// Config / Utilities
 
 	server.tool(
 		"config_action",
@@ -285,7 +286,7 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleConfigAction)
 	);
 
-	// --- Lending (Vesu V2) ---
+	// Lending (Vesu V2)
 
 	server.tool(
 		"list_lending_pools",
@@ -384,5 +385,23 @@ export function registerTools(server: McpServer): void {
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleRepayDebt)
+	);
+
+	server.tool(
+		"close_position",
+		"Atomically close an active Vesu V2 lending position. Repays all outstanding debt and withdraws all collateral in a single transaction.",
+		{
+			pool: z
+				.string()
+				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
+			collateral_token: z
+				.string()
+				.describe("Collateral token symbol of the position (e.g. 'STRK', 'ETH')"),
+			debt_token: z
+				.string()
+				.describe("Borrowed token symbol of the position (e.g. 'USDC', 'USDT')"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleClosePosition)
 	);
 }

@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { apiVerify } from "../../services/api/client.js";
 import { saveSession } from "../../services/auth/session.js";
-import { createSpinner, success, formatResult } from "../../lib/format.js";
+import { createSpinner, success, formatResult, formatError } from "../../lib/format.js";
 import { STARKFI_API_URL_DEFAULT } from "../../lib/config.js";
 import { createSDK, connectWallet, resolveFeeModeConfig } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
@@ -74,10 +74,7 @@ export function registerVerifyCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				console.error(
-					"Verification failed:",
-					error instanceof Error ? error.message : error
-				);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

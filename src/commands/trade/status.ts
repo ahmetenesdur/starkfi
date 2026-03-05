@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { loadSession } from "../../services/auth/session.js";
 import { checkFibrousHealth } from "../../services/fibrous/health.js";
-import { createSpinner, formatResult, success, warn } from "../../lib/format.js";
+import { createSpinner, formatResult, success, warn, formatError } from "../../lib/format.js";
 
 export function registerStatusCommand(program: Command): void {
 	program
@@ -40,7 +40,7 @@ export function registerStatusCommand(program: Command): void {
 				}
 			} catch (error) {
 				spinner.fail("Status check failed");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

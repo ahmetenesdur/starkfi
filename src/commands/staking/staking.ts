@@ -3,7 +3,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as stakingService from "../../services/staking/staking.js";
 import { getValidators, findValidator } from "../../services/staking/validators.js";
-import { createSpinner, formatResult, formatTable } from "../../lib/format.js";
+import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 
 export function registerStakeCommand(program: Command): void {
@@ -63,7 +63,7 @@ export function registerStakeCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Staking failed");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -151,7 +151,7 @@ export function registerUnstakeCommand(program: Command): void {
 				}
 			} catch (error) {
 				spinner.fail("Unstake failed");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -241,7 +241,7 @@ export function registerRewardsCommand(program: Command): void {
 				// Error mapping is standard
 			} catch (error) {
 				spinner.fail("Failed to fetch staking info");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -290,7 +290,7 @@ export function registerPoolsCommand(program: Command): void {
 				console.log();
 			} catch (error) {
 				spinner.fail("Failed to fetch pools");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -320,7 +320,7 @@ export function registerValidatorsCommand(program: Command): void {
 				console.log();
 			} catch (error) {
 				spinner.fail("Failed to load validators");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -379,7 +379,7 @@ export function registerStakeStatusCommand(program: Command): void {
 				console.log();
 			} catch (error) {
 				spinner.fail("Failed to fetch staking stats");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

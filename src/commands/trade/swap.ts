@@ -3,7 +3,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { getRoute, getCalldata } from "../../services/fibrous/route.js";
-import { createSpinner, formatResult } from "../../lib/format.js";
+import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { Amount, fromAddress } from "starkzap";
 
@@ -79,7 +79,7 @@ export function registerSwapCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Swap failed");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

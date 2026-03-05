@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet, resolveFeeModeConfig } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
-import { createSpinner, success, warn, formatResult } from "../../lib/format.js";
+import { createSpinner, success, warn, formatResult, formatError } from "../../lib/format.js";
 
 export function registerDeployCommand(program: Command): void {
 	program
@@ -68,6 +68,7 @@ export function registerDeployCommand(program: Command): void {
 				}
 			} catch (error) {
 				const msg = error instanceof Error ? error.message : String(error);
+				console.error(formatError(error));
 				spinner.fail("Deployment failed");
 
 				if (msg.includes("exceed balance") || msg.includes("insufficient")) {

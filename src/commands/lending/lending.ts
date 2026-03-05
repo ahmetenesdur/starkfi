@@ -323,6 +323,50 @@ export function registerLendRepayCommand(program: Command): void {
 		});
 }
 
+export function registerLendCloseCommand(program: Command): void {
+	program
+		.command("lend-close")
+		.description(
+			"Atomically repay all debt and withdraw all collateral from a Vesu V2 position"
+		)
+		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
+		.requiredOption(
+			"--collateral-token <symbol>",
+			"Collateral token symbol (e.g. 'ETH', 'STRK')"
+		)
+		.requiredOption("--borrow-token <symbol>", "Borrowed token symbol (e.g. 'USDC', 'USDT')")
+		.action(async (opts) => {
+			const spinner = createSpinner("Closing position...").start();
+
+			try {
+				const session = requireSession();
+				const { wallet } = await initSDKAndWallet(session);
+				await wallet.ensureReady({ deploy: "if_needed" });
+
+				const pool = resolvePoolAddress(opts.pool, session.network);
+				const result = await lendingService.closePosition(
+					wallet,
+					pool.address,
+					opts.collateralToken,
+					opts.borrowToken
+				);
+
+				spinner.succeed("Position closed successfully");
+				console.log(
+					formatResult({
+						status: "Closed",
+						pool: pool.name ?? pool.address,
+						txHash: result.hash,
+						explorer: result.explorerUrl,
+					})
+				);
+			} catch (error) {
+				spinner.fail("Failed to close position");
+				handleLendingError(error);
+			}
+		});
+}
+
 export function registerLendStatusCommand(program: Command): void {
 	program
 		.command("lend-status")
@@ -380,6 +424,28 @@ export function registerLendStatusCommand(program: Command): void {
 					resultObj["collateral"] =
 						`${position.collateralAmount} ${position.collateralAsset}`;
 					resultObj["debt"] = `${position.debtAmount} ${position.debtAsset}`;
+
+					if (position.healthFactor !== undefined) {
+						let hfStr =
+							position.healthFactor === Infinity
+								? "∞"
+								: position.healthFactor.toFixed(2);
+						let riskStrFormatted: string = position.riskLevel ?? "UNKNOWN";
+
+						if (position.riskLevel === "SAFE") riskStrFormatted = chalk.green("SAFE");
+						else if (position.riskLevel === "WARNING")
+							riskStrFormatted = chalk.yellow("WARNING");
+						else if (position.riskLevel === "DANGER")
+							riskStrFormatted = chalk.red("DANGER");
+
+						if (position.healthFactor === Infinity) hfStr = chalk.green(hfStr);
+						else if (position.healthFactor > 1.5) hfStr = chalk.green(hfStr);
+						else if (position.healthFactor > 1.1) hfStr = chalk.yellow(hfStr);
+						else hfStr = chalk.red(hfStr);
+
+						resultObj["healthFactor"] = hfStr;
+						resultObj["riskLevel"] = riskStrFormatted;
+					}
 				}
 
 				console.log(formatResult(resultObj));

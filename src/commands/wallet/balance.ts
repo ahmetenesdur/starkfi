@@ -3,7 +3,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
-import { createSpinner, formatTable, formatResult } from "../../lib/format.js";
+import { createSpinner, formatTable, formatResult, formatError } from "../../lib/format.js";
 
 export function registerBalanceCommand(program: Command): void {
 	program
@@ -52,7 +52,7 @@ export function registerBalanceCommand(program: Command): void {
 				}
 			} catch (error) {
 				spinner.fail("Failed to fetch balances");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});

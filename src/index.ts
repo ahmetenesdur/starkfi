@@ -33,6 +33,7 @@ import {
 	registerLendWithdrawCommand,
 	registerLendBorrowCommand,
 	registerLendRepayCommand,
+	registerLendCloseCommand,
 	registerLendStatusCommand,
 } from "./commands/lending/lending.js";
 
@@ -70,6 +71,7 @@ registerLendSupplyCommand(program);
 registerLendWithdrawCommand(program);
 registerLendBorrowCommand(program);
 registerLendRepayCommand(program);
+registerLendCloseCommand(program);
 registerLendStatusCommand(program);
 
 registerConfigCommand(program);
