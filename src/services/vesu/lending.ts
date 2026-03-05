@@ -89,7 +89,8 @@ export async function borrow(
 	collateralTokenSymbol: string,
 	collateralAmount: string,
 	debtTokenSymbol: string,
-	debtAmount: string
+	debtAmount: string,
+	useSupplied: boolean = false
 ): Promise<TxResult> {
 	const collateralToken = await resolveToken(collateralTokenSymbol);
 	const debtToken = await resolveToken(debtTokenSymbol);
@@ -105,8 +106,18 @@ export async function borrow(
 		...encodeVesuAmount(DENOMINATION_ASSETS, parsedDebt.toBase()),
 	];
 
-	const tx = await wallet
-		.tx()
+	let txBuilder = wallet.tx();
+
+	if (useSupplied) {
+		const vTokenAddress = await getVTokenAddress(wallet, poolAddress, collateralToken);
+		txBuilder = txBuilder.add({
+			contractAddress: fromAddress(vTokenAddress),
+			entrypoint: "withdraw",
+			calldata: [parsedCollateral.toBase().toString(), userAddress, userAddress],
+		});
+	}
+
+	const tx = await txBuilder
 		.approve(collateralToken, fromAddress(poolAddress), parsedCollateral)
 		.add({
 			contractAddress: fromAddress(poolAddress),

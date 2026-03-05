@@ -83,7 +83,8 @@ npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
 npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
 npx starkfi lend-borrow -p <pool> \                      # Initiate collateralized borrow
   --collateral-amount <n> --collateral-token <token> \
-  --borrow-amount <n> --borrow-token <token>
+  --borrow-amount <n> --borrow-token <token> \
+  [--use-supplied]
 npx starkfi lend-repay <amount> -p <pool> -t <token> \   # Repay outstanding debt
   --collateral-token <token>
 npx starkfi lend-status -p <pool> \                      # Query active position status

@@ -55,7 +55,7 @@ These tools construct and broadcast transactions. The connecting AI client is st
 | `compound_rewards` | Executes an atomic transaction to claim pending rewards and immediately restake them.                                      |
 | `supply_assets`    | Deposits specified assets into a Vesu V2 pool to generate yield. Pool resolved by name (e.g. 'Prime') or contract address. |
 | `withdraw_assets`  | Redeems supplied assets from a Vesu V2 pool. Pool resolved by name or contract address.                                    |
-| `borrow_assets`    | Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool.                                  |
+| `borrow_assets`    | Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool. Supports using supplied vTokens. |
 | `repay_debt`       | Processes the repayment of borrowed assets against an existing Vesu V2 position.                                           |
 
 ### Configuration Utilities

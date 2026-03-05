@@ -125,19 +125,37 @@ export async function handleBorrowAssets(args: {
 	collateral_token: string;
 	borrow_amount: string;
 	borrow_token: string;
+	use_supplied?: boolean;
 }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
 	await wallet.ensureReady({ deploy: "if_needed" });
 
 	const pool = resolvePool(args.pool, session.network);
+
+	let useSupplied = false;
+	if (args.use_supplied) {
+		const balance = await lendingService.getSuppliedBalance(
+			wallet,
+			pool.address,
+			args.collateral_token
+		);
+		if (!balance || parseFloat(balance) < parseFloat(args.collateral_amount)) {
+			throw new Error(
+				`Insufficient supplied balance. You have ${balance || "0"} ${args.collateral_token} supplied, but want to use ${args.collateral_amount} as collateral.`
+			);
+		}
+		useSupplied = true;
+	}
+
 	const result = await lendingService.borrow(
 		wallet,
 		pool.address,
 		args.collateral_token,
 		args.collateral_amount,
 		args.borrow_token,
-		args.borrow_amount
+		args.borrow_amount,
+		useSupplied
 	);
 
 	return jsonResult({

@@ -16,6 +16,25 @@ function resolvePoolAddress(
 	return { address: validateAddress(poolQuery), name: null };
 }
 
+function handleLendingError(error: unknown): void {
+	const msg = error instanceof Error ? error.message : String(error);
+
+	if (msg.includes("dusty-collateral-balance")) {
+		console.error(
+			chalk.red("Error:"),
+			"The collateral amount is below the pool's minimum dollar value limit (dust limit). Please increase the amount."
+		);
+	} else if (msg.includes("dusty-debt-balance")) {
+		console.error(
+			chalk.red("Error:"),
+			"The borrow amount is below the pool's minimum dollar value limit (dust limit). Please increase the amount."
+		);
+	} else {
+		console.error(msg);
+	}
+	process.exit(1);
+}
+
 export function registerLendPoolsCommand(program: Command): void {
 	program
 		.command("lend-pools")
@@ -144,8 +163,7 @@ export function registerLendSupplyCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Supply failed");
-				console.error(error instanceof Error ? error.message : error);
-				process.exit(1);
+				handleLendingError(error);
 			}
 		});
 }
@@ -184,8 +202,7 @@ export function registerLendWithdrawCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Withdrawal failed");
-				console.error(error instanceof Error ? error.message : error);
-				process.exit(1);
+				handleLendingError(error);
 			}
 		});
 }
@@ -202,6 +219,10 @@ export function registerLendBorrowCommand(program: Command): void {
 		)
 		.requiredOption("--borrow-amount <n>", "Amount to borrow")
 		.requiredOption("--borrow-token <symbol>", "Token to borrow (e.g. 'USDC', 'USDT')")
+		.option(
+			"--use-supplied",
+			"Use your previously supplied yield tokens as collateral instead of transferring from wallet"
+		)
 		.action(async (opts) => {
 			const spinner = createSpinner(
 				`Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`
@@ -213,13 +234,32 @@ export function registerLendBorrowCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = resolvePoolAddress(opts.pool, session.network);
+
+				let useSupplied = false;
+				if (opts.useSupplied) {
+					spinner.text = "Checking supplied yield balance...";
+					const balance = await lendingService.getSuppliedBalance(
+						wallet,
+						pool.address,
+						opts.collateralToken
+					);
+					if (!balance || parseFloat(balance) < parseFloat(opts.collateralAmount)) {
+						throw new Error(
+							`Insufficient supplied balance. You have ${balance || "0"} ${opts.collateralToken} supplied, but want to use ${opts.collateralAmount} as collateral.`
+						);
+					}
+					useSupplied = true;
+					spinner.text = `Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`;
+				}
+
 				const result = await lendingService.borrow(
 					wallet,
 					pool.address,
 					opts.collateralToken,
 					opts.collateralAmount,
 					opts.borrowToken,
-					opts.borrowAmount
+					opts.borrowAmount,
+					useSupplied
 				);
 
 				spinner.succeed("Borrow confirmed");
@@ -234,8 +274,7 @@ export function registerLendBorrowCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Borrow failed");
-				console.error(error instanceof Error ? error.message : error);
-				process.exit(1);
+				handleLendingError(error);
 			}
 		});
 }
@@ -279,8 +318,7 @@ export function registerLendRepayCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Repayment failed");
-				console.error(error instanceof Error ? error.message : error);
-				process.exit(1);
+				handleLendingError(error);
 			}
 		});
 }

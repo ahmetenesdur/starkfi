@@ -356,6 +356,12 @@ export function registerTools(server: McpServer): void {
 			collateral_token: z.string().describe("Collateral token symbol (e.g. 'STRK', 'ETH')"),
 			borrow_amount: z.string().describe("Amount to borrow (e.g. '100')"),
 			borrow_token: z.string().describe("Token to borrow (e.g. 'USDC', 'USDT')"),
+			use_supplied: z
+				.boolean()
+				.optional()
+				.describe(
+					"Set to true to use previously supplied yield tokens as collateral via Multicall instead of transferring fresh tokens from wallet."
+				),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleBorrowAssets)
