@@ -14,6 +14,7 @@ import {
 	handleGetStakingOverview,
 	handleListPools,
 	handleListValidators,
+	handleClaimRewards,
 	handleCompoundRewards,
 	handleConfigAction,
 	handleListLendingPools,
@@ -227,6 +228,16 @@ export function registerTools(server: McpServer): void {
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleUnstakeTokens)
+	);
+
+	server.tool(
+		"claim_rewards",
+		"Extract earned rewards from a staking pool to the user's wallet.",
+		{
+			pool: z.string().describe("Staking pool contract address (0x...)"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleClaimRewards)
 	);
 
 	server.tool(

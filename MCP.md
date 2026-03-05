@@ -51,6 +51,7 @@ These tools construct and broadcast transactions. The connecting AI client is st
 | `send_tokens`      | Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets.                                          |
 | `stake_tokens`     | Executes multi-token smart delegation (STRK, WBTC, tBTC, SolvBTC, LBTC). Auto-detects enter vs. add.                       |
 | `unstake_tokens`   | Manages the strict two-step Starknet unstaking lifecycle. Supports multi-token pools.                                      |
+| `claim_rewards`    | Extracts earned rewards from a staking pool to the user's wallet.                                                          |
 | `compound_rewards` | Executes an atomic transaction to claim pending rewards and immediately restake them.                                      |
 | `supply_assets`    | Deposits specified assets into a Vesu V2 pool to generate yield. Pool resolved by name (e.g. 'Prime') or contract address. |
 | `withdraw_assets`  | Redeems supplied assets from a Vesu V2 pool. Pool resolved by name or contract address.                                    |

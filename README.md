@@ -37,6 +37,7 @@ npx starkfi auth verify <user@example.com> <verification_code>
 
 ```bash
 npx starkfi auth logout                # Terminate active session
+npx starkfi status                     # Check authentication status and API health
 npx starkfi address                    # Display active Starknet address
 npx starkfi deploy                     # Deploy smart account contract on-chain
 npx starkfi balance [token]            # Query all token balances (STRK, ETH, ERC-20)

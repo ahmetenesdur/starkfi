@@ -1,6 +1,7 @@
 import { Amount, fromAddress, type StarkZap } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
+import { StarkfiError, ErrorCode } from "../../lib/errors.js";
 
 export interface ValidatorInfo {
 	name: string;
@@ -47,7 +48,10 @@ export function resolvePoolForToken(pools: PoolInfo[], tokenSymbol: string): Poo
 	const match = pools.find((p) => p.tokenSymbol.toUpperCase() === upper);
 	if (!match) {
 		const available = pools.map((p) => p.tokenSymbol).join(", ");
-		throw new Error(`No ${tokenSymbol} pool found for this validator. Available: ${available}`);
+		throw new StarkfiError(
+			ErrorCode.POOL_NOT_FOUND,
+			`No ${tokenSymbol} pool found for this validator. Available: ${available}`
+		);
 	}
 	return match;
 }
@@ -96,7 +100,7 @@ export async function claimRewards(
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position || position.rewards.isZero()) {
-		throw new Error("No rewards to claim for this pool.");
+		throw new StarkfiError(ErrorCode.STAKING_FAILED, "No rewards to claim for this pool.");
 	}
 
 	const tx = await wallet.claimPoolRewards(fromAddress(poolAddress));
@@ -115,7 +119,7 @@ export async function compoundRewards(
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position || position.rewards.isZero()) {
-		throw new Error("No rewards to compound for this pool.");
+		throw new StarkfiError(ErrorCode.STAKING_FAILED, "No rewards to compound for this pool.");
 	}
 
 	const compounded = position.rewards.toFormatted(true);
@@ -160,15 +164,19 @@ export async function exitPool(
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position) {
-		throw new Error("Not a member of this pool.");
+		throw new StarkfiError(ErrorCode.STAKING_FAILED, "Not a member of this pool.");
 	}
 
 	if (position.unpooling.isZero()) {
-		throw new Error("No exit intent declared. Call 'unstake intent' first.");
+		throw new StarkfiError(
+			ErrorCode.EXIT_NOT_READY,
+			"No exit intent declared. Call 'unstake intent' first."
+		);
 	}
 
 	if (position.unpoolTime && new Date() < position.unpoolTime) {
-		throw new Error(
+		throw new StarkfiError(
+			ErrorCode.EXIT_NOT_READY,
 			`Cooldown period is still active. Please wait until ${position.unpoolTime.toLocaleString()}`
 		);
 	}

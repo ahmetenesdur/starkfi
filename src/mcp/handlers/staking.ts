@@ -121,6 +121,21 @@ export async function handleListValidators() {
 	});
 }
 
+export async function handleClaimRewards(args: { pool: string }) {
+	const session = requireSession();
+	const { wallet } = await initSDKAndWallet(session);
+
+	await wallet.ensureReady({ deploy: "if_needed" });
+
+	const result = await stakingService.claimRewards(wallet, args.pool);
+
+	return jsonResult({
+		success: true,
+		txHash: result.hash,
+		explorerUrl: result.explorerUrl,
+	});
+}
+
 export async function handleCompoundRewards(args: { pool: string }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
