@@ -43,6 +43,24 @@ export function clearSession(): void {
 	}
 }
 
+// Decode JWT payload (no signature verification — client-side expiry check only).
+function isSessionExpired(token: string): boolean {
+	try {
+		const parts = token.split(".");
+		if (parts.length !== 3 || !parts[1]) return false;
+
+		const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString()) as {
+			exp?: number;
+		};
+		if (!payload.exp) return false;
+
+		// 5-minute buffer — catch sessions about to expire
+		return Date.now() >= (payload.exp - 300) * 1000;
+	} catch {
+		return false;
+	}
+}
+
 export function requireSession(): Session {
 	const session = loadSession();
 	if (!session) {
@@ -51,5 +69,14 @@ export function requireSession(): Session {
 			"Not authenticated. Run 'starkfi auth login <email>' or 'starkfi auth import' first."
 		);
 	}
+
+	if (isSessionExpired(session.token)) {
+		clearSession();
+		throw new StarkfiError(
+			ErrorCode.SESSION_EXPIRED,
+			"Session expired. Please re-authenticate with 'starkfi auth login <email>'"
+		);
+	}
+
 	return session;
 }

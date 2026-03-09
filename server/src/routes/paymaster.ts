@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import { config } from "../lib/config.js";
+import { authMiddleware } from "../middleware/auth.js";
 
 const paymaster = new Hono();
+
+paymaster.use("/*", authMiddleware);
 
 paymaster.post("/", async (c) => {
 	try {

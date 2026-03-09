@@ -263,14 +263,7 @@ export function registerTools(server: McpServer): void {
 		"View and modify starkfi global configuration such as active network, RPC URL, and Gas Payment mechanisms.",
 		{
 			action: z
-				.enum([
-					"list",
-					"set-rpc",
-					"get-rpc",
-					"set-network",
-					"set-gasfree",
-					"set-gas-token",
-				])
+				.enum(["list", "set-rpc", "get-rpc", "set-network", "set-gasfree", "set-gas-token"])
 				.describe(
 					"list: view all. set-gasfree: dev pays gas using paymaster credits. set-gas-token: user pays gas in ERC20 token instead of STRK."
 				),

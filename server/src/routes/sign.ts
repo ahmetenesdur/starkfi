@@ -3,14 +3,17 @@ import { zValidator } from "@hono/zod-validator";
 import { signHashSchema, signMessageSchema } from "../lib/validation.js";
 import { signHash as privySignHash, signMessage as privySignMsg } from "../services/privy.js";
 import { authMiddleware, requireWalletOwnership, type JwtPayload } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rate-limit.js";
 
 type Variables = { jwtPayload: JwtPayload };
 
 const sign = new Hono<{ Variables: Variables }>();
 
+const signRateLimit = rateLimit({ maxRequests: 30, windowMs: 60_000 });
+
 sign.use("/*", authMiddleware);
 
-sign.post("/hash", zValidator("json", signHashSchema), async (c) => {
+sign.post("/hash", signRateLimit, zValidator("json", signHashSchema), async (c) => {
 	const { walletId, hash } = c.req.valid("json");
 
 	requireWalletOwnership(c, walletId);
@@ -19,7 +22,7 @@ sign.post("/hash", zValidator("json", signHashSchema), async (c) => {
 	return c.json(result);
 });
 
-sign.post("/message", zValidator("json", signMessageSchema), async (c) => {
+sign.post("/message", signRateLimit, zValidator("json", signMessageSchema), async (c) => {
 	const { walletId, message } = c.req.valid("json");
 
 	requireWalletOwnership(c, walletId);
