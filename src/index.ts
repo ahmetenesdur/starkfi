@@ -42,6 +42,7 @@ import {
 } from "./commands/lending/lending.js";
 import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
 import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
+import { registerBatchCommand } from "./commands/batch/batch.js";
 
 const program = new Command();
 
@@ -82,6 +83,8 @@ registerLendCloseCommand(program);
 registerLendStatusCommand(program);
 
 registerPortfolioCommand(program);
+
+registerBatchCommand(program);
 
 registerConfigCommand(program);
 

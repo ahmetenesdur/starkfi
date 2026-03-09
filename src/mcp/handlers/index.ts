@@ -6,3 +6,4 @@ export * from "./config.js";
 export * from "./lending.js";
 export * from "./portfolio.js";
 export * from "./multi-swap.js";
+export * from "./batch.js";

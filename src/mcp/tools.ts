@@ -27,6 +27,7 @@ import {
 	handleGetPortfolio,
 	handleGetMultiSwapQuote,
 	handleMultiSwap,
+	handleBatchExecute,
 } from "./handlers/index.js";
 import { StarkfiError } from "../lib/errors.js";
 
@@ -203,6 +204,36 @@ export function registerTools(server: McpServer): void {
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleMultiSwap)
+	);
+
+	// Batch (Multicall)
+
+	server.tool(
+		"batch_execute",
+		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap, stake, supply, send. Requires at least 2 operations.",
+		{
+			operations: z
+				.array(
+					z.object({
+						type: z
+							.enum(["swap", "stake", "supply", "send"])
+							.describe("Operation type"),
+						params: z
+							.record(z.string(), z.string())
+							.describe(
+								"Operation params. swap: {amount, from_token, to_token}. stake: {amount, token?, pool? or validator?}. supply: {amount, token, pool}. send: {amount, token, to}."
+							),
+					})
+				)
+				.min(2)
+				.describe("Array of operations to batch (min 2)"),
+			simulate: z
+				.boolean()
+				.optional()
+				.describe("Set true to simulate only — estimates fees without executing"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleBatchExecute)
 	);
 
 	// Staking

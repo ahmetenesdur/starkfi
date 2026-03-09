@@ -20,7 +20,7 @@ export interface TxResult {
 	explorerUrl: string;
 }
 
-function splitU256(value: bigint): [string, string] {
+export function splitU256(value: bigint): [string, string] {
 	const low = value & ((1n << 128n) - 1n);
 	const high = value >> 128n;
 	return [`0x${low.toString(16)}`, `0x${high.toString(16)}`];
@@ -329,7 +329,7 @@ export async function getPosition(
 	}
 }
 
-async function getVTokenAddress(
+export async function getVTokenAddress(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	token: Token
