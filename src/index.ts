@@ -44,13 +44,23 @@ import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
 import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
 import { registerBatchCommand } from "./commands/batch/batch.js";
 
+const banner = `
+  ┌───────────────────────────────────────┐
+  │  StarkFi  v${version.padEnd(26)}│
+  │  Starknet DeFi CLI + MCP Server      │
+  └───────────────────────────────────────┘
+`;
+
 const program = new Command();
 
 program
 	.name("starkfi")
-	.description("Starknet DeFi CLI — Token swaps, staking, lending, gasless transactions")
+	.description(
+		"Starknet DeFi CLI + MCP — Swaps, multi-swap, batch, staking, lending, simulation, portfolio"
+	)
 	.version(version)
-	.showHelpAfterError();
+	.showHelpAfterError()
+	.addHelpText("beforeAll", banner);
 
 registerLoginCommand(program);
 registerVerifyCommand(program);

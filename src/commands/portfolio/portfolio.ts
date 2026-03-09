@@ -27,7 +27,7 @@ export function registerPortfolioCommand(program: Command): void {
 				}
 
 				// Balances
-				console.log(`\n  💰 Token Balances\n`);
+				console.log(`\n  Token Balances\n`);
 
 				if (portfolio.balances.length > 0) {
 					console.log(
@@ -45,7 +45,7 @@ export function registerPortfolioCommand(program: Command): void {
 				}
 
 				// Staking
-				console.log(`\n  📈 Staking Positions\n`);
+				console.log(`\n  Staking Positions\n`);
 
 				if (portfolio.staking.length > 0) {
 					console.log(
@@ -65,7 +65,7 @@ export function registerPortfolioCommand(program: Command): void {
 				}
 
 				// Lending
-				console.log(`\n  🏦 Lending Positions (Vesu)\n`);
+				console.log(`\n  Lending Positions (Vesu)\n`);
 
 				if (portfolio.lending.length > 0) {
 					console.log(

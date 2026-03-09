@@ -40,7 +40,8 @@ export function registerLendPoolsCommand(program: Command): void {
 		.command("lend-pools")
 		.description("List available Vesu V2 lending pools")
 		.argument("[name]", "Filter pools by name (partial match, shows details)")
-		.action(async (name?: string) => {
+		.option("--json", "Output raw JSON")
+		.action(async (name: string | undefined, opts) => {
 			const spinner = createSpinner("Fetching Vesu pools...").start();
 
 			try {
@@ -59,6 +60,24 @@ export function registerLendPoolsCommand(program: Command): void {
 
 				spinner.succeed(`Found ${pools.length} pool(s)`);
 
+				if (opts.json) {
+					console.log(
+						JSON.stringify(
+							{
+								pools: pools.map((p) => ({
+									name: p.name,
+									version: p.protocolVersion,
+									address: p.address,
+									assets: p.assets,
+									pairs: p.pairs,
+								})),
+							},
+							null,
+							2
+						)
+					);
+					return;
+				}
 				if (name && pools.length <= 2) {
 					for (const pool of pools) {
 						console.log("");

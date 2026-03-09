@@ -10,6 +10,7 @@ export function registerBalanceCommand(program: Command): void {
 		.command("balance")
 		.description("Show wallet balance for all tokens or a specific token")
 		.option("-t, --token <symbol>", "Specific token symbol (e.g. STRK, ETH)")
+		.option("--json", "Output raw JSON")
 		.action(async (opts) => {
 			const spinner = createSpinner("Fetching balances...").start();
 
@@ -23,6 +24,21 @@ export function registerBalanceCommand(program: Command): void {
 					const balanceAmount = await wallet.balanceOf(tokenType);
 					spinner.stop();
 
+					if (opts.json) {
+						console.log(
+							JSON.stringify(
+								{
+									token: tokenType.symbol,
+									balance: balanceAmount.toUnit(),
+									network: session.network,
+								},
+								null,
+								2
+							)
+						);
+						return;
+					}
+
 					console.log(
 						formatResult({
 							token: tokenType.symbol,
@@ -33,6 +49,21 @@ export function registerBalanceCommand(program: Command): void {
 				} else {
 					const balances = await getBalances(wallet);
 					spinner.stop();
+
+					if (opts.json) {
+						console.log(
+							JSON.stringify(
+								{
+									wallet: session.address,
+									network: session.network,
+									tokens: balances,
+								},
+								null,
+								2
+							)
+						);
+						return;
+					}
 
 					console.log(`\n  Wallet: ${session.address}`);
 					console.log(`  Network: ${session.network}\n`);

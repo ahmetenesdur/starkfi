@@ -1,6 +1,22 @@
 import chalk from "chalk";
 import ora from "ora";
 
+/** ANSI terminal hyperlink (iTerm2, Wezterm, Windows Terminal). Graceful fallback in unsupported terminals. */
+function hyperlink(text: string, url: string): string {
+	return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
+}
+
+/** Apply semantic coloring based on key name. */
+function colorizeValue(key: string, value: string): string {
+	if (key === "explorer") return chalk.dim(hyperlink(value, value));
+	if (key === "txHash") return chalk.dim(value);
+	if (key === "revertReason") return chalk.red(value);
+	if (key === "mode" && value.includes("SIMULATION")) return chalk.yellow(value);
+	if (/fee/i.test(key) && !/usd/i.test(key)) return chalk.yellow(value);
+	if (/usd/i.test(key)) return chalk.green(value);
+	return chalk.white(value);
+}
+
 export function formatResult(data: Record<string, unknown>, options?: { json?: boolean }): string {
 	if (options?.json) {
 		return JSON.stringify(data, bigintReplacer, 2);
@@ -11,7 +27,7 @@ export function formatResult(data: Record<string, unknown>, options?: { json?: b
 		const label = chalk.gray(key.padEnd(20));
 		const val =
 			typeof value === "string" || typeof value === "number"
-				? chalk.white(String(value))
+				? colorizeValue(key, String(value))
 				: chalk.dim(JSON.stringify(value, bigintReplacer));
 		lines.push(`  ${label} ${val}`);
 	}
@@ -38,11 +54,40 @@ export function formatTable(headers: string[], rows: string[][]): string {
 }
 
 export function createSpinner(text: string) {
+	if (!process.stdout.isTTY) {
+		let currentText = text;
+		return {
+			start() {
+				return this;
+			},
+			stop() {
+				return this;
+			},
+			succeed(msg: string) {
+				console.log(success(msg));
+				return this;
+			},
+			fail(msg: string) {
+				console.error(chalk.red(`✖ ${msg}`));
+				return this;
+			},
+			info(msg: string) {
+				console.log(chalk.blue(`ℹ ${msg}`));
+				return this;
+			},
+			set text(t: string) {
+				currentText = t;
+			},
+			get text() {
+				return currentText;
+			},
+		};
+	}
 	return ora({ text, spinner: "dots" });
 }
 
 export function success(msg: string): string {
-	return chalk.green(`✔ ${msg}`);
+	return chalk.green.bold(`✔ ${msg}`);
 }
 
 export function warn(msg: string): string {

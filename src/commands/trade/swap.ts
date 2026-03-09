@@ -17,6 +17,7 @@ export function registerSwapCommand(program: Command): void {
 		.argument("<to>", "Destination token symbol")
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
 		.option("--simulate", "Estimate fees and validate without executing")
+		.option("--json", "Output raw JSON")
 		.action(async (amount: string, from: string, to: string, opts) => {
 			const spinner = createSpinner("Finding best route...").start();
 
@@ -75,17 +76,21 @@ export function registerSwapCommand(program: Command): void {
 						spinner.fail("Simulation failed");
 					}
 
-					console.log(
-						formatResult({
-							mode: "SIMULATION (no TX sent)",
-							input: `${amount} ${tokenIn.symbol}`,
-							expectedOutput: `~${outputFormatted} ${tokenOut.symbol}`,
-							estimatedFee: sim.estimatedFee,
-							estimatedFeeUsd: sim.estimatedFeeUsd,
-							calls: sim.callCount,
-							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-						})
-					);
+					const simResult = {
+						mode: "SIMULATION (no TX sent)",
+						input: `${amount} ${tokenIn.symbol}`,
+						expectedOutput: `~${outputFormatted} ${tokenOut.symbol}`,
+						estimatedFee: sim.estimatedFee,
+						estimatedFeeUsd: sim.estimatedFeeUsd,
+						calls: sim.callCount,
+						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+					};
+
+					if (opts.json) {
+						console.log(JSON.stringify(simResult, null, 2));
+					} else {
+						console.log(formatResult(simResult));
+					}
 					return;
 				}
 
@@ -96,14 +101,18 @@ export function registerSwapCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Swap confirmed");
-				console.log(
-					formatResult({
-						input: `${amount} ${tokenIn.symbol}`,
-						output: `~${outputFormatted} ${tokenOut.symbol}`,
-						txHash: tx.hash,
-						explorer: tx.explorerUrl,
-					})
-				);
+				const txResult = {
+					input: `${amount} ${tokenIn.symbol}`,
+					output: `~${outputFormatted} ${tokenOut.symbol}`,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				};
+
+				if (opts.json) {
+					console.log(JSON.stringify(txResult, null, 2));
+				} else {
+					console.log(formatResult(txResult));
+				}
 			} catch (error) {
 				spinner.fail("Swap failed");
 				console.error(formatError(error));

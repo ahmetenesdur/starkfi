@@ -86,6 +86,7 @@ export function registerBatchCommand(program: Command): void {
 		.option("--supply <args>", 'Supply to Vesu: "200 USDC 0xPool" (repeatable)', collect, [])
 		.option("--send <args>", 'Send tokens: "10 STRK 0xAddr" (repeatable)', collect, [])
 		.option("--simulate", "Estimate fees and validate without executing")
+		.option("--json", "Output raw JSON")
 		.action(async (opts) => {
 			const spinner = createSpinner("Preparing batch...").start();
 
@@ -113,7 +114,7 @@ export function registerBatchCommand(program: Command): void {
 				const { builder, summary } = await buildBatch(wallet, session, operations);
 
 				spinner.stop();
-				console.log("\n  📦 Batch Operations:\n");
+				console.log("\n  Batch Operations:\n");
 				summary.forEach((s, i) => console.log(`    ${i + 1}. ${s}`));
 				console.log();
 
@@ -128,16 +129,20 @@ export function registerBatchCommand(program: Command): void {
 						spinner.fail("Simulation failed");
 					}
 
-					console.log(
-						formatResult({
-							mode: "SIMULATION (no TX sent)",
-							operations: operations.length,
-							estimatedFee: sim.estimatedFee,
-							estimatedFeeUsd: sim.estimatedFeeUsd,
-							calls: sim.callCount,
-							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-						})
-					);
+					const simResult = {
+						mode: "SIMULATION (no TX sent)",
+						operations: operations.length,
+						estimatedFee: sim.estimatedFee,
+						estimatedFeeUsd: sim.estimatedFeeUsd,
+						calls: sim.callCount,
+						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+					};
+
+					if (opts.json) {
+						console.log(JSON.stringify(simResult, null, 2));
+					} else {
+						console.log(formatResult(simResult));
+					}
 					return;
 				}
 
@@ -149,13 +154,17 @@ export function registerBatchCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Batch confirmed");
-				console.log(
-					formatResult({
-						operations: operations.length,
-						txHash: tx.hash,
-						explorer: tx.explorerUrl,
-					})
-				);
+				const txResult = {
+					operations: operations.length,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				};
+
+				if (opts.json) {
+					console.log(JSON.stringify(txResult, null, 2));
+				} else {
+					console.log(formatResult(txResult));
+				}
 			} catch (error) {
 				spinner.fail("Batch failed");
 				console.error(formatError(error));

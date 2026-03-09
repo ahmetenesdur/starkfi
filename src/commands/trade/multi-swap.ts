@@ -50,6 +50,7 @@ export function registerMultiSwapCommand(program: Command): void {
 		.argument("<pairs>", 'Swap pairs (e.g. "100 USDC>ETH, 50 USDC>STRK")')
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
 		.option("--simulate", "Estimate fees and validate without executing")
+		.option("--json", "Output raw JSON")
 		.action(async (pairsInput: string, opts) => {
 			const spinner = createSpinner("Parsing swap pairs...").start();
 
@@ -134,16 +135,20 @@ export function registerMultiSwapCommand(program: Command): void {
 						spinner.fail("Simulation failed");
 					}
 
-					console.log(
-						formatResult({
-							mode: "SIMULATION (no TX sent)",
-							pairs: pairs.length,
-							estimatedFee: sim.estimatedFee,
-							estimatedFeeUsd: sim.estimatedFeeUsd,
-							calls: sim.callCount,
-							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-						})
-					);
+					const simResult = {
+						mode: "SIMULATION (no TX sent)",
+						pairs: pairs.length,
+						estimatedFee: sim.estimatedFee,
+						estimatedFeeUsd: sim.estimatedFeeUsd,
+						calls: sim.callCount,
+						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+					};
+
+					if (opts.json) {
+						console.log(JSON.stringify(simResult, null, 2));
+					} else {
+						console.log(formatResult(simResult));
+					}
 					return;
 				}
 
@@ -154,13 +159,17 @@ export function registerMultiSwapCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Multi-swap confirmed");
-				console.log(
-					formatResult({
-						pairs: pairs.length,
-						txHash: tx.hash,
-						explorer: tx.explorerUrl,
-					})
-				);
+				const txResult = {
+					pairs: pairs.length,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				};
+
+				if (opts.json) {
+					console.log(JSON.stringify(txResult, null, 2));
+				} else {
+					console.log(formatResult(txResult));
+				}
 			} catch (error) {
 				spinner.fail("Multi-swap failed");
 				console.error(formatError(error));

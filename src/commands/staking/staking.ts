@@ -283,7 +283,8 @@ export function registerPoolsCommand(program: Command): void {
 		.command("pools")
 		.description("List staking pools for a validator (by name or address)")
 		.argument("<validator>", "Validator name (e.g. 'Karnot') or staker address")
-		.action(async (validator: string) => {
+		.option("--json", "Output raw JSON")
+		.action(async (validator: string, opts) => {
 			const spinner = createSpinner("Fetching pools...").start();
 
 			try {
@@ -305,6 +306,26 @@ export function registerPoolsCommand(program: Command): void {
 				}
 
 				const validatorLabel = found ? `${found.name} (${stakerAddress})` : stakerAddress;
+
+				if (opts.json) {
+					console.log(
+						JSON.stringify(
+							{
+								validator: validatorLabel,
+								pools: pools.map((p) => ({
+									address: p.poolContract,
+									token: p.tokenSymbol,
+									amount: p.amount,
+									commission: p.commission,
+								})),
+							},
+							null,
+							2
+						)
+					);
+					return;
+				}
+
 				console.log(`\n  Validator: ${validatorLabel}\n`);
 
 				console.log(
@@ -331,7 +352,8 @@ export function registerValidatorsCommand(program: Command): void {
 	program
 		.command("validators")
 		.description("List all known Starknet staking validators")
-		.action(async () => {
+		.option("--json", "Output raw JSON")
+		.action(async (opts) => {
 			const spinner = createSpinner("Loading validators...").start();
 
 			try {
@@ -339,6 +361,23 @@ export function registerValidatorsCommand(program: Command): void {
 				const validators = getValidators(session.network);
 
 				spinner.stop();
+
+				if (opts.json) {
+					console.log(
+						JSON.stringify(
+							{
+								network: session.network,
+								validators: validators.map((v) => ({
+									name: v.name,
+									stakerAddress: v.stakerAddress.toString(),
+								})),
+							},
+							null,
+							2
+						)
+					);
+					return;
+				}
 
 				console.log(`\n  Validators on ${session.network} (${validators.length} total)\n`);
 
@@ -362,7 +401,8 @@ export function registerStakeStatusCommand(program: Command): void {
 		.command("stake-status")
 		.description("Show a consolidated staking dashboard across validators and pools")
 		.argument("[validator]", "Optional validator name to filter results (e.g. Fibrous)")
-		.action(async (validatorTarget?: string) => {
+		.option("--json", "Output raw JSON")
+		.action(async (validatorTarget: string | undefined, opts) => {
 			const spinner = createSpinner("Scanning staking positions...").start();
 
 			try {
@@ -381,6 +421,20 @@ export function registerStakeStatusCommand(program: Command): void {
 
 				if (overview.positions.length === 0) {
 					console.log("\n  No active staking positions found.\n");
+					return;
+				}
+
+				if (opts.json) {
+					console.log(
+						JSON.stringify(
+							{
+								network: overview.network,
+								positions: overview.positions,
+							},
+							null,
+							2
+						)
+					);
 					return;
 				}
 

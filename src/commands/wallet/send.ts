@@ -15,6 +15,7 @@ export function registerSendCommand(program: Command): void {
 		.argument("<token>", "Token symbol (e.g. STRK, ETH, USDC)")
 		.argument("<to>", "Recipient Starknet address")
 		.option("--simulate", "Estimate fees and validate without executing")
+		.option("--json", "Output raw JSON")
 		.action(async (amount: string, token: string, to: string, opts) => {
 			const spinner = createSpinner("Preparing transfer...").start();
 
@@ -53,17 +54,21 @@ export function registerSendCommand(program: Command): void {
 						spinner.fail("Simulation failed");
 					}
 
-					console.log(
-						formatResult({
-							mode: "SIMULATION (no TX sent)",
-							amount: `${amount} ${token.toUpperCase()}`,
-							to: validatedTo,
-							estimatedFee: sim.estimatedFee,
-							estimatedFeeUsd: sim.estimatedFeeUsd,
-							calls: sim.callCount,
-							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-						})
-					);
+					const simResult = {
+						mode: "SIMULATION (no TX sent)",
+						amount: `${amount} ${token.toUpperCase()}`,
+						to: validatedTo,
+						estimatedFee: sim.estimatedFee,
+						estimatedFeeUsd: sim.estimatedFeeUsd,
+						calls: sim.callCount,
+						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+					};
+
+					if (opts.json) {
+						console.log(JSON.stringify(simResult, null, 2));
+					} else {
+						console.log(formatResult(simResult));
+					}
 					return;
 				}
 
@@ -74,14 +79,18 @@ export function registerSendCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Transfer confirmed");
-				console.log(
-					formatResult({
-						amount: `${amount} ${token.toUpperCase()}`,
-						to: validatedTo,
-						txHash: tx.hash,
-						explorer: tx.explorerUrl,
-					})
-				);
+				const txResult = {
+					amount: `${amount} ${token.toUpperCase()}`,
+					to: validatedTo,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				};
+
+				if (opts.json) {
+					console.log(JSON.stringify(txResult, null, 2));
+				} else {
+					console.log(formatResult(txResult));
+				}
 			} catch (error) {
 				spinner.fail("Transfer failed");
 				console.error(formatError(error));
