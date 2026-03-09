@@ -1,5 +1,6 @@
 import { VESU_API_BASE, V2_POOLS } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { withRetry } from "../../lib/retry.js";
 
 export interface VesuAsset {
 	address: string;
@@ -119,7 +120,9 @@ export async function fetchPool(address: string): Promise<VesuPoolData> {
 
 	try {
 		const url = `${VESU_API_BASE}/pools/${address}`;
-		const res = await fetch(url, { signal: controller.signal });
+		const res = await withRetry(() => fetch(url, { signal: controller.signal }), {
+			retryOnCodes: [ErrorCode.NETWORK_ERROR],
+		});
 
 		if (!res.ok) {
 			throw new StarkfiError(

@@ -5,6 +5,10 @@ import { Command } from "commander";
 import { formatError } from "./lib/format.js";
 import { startMcpServer } from "./mcp/server.js";
 
+// Graceful shutdown on signals
+process.on("SIGINT", () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
+
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
 

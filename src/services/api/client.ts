@@ -1,4 +1,5 @@
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { withRetry } from "../../lib/retry.js";
 import { STARKFI_API_URL_DEFAULT } from "../../lib/config.js";
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -32,12 +33,16 @@ async function request<T>(
 	const timer = setTimeout(() => controller.abort(), timeout);
 
 	try {
-		const res = await fetch(url, {
-			method: "POST",
-			headers,
-			body: JSON.stringify(body),
-			signal: controller.signal,
-		});
+		const res = await withRetry(
+			() =>
+				fetch(url, {
+					method: "POST",
+					headers,
+					body: JSON.stringify(body),
+					signal: controller.signal,
+				}),
+			{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
+		);
 
 		if (!res.ok) {
 			const errorBody = await res

@@ -1,5 +1,6 @@
 import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { withRetry } from "../../lib/retry.js";
 import type { Token } from "starkzap";
 
 interface RouteToken {
@@ -55,7 +56,10 @@ export async function getRoute(
 		tokenOutAddress: tokenOut.address,
 	});
 
-	const response = await fetch(`${FIBROUS_BASE_URL}/route?${params.toString()}`);
+	const response = await withRetry(
+		() => fetch(`${FIBROUS_BASE_URL}/route?${params.toString()}`),
+		{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
+	);
 
 	if (!response.ok) {
 		throw new StarkfiError(
@@ -94,7 +98,10 @@ export async function getCalldata(
 		params.append("destination", destination);
 	}
 
-	const response = await fetch(`${FIBROUS_BASE_URL}/calldata?${params.toString()}`);
+	const response = await withRetry(
+		() => fetch(`${FIBROUS_BASE_URL}/calldata?${params.toString()}`),
+		{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
+	);
 
 	if (!response.ok) {
 		const errorText = await response.text().catch(() => "");

@@ -79,7 +79,20 @@ if (
 ) {
 	const { serve } = await import("@hono/node-server");
 
-	serve({ fetch: app.fetch, port, hostname: "0.0.0.0" }, (info: { port: number }) => {
-		console.log(`starkfi-server running at http://localhost:${info.port}`);
-	});
+	const server = serve(
+		{ fetch: app.fetch, port, hostname: "0.0.0.0" },
+		(info: { port: number }) => {
+			console.log(`starkfi-server running at http://localhost:${info.port}`);
+		}
+	);
+
+	const shutdown = () => {
+		console.log("Shutting down gracefully...");
+		server.close(() => process.exit(0));
+		// Force exit after 5s if connections don't close
+		setTimeout(() => process.exit(1), 5000);
+	};
+
+	process.on("SIGTERM", shutdown);
+	process.on("SIGINT", shutdown);
 }
