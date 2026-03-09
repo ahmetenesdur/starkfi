@@ -8,7 +8,8 @@ export interface TokenBalance {
 }
 
 export async function getBalances(wallet: WalletInterface): Promise<TokenBalance[]> {
-	const tokens = await fetchTokens();
+	const tokenMap = await fetchTokens();
+	const tokens = Array.from(tokenMap.values());
 	const results: TokenBalance[] = [];
 
 	const balancePromises = tokens.map(async (token) => {
