@@ -138,12 +138,18 @@ export function registerTools(server: McpServer): void {
 
 	server.tool(
 		"swap_tokens",
-		"Execute a token swap on Starknet using Fibrous aggregation. Finds optimal route and simulates before execution. ONLY call this after showing the user a quote via get_swap_quote.",
+		"Execute a token swap on Starknet using Fibrous aggregation. Finds optimal route and executes. Set simulate=true to estimate fees without executing. ONLY call this after showing the user a quote via get_swap_quote.",
 		{
 			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
 			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'STRK')"),
 			to_token: z.string().describe("Destination token symbol to buy (e.g. 'USDC', 'DAI')"),
 			slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
+			simulate: z
+				.boolean()
+				.optional()
+				.describe(
+					"Set true to simulate only — estimates fees without sending a transaction"
+				),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSwapTokens)

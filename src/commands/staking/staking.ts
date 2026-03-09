@@ -1,10 +1,13 @@
 import type { Command } from "commander";
+import { Amount, fromAddress } from "starkzap";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as stakingService from "../../services/staking/staking.js";
 import { getValidators, findValidator } from "../../services/staking/validators.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
+import { resolveToken } from "../../services/tokens/tokens.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 
 export function registerStakeCommand(program: Command): void {
 	program
@@ -17,6 +20,7 @@ export function registerStakeCommand(program: Command): void {
 			"Validator name or staker address (auto-finds pool by token)"
 		)
 		.option("-t, --token <symbol>", "Token to stake (default: STRK)", "STRK")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.action(async (amount: string, opts) => {
 			if (!opts.pool && !opts.validator) {
 				console.error("Provide --pool <address> or --validator <name>");
@@ -48,6 +52,33 @@ export function registerStakeCommand(program: Command): void {
 					poolAddress = matched.poolContract;
 				} else {
 					poolAddress = validateAddress(poolAddress);
+				}
+
+				if (opts.simulate) {
+					spinner.text = "Simulating stake...";
+					const token = await resolveToken(tokenSymbol);
+					const parsedAmount = Amount.parse(amount, token);
+					const builder = wallet.tx().stake(fromAddress(poolAddress), parsedAmount);
+					const sim = await simulateTransaction(builder);
+
+					if (sim.success) {
+						spinner.succeed("Simulation complete");
+					} else {
+						spinner.fail("Simulation failed");
+					}
+
+					console.log(
+						formatResult({
+							mode: "SIMULATION (no TX sent)",
+							amount: `${amount} ${tokenSymbol}`,
+							pool: poolAddress,
+							estimatedFee: sim.estimatedFee,
+							estimatedFeeUsd: sim.estimatedFeeUsd,
+							calls: sim.callCount,
+							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+						})
+					);
+					return;
 				}
 
 				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol);

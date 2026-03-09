@@ -4,6 +4,7 @@ import { resolveToken } from "../../services/tokens/tokens.js";
 import { getCalldata, getRoute } from "../../services/fibrous/route.js";
 import { Amount, fromAddress } from "starkzap";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { jsonResult } from "./utils.js";
 
 export async function handleGetSwapQuote(args: {
@@ -39,6 +40,7 @@ export async function handleSwapTokens(args: {
 	from_token: string;
 	to_token: string;
 	slippage?: number;
+	simulate?: boolean;
 }) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
@@ -59,19 +61,34 @@ export async function handleSwapTokens(args: {
 		session.address
 	);
 
-	const tx = await wallet
+	const builder = wallet
 		.tx()
 		.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount)
 		.add({
 			contractAddress: FIBROUS_ROUTER_ADDRESS,
 			entrypoint: "swap",
 			calldata: calldataResponse.calldata,
-		})
-		.send();
-	await tx.wait();
+		});
 
 	const outputAmount = Amount.fromRaw(calldataResponse.route.outputAmount, tokenOut);
 	const outputFormatted = outputAmount.toUnit();
+
+	if (args.simulate) {
+		const sim = await simulateTransaction(builder);
+		return jsonResult({
+			success: sim.success,
+			mode: "SIMULATION (no TX sent)",
+			amountIn: `${args.amount} ${tokenIn.symbol}`,
+			expectedAmountOut: `~${outputFormatted} ${tokenOut.symbol}`,
+			estimatedFee: sim.estimatedFee,
+			estimatedFeeUsd: sim.estimatedFeeUsd,
+			callCount: sim.callCount,
+			...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+		});
+	}
+
+	const tx = await builder.send();
+	await tx.wait();
 
 	return jsonResult({
 		success: true,

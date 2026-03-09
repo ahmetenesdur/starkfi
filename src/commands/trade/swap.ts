@@ -5,6 +5,7 @@ import { resolveToken } from "../../services/tokens/tokens.js";
 import { getRoute, getCalldata } from "../../services/fibrous/route.js";
 import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { Amount, fromAddress } from "starkzap";
 
 export function registerSwapCommand(program: Command): void {
@@ -15,6 +16,7 @@ export function registerSwapCommand(program: Command): void {
 		.argument("<from>", "Source token symbol")
 		.argument("<to>", "Destination token symbol")
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.action(async (amount: string, from: string, to: string, opts) => {
 			const spinner = createSpinner("Finding best route...").start();
 
@@ -54,16 +56,41 @@ export function registerSwapCommand(program: Command): void {
 					session.address
 				);
 
-				spinner.text = "Executing swap...";
-				const tx = await wallet
+				const builder = wallet
 					.tx()
 					.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount)
 					.add({
 						contractAddress: FIBROUS_ROUTER_ADDRESS,
 						entrypoint: "swap",
 						calldata: calldataResponse.calldata,
-					})
-					.send();
+					});
+
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+
+					if (sim.success) {
+						spinner.succeed("Simulation complete");
+					} else {
+						spinner.fail("Simulation failed");
+					}
+
+					console.log(
+						formatResult({
+							mode: "SIMULATION (no TX sent)",
+							input: `${amount} ${tokenIn.symbol}`,
+							expectedOutput: `~${outputFormatted} ${tokenOut.symbol}`,
+							estimatedFee: sim.estimatedFee,
+							estimatedFeeUsd: sim.estimatedFeeUsd,
+							calls: sim.callCount,
+							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+						})
+					);
+					return;
+				}
+
+				spinner.text = "Executing swap...";
+				const tx = await builder.send();
 
 				spinner.text = "Waiting for confirmation...";
 				await tx.wait();

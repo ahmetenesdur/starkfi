@@ -5,6 +5,7 @@ import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 
 export function registerSendCommand(program: Command): void {
 	program
@@ -13,7 +14,8 @@ export function registerSendCommand(program: Command): void {
 		.argument("<amount>", "Amount to send")
 		.argument("<token>", "Token symbol (e.g. STRK, ETH, USDC)")
 		.argument("<to>", "Recipient Starknet address")
-		.action(async (amount: string, token: string, to: string) => {
+		.option("--simulate", "Estimate fees and validate without executing")
+		.action(async (amount: string, token: string, to: string, opts) => {
 			const spinner = createSpinner("Preparing transfer...").start();
 
 			try {
@@ -36,11 +38,37 @@ export function registerSendCommand(program: Command): void {
 					process.exit(1);
 				}
 
-				spinner.text = "Executing transfer...";
+				const builder = wallet.tx().transfer(tokenObj, {
+					to: fromAddress(validatedTo),
+					amount: parsedAmount,
+				});
 
-				const tx = await wallet.transfer(tokenObj, [
-					{ to: fromAddress(validatedTo), amount: parsedAmount },
-				]);
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+
+					if (sim.success) {
+						spinner.succeed("Simulation complete");
+					} else {
+						spinner.fail("Simulation failed");
+					}
+
+					console.log(
+						formatResult({
+							mode: "SIMULATION (no TX sent)",
+							amount: `${amount} ${token.toUpperCase()}`,
+							to: validatedTo,
+							estimatedFee: sim.estimatedFee,
+							estimatedFeeUsd: sim.estimatedFeeUsd,
+							calls: sim.callCount,
+							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+						})
+					);
+					return;
+				}
+
+				spinner.text = "Executing transfer...";
+				const tx = await builder.send();
 
 				spinner.text = "Waiting for confirmation...";
 				await tx.wait();
