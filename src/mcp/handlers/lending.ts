@@ -2,6 +2,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as lendingService from "../../services/vesu/lending.js";
 import { getVesuPools, findPoolEntry } from "../../services/vesu/pools.js";
+import { StarkfiError, ErrorCode } from "../../lib/errors.js";
 import { jsonResult } from "./utils.js";
 
 function resolvePool(
@@ -141,7 +142,8 @@ export async function handleBorrowAssets(args: {
 			args.collateral_token
 		);
 		if (!balance || parseFloat(balance) < parseFloat(args.collateral_amount)) {
-			throw new Error(
+			throw new StarkfiError(
+				ErrorCode.INSUFFICIENT_BALANCE,
 				`Insufficient supplied balance. You have ${balance || "0"} ${args.collateral_token} supplied, but want to use ${args.collateral_amount} as collateral.`
 			);
 		}

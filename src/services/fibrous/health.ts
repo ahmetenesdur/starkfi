@@ -15,7 +15,7 @@ export async function checkFibrousHealth(): Promise<{
 		}
 
 		const data = (await response.json()) as {
-			staus: number;
+			staus: number; // NOTE: Typo in Fibrous API response — "staus" instead of "status"
 			message: string;
 		};
 
