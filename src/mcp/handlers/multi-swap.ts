@@ -11,28 +11,38 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { jsonResult } from "./utils.js";
 
-export async function handleGetMultiSwapQuote(args: {
-	swaps: { amount: string; from_token: string; to_token: string }[];
-}) {
-	// Resolve tokens and build pairs
-	const pairs: BatchSwapPair[] = await Promise.all(
-		args.swaps.map(async (s) => {
+// ─── Shared Helpers ──────────────────────────────────────────
+
+/** Resolve tokens and build BatchSwapPair[] from raw MCP args. */
+async function resolvePairs(
+	swaps: { amount: string; from_token: string; to_token: string }[]
+): Promise<BatchSwapPair[]> {
+	return Promise.all(
+		swaps.map(async (s) => {
 			const tokenIn = await resolveToken(s.from_token);
 			const tokenOut = await resolveToken(s.to_token);
 			const parsedAmount = Amount.parse(s.amount, tokenIn);
 			return { tokenIn, tokenOut, amount: parsedAmount.toBase().toString() };
 		})
 	);
+}
 
+// ─── Handlers ────────────────────────────────────────────────
+
+export async function handleGetMultiSwapQuote(args: {
+	swaps: { amount: string; from_token: string; to_token: string }[];
+}) {
+	const pairs = await resolvePairs(args.swaps);
 	const routes = await getRouteBatch(pairs);
 
 	return jsonResult({
 		success: true,
 		quotes: routes.map((r, i) => ({
-			input: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
-			expectedOutput: `~${Amount.fromRaw(BigInt(r.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
+			amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
+			expectedAmountOut: `~${Amount.fromRaw(BigInt(r.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
 			estimatedGasUsd: r.estimatedGasUsedInUsd ?? null,
 		})),
+		message: "Quotes generated. Use multi_swap to execute.",
 	});
 }
 
@@ -46,20 +56,10 @@ export async function handleMultiSwap(args: {
 
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	// Resolve tokens and build pairs
-	const pairs: BatchSwapPair[] = await Promise.all(
-		args.swaps.map(async (s) => {
-			const tokenIn = await resolveToken(s.from_token);
-			const tokenOut = await resolveToken(s.to_token);
-			const parsedAmount = Amount.parse(s.amount, tokenIn);
-			return { tokenIn, tokenOut, amount: parsedAmount.toBase().toString() };
-		})
-	);
-
-	// Get calldata for all pairs
+	const pairs = await resolvePairs(args.swaps);
 	const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
 
-	// Build multicall
+	// Build multicall: approve + swap for each pair
 	const builder = wallet.tx();
 	for (let i = 0; i < pairs.length; i++) {
 		const pair = pairs[i];
@@ -73,10 +73,10 @@ export async function handleMultiSwap(args: {
 		});
 	}
 
-	// Get expected outputs from calldata responses
-	const outputs = calldataResults.map((cd, i) => {
-		const out = Amount.fromRaw(BigInt(cd.route.outputAmount), pairs[i].tokenOut);
-		return `~${out.toUnit()} ${pairs[i].tokenOut.symbol}`;
+	// Format expected outputs from calldata responses
+	const formatSwap = (i: number) => ({
+		amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
+		expectedAmountOut: `~${Amount.fromRaw(BigInt(calldataResults[i].route.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
 	});
 
 	if (args.simulate) {
@@ -84,10 +84,7 @@ export async function handleMultiSwap(args: {
 		return jsonResult({
 			success: sim.success,
 			mode: "SIMULATION (no TX sent)",
-			swaps: args.swaps.map((s, i) => ({
-				input: `${s.amount} ${pairs[i].tokenIn.symbol}`,
-				expectedOutput: outputs[i],
-			})),
+			swaps: pairs.map((_, i) => formatSwap(i)),
 			estimatedFee: sim.estimatedFee,
 			estimatedFeeUsd: sim.estimatedFeeUsd,
 			callCount: sim.callCount,
@@ -102,10 +99,7 @@ export async function handleMultiSwap(args: {
 		success: true,
 		txHash: tx.hash,
 		explorerUrl: tx.explorerUrl,
-		swaps: args.swaps.map((s, i) => ({
-			input: `${s.amount} ${pairs[i].tokenIn.symbol}`,
-			output: outputs[i],
-		})),
+		swaps: pairs.map((_, i) => formatSwap(i)),
 		slippage: `${args.slippage ?? 1}%`,
 	});
 }

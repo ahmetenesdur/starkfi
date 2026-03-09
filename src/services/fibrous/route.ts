@@ -207,35 +207,31 @@ export async function getCalldataBatch(
 		);
 	}
 
-	const results = await Promise.all(
+	return Promise.all(
 		pairs.map((pair) =>
 			getCalldata(pair.tokenIn, pair.tokenOut, pair.amount, slippage, destination)
 		)
 	);
-
-	return results;
 }
 
-// Fetches the current USD price of a token using Fibrous routing data.
-// It simulates a 1-unit swap to USDC to reliably extract the `inputToken.price` from the API.
+// Fetches the current USD price of a token via Fibrous routing data.
+// Simulates a 1-unit swap to USDC and reads the `inputToken.price` from the response.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
-	// If the token is already USDC/USDT, we can skip the remote call.
-	// But it's safer to just fetch everything for simplicity, or we check symbols:
 	if (token.symbol.toUpperCase() === "USDC" || token.symbol.toUpperCase() === "USDT") {
-		return 1.0; // Peg assumption for stablecoins
+		return 1.0;
 	}
 
 	try {
+		// Dynamic import to avoid circular dependency (route.ts → tokens.ts → route.ts)
 		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC"));
-		// Simulate a 1-unit swap (e.g., 1 ETH, 1 STRK) to USDC
 		const oneUnit = (10n ** BigInt(token.decimals)).toString();
 		const routeData = await getRoute(token, usdc, oneUnit);
 
-		if (routeData.success && routeData.inputToken && routeData.inputToken.price) {
+		if (routeData.success && routeData.inputToken?.price) {
 			return parseFloat(routeData.inputToken.price);
 		}
 	} catch {
-		// Ignore explicit error to not break fallback systems, return 0 if pricing fails.
+		// Best-effort — return 0 if pricing fails
 	}
 	return 0;
 }
