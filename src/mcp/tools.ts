@@ -25,6 +25,8 @@ import {
 	handleRepayDebt,
 	handleClosePosition,
 	handleGetPortfolio,
+	handleGetMultiSwapQuote,
+	handleMultiSwap,
 } from "./handlers/index.js";
 import { StarkfiError } from "../lib/errors.js";
 
@@ -162,6 +164,45 @@ export function registerTools(server: McpServer): void {
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSwapTokens)
+	);
+
+	const swapItemSchema = z.object({
+		amount: z.string().describe("Amount to swap in (e.g. '100', '0.5')"),
+		from_token: z.string().describe("Source token symbol (e.g. 'USDC', 'ETH')"),
+		to_token: z.string().describe("Destination token symbol (e.g. 'ETH', 'STRK')"),
+	});
+
+	server.tool(
+		"get_multi_swap_quote",
+		"Get quotes for multiple token swaps at once (2-3 pairs). Uses Fibrous batch routing for optimal rates.",
+		{
+			swaps: z
+				.array(swapItemSchema)
+				.min(2)
+				.max(3)
+				.describe("Array of swap pairs (2-3 items)"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetMultiSwapQuote)
+	);
+
+	server.tool(
+		"multi_swap",
+		"Execute multiple token swaps in a single transaction (2-3 pairs). Uses Fibrous batch routing. Call get_multi_swap_quote first to preview.",
+		{
+			swaps: z
+				.array(swapItemSchema)
+				.min(2)
+				.max(3)
+				.describe("Array of swap pairs (2-3 items)"),
+			slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
+			simulate: z
+				.boolean()
+				.optional()
+				.describe("Set true to simulate only — estimates fees without executing"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleMultiSwap)
 	);
 
 	// Staking

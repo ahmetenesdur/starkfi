@@ -41,6 +41,7 @@ import {
 	registerLendStatusCommand,
 } from "./commands/lending/lending.js";
 import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
+import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
 
 const program = new Command();
 
@@ -60,6 +61,7 @@ registerSendCommand(program);
 registerDeployCommand(program);
 
 registerSwapCommand(program);
+registerMultiSwapCommand(program);
 registerStatusCommand(program);
 
 registerTxStatusCommand(program);

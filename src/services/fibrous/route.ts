@@ -123,6 +123,99 @@ export async function getCalldata(
 	return data;
 }
 
+// ─── Batch Swap (Fibrous routeBatch API) ──────────────────────
+
+export interface BatchSwapPair {
+	tokenIn: Token;
+	tokenOut: Token;
+	/** Raw amount in base units (wei) */
+	amount: string;
+}
+
+const MAX_BATCH_PAIRS = 3;
+
+/**
+ * Fetch optimal routes for multiple swap pairs.
+ * - If all pairs share the same output token → Fibrous routeBatch API (single request).
+ * - Otherwise → parallel individual route requests (different output tokens).
+ * Max 3 pairs per request.
+ */
+export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteResponse[]> {
+	if (pairs.length > MAX_BATCH_PAIRS) {
+		throw new StarkfiError(
+			ErrorCode.BATCH_LIMIT_EXCEEDED,
+			`Multi-swap supports up to ${MAX_BATCH_PAIRS} pairs, got ${pairs.length}`
+		);
+	}
+
+	// routeBatch only supports shared output token (many-to-one swaps)
+	const allSameOutput = pairs.every(
+		(p) => p.tokenOut.address.toLowerCase() === pairs[0].tokenOut.address.toLowerCase()
+	);
+
+	if (allSameOutput) {
+		try {
+			const params = new URLSearchParams({
+				amounts: pairs.map((p) => p.amount).join(","),
+				tokenInAddresses: pairs.map((p) => p.tokenIn.address).join(","),
+				tokenOutAddresses: pairs[0].tokenOut.address,
+			});
+
+			const response = await withRetry(
+				() => fetch(`${FIBROUS_BASE_URL}/routeBatch?${params.toString()}`),
+				{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
+			);
+
+			if (response.ok) {
+				const data = (await response.json()) as RouteResponse[];
+
+				if (Array.isArray(data) && data.length === pairs.length) {
+					for (let i = 0; i < data.length; i++) {
+						if (!data[i].success) {
+							const pair = pairs[i];
+							throw new StarkfiError(
+								ErrorCode.NO_ROUTE_FOUND,
+								`No route found for pair ${i + 1}: ${pair.tokenIn.symbol} → ${pair.tokenOut.symbol}`
+							);
+						}
+					}
+					return data;
+				}
+			}
+		} catch (error) {
+			if (error instanceof StarkfiError) throw error;
+		}
+	}
+
+	// Fallback / different output tokens: parallel individual route requests
+	return Promise.all(pairs.map((p) => getRoute(p.tokenIn, p.tokenOut, p.amount)));
+}
+
+/**
+ * Fetch calldata for multiple swap pairs in parallel.
+ * Each pair gets its own calldata to be combined into a single multicall.
+ */
+export async function getCalldataBatch(
+	pairs: BatchSwapPair[],
+	slippage: number = DEFAULT_SLIPPAGE,
+	destination?: string
+): Promise<CalldataResponse[]> {
+	if (pairs.length > MAX_BATCH_PAIRS) {
+		throw new StarkfiError(
+			ErrorCode.BATCH_LIMIT_EXCEEDED,
+			`Multi-swap supports up to ${MAX_BATCH_PAIRS} pairs, got ${pairs.length}`
+		);
+	}
+
+	const results = await Promise.all(
+		pairs.map((pair) =>
+			getCalldata(pair.tokenIn, pair.tokenOut, pair.amount, slippage, destination)
+		)
+	);
+
+	return results;
+}
+
 // Fetches the current USD price of a token using Fibrous routing data.
 // It simulates a 1-unit swap to USDC to reliably extract the `inputToken.price` from the API.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
