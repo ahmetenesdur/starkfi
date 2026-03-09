@@ -207,10 +207,6 @@ export async function getPosition(
 	};
 }
 
-export async function isPoolMember(wallet: StarkZapWallet, poolAddress: string): Promise<boolean> {
-	return wallet.isPoolMember(fromAddress(poolAddress));
-}
-
 // Scan all known validators & pools to build a consolidated staking dashboard.
 // If targetValidator is provided, it will strictly scan that validator's pools.
 export async function getStakingOverview(

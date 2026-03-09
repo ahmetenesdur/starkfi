@@ -37,5 +37,4 @@ export const V2_POOLS: readonly PoolEntry[] = [
 ] as const;
 
 // AmountDenomination enum values for calldata encoding.
-export const DENOMINATION_NATIVE = 0;
 export const DENOMINATION_ASSETS = 1;

@@ -181,7 +181,3 @@ export async function fetchAllPools(): Promise<VesuPoolData[]> {
 
 	return pools;
 }
-
-export function clearPoolCache(): void {
-	poolCache.clear();
-}

@@ -45,10 +45,6 @@ export function success(msg: string): string {
 	return chalk.green(`✔ ${msg}`);
 }
 
-export function info(msg: string): string {
-	return chalk.blue(`ℹ ${msg}`);
-}
-
 export function warn(msg: string): string {
 	return chalk.yellow(`⚠ ${msg}`);
 }

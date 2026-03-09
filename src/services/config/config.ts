@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_DIR } from "../../lib/config.js";
 
@@ -15,9 +15,11 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 export class ConfigService {
 	private static instance: ConfigService;
 	private config: StarkfiConfig;
+	private lastMtime = 0;
 
 	private constructor() {
 		this.config = this.load();
+		this.updateMtime();
 	}
 
 	static getInstance(): ConfigService {
@@ -28,6 +30,7 @@ export class ConfigService {
 	}
 
 	get(key: string): unknown {
+		this.refreshIfChanged();
 		return this.config[key];
 	}
 
@@ -42,7 +45,32 @@ export class ConfigService {
 	}
 
 	getAll(): StarkfiConfig {
+		this.refreshIfChanged();
 		return { ...this.config };
+	}
+
+	/** Re-read config from disk if the file was modified externally. */
+	private refreshIfChanged(): void {
+		try {
+			if (!existsSync(CONFIG_FILE)) return;
+			const mtime = statSync(CONFIG_FILE).mtimeMs;
+			if (mtime > this.lastMtime) {
+				this.config = this.load();
+				this.lastMtime = mtime;
+			}
+		} catch {
+			// File may have been deleted between check and stat
+		}
+	}
+
+	private updateMtime(): void {
+		try {
+			if (existsSync(CONFIG_FILE)) {
+				this.lastMtime = statSync(CONFIG_FILE).mtimeMs;
+			}
+		} catch {
+			// Ignore
+		}
 	}
 
 	private load(): StarkfiConfig {
@@ -61,5 +89,6 @@ export class ConfigService {
 			mkdirSync(CONFIG_DIR, { recursive: true });
 		}
 		writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), "utf-8");
+		this.updateMtime();
 	}
 }

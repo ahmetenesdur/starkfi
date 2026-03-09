@@ -42,6 +42,16 @@ export function resolveFeeModeConfig(
 // Patch paymaster feeMode: 'sponsored' → 'default' with gasToken for gasless mode.
 function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 	const account = wallet.getAccount();
+
+	// Defensive guard — if StarkZap SDK changes the internal method name, fail gracefully
+	if (typeof (account as any).executePaymasterTransaction !== "function") {
+		console.warn(
+			"[StarkFi] Cannot patch gasless mode — executePaymasterTransaction not found on account. " +
+				"Gas will use default sponsored mode. Consider updating StarkZap SDK."
+		);
+		return;
+	}
+
 	const originalExecutePaymaster = (account as any).executePaymasterTransaction.bind(account);
 
 	(account as any).executePaymasterTransaction = async function (

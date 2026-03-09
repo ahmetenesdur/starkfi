@@ -329,7 +329,7 @@ export async function getPosition(
 	}
 }
 
-export async function getVTokenAddress(
+async function getVTokenAddress(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	token: Token
