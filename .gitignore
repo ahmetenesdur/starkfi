@@ -5,4 +5,5 @@ dist/
 .env.local
 .agent/
 .agents/
+.jules/
 .DS_Store
