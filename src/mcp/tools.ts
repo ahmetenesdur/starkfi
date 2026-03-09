@@ -24,6 +24,7 @@ import {
 	handleBorrowAssets,
 	handleRepayDebt,
 	handleClosePosition,
+	handleGetPortfolio,
 } from "./handlers/index.js";
 import { StarkfiError } from "../lib/errors.js";
 
@@ -120,6 +121,14 @@ export function registerTools(server: McpServer): void {
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSendTokens)
+	);
+
+	server.tool(
+		"get_portfolio",
+		"Get complete DeFi portfolio overview: all token balances (with USD values), staking positions, and lending positions in one call.",
+		{},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleGetPortfolio)
 	);
 
 	// Trading (Fibrous API)

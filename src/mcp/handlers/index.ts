@@ -4,3 +4,4 @@ export * from "./trade.js";
 export * from "./staking.js";
 export * from "./config.js";
 export * from "./lending.js";
+export * from "./portfolio.js";

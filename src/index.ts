@@ -40,6 +40,7 @@ import {
 	registerLendCloseCommand,
 	registerLendStatusCommand,
 } from "./commands/lending/lending.js";
+import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
 
 const program = new Command();
 
@@ -77,6 +78,8 @@ registerLendBorrowCommand(program);
 registerLendRepayCommand(program);
 registerLendCloseCommand(program);
 registerLendStatusCommand(program);
+
+registerPortfolioCommand(program);
 
 registerConfigCommand(program);
 
