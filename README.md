@@ -9,6 +9,10 @@ The toolkit integrates the StarkZap SDK, Privy authentication, Fibrous trade agg
 StarkFi abstracts the complexities of the Starknet ecosystem through the following core capabilities:
 
 - **Intelligent Trade Routing:** Seamless token swaps aggregated via Fibrous for optimal execution paths.
+- **Multi-Swap:** Execute up to 3 token swaps in a single transaction via Fibrous batch routing.
+- **Transaction Batching:** Bundle different operations (swap + stake + supply + send) into a single Starknet multicall.
+- **Simulation / Dry Run:** Estimate fees and validate any transaction without broadcasting — available on swap, send, multi-swap, and batch.
+- **Portfolio Dashboard:** Consolidated view of all DeFi positions — token balances (with USD), staking, and lending.
 - **Advanced Gas Abstraction:** All transactions are routed through the Paymaster by default. Gas is paid in STRK (configurable to ETH, USDC, USDT, DAI). Developer-sponsored (Gasfree) mode is also available.
 - **Delegation and Staking Management:** Multi-token staking lifecycle controls (STRK, WBTC, tBTC, SolvBTC, LBTC), including entering pools, restaking, atomic compounding, and intent-based unstaking.
 - **Protocol-Level Lending:** Direct integration with Vesu V2 for supplying collateral, borrowing assets, and managing debt positions.
@@ -41,13 +45,27 @@ npx starkfi status                     # Check authentication status and API hea
 npx starkfi address                    # Display active Starknet address
 npx starkfi deploy                     # Deploy smart account contract on-chain
 npx starkfi balance [token]            # Query all token balances (STRK, ETH, ERC-20)
-npx starkfi send <amount> <token> <recipient> # Execute token transfer
+npx starkfi send <amount> <token> <recipient> [--simulate]  # Execute token transfer
+npx starkfi portfolio [--json]         # Complete DeFi portfolio (balances, staking, lending)
 ```
 
 #### Trading and Aggregation (Fibrous)
 
 ```bash
-npx starkfi trade <amount> <from> <to> # Execute aggregated token swap
+npx starkfi trade <amount> <from> <to> [--simulate]               # Execute aggregated token swap
+npx starkfi multi-swap "<pairs>" [--simulate]                     # Multi-token swap (2-3 pairs)
+# Example: npx starkfi multi-swap "100 USDC>ETH, 50 USDT>STRK"
+```
+
+#### Transaction Batching (Multicall)
+
+```bash
+npx starkfi batch [--simulate] \
+  --swap "100 USDC ETH" \
+  --stake "50 STRK karnot" \
+  --supply "200 USDC 0xPool" \
+  --send "10 STRK 0xAddr"
+# All options are repeatable. Minimum 2 operations required.
 ```
 
 #### Staking Operations
