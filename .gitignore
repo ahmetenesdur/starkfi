@@ -7,3 +7,4 @@ dist/
 .agents/
 .jules/
 .DS_Store
+skills-lock.json
