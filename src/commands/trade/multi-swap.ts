@@ -13,10 +13,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-/**
- * Parse multi-swap pairs string: "100 USDC>ETH, 50 USDC>STRK"
- * Returns array of { amount, fromToken, toToken }
- */
+/** Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs. */
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
 	const segments = input.split(",").map((s) => s.trim());
 	const parsed = [];
@@ -64,7 +61,6 @@ export function registerMultiSwapCommand(program: Command): void {
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				// Resolve tokens and build BatchSwapPair[]
 				spinner.text = "Resolving tokens...";
 				const pairs: BatchSwapPair[] = await Promise.all(
 					parsed.map(async (p) => {
@@ -79,11 +75,9 @@ export function registerMultiSwapCommand(program: Command): void {
 					})
 				);
 
-				// Get routes first for preview
 				spinner.text = "Finding optimal routes...";
 				const routes = await getRouteBatch(pairs);
 
-				// Show route summary (use API's outputToken info for correct decimals)
 				spinner.stop();
 				console.log();
 				console.log(
@@ -107,7 +101,6 @@ export function registerMultiSwapCommand(program: Command): void {
 				);
 				console.log();
 
-				// Get calldata for all pairs
 				spinner.start();
 				spinner.text = "Generating calldata...";
 				const calldataResults = await getCalldataBatch(
@@ -116,7 +109,6 @@ export function registerMultiSwapCommand(program: Command): void {
 					session.address
 				);
 
-				// Build multicall: approve + swap for each pair
 				const builder = wallet.tx();
 				for (let i = 0; i < pairs.length; i++) {
 					const pair = pairs[i];

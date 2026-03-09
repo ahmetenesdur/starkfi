@@ -123,8 +123,6 @@ export async function getCalldata(
 	return data;
 }
 
-// ─── Batch Swap (Fibrous routeBatch API) ──────────────────────
-
 export interface BatchSwapPair {
 	tokenIn: Token;
 	tokenOut: Token;
@@ -134,12 +132,7 @@ export interface BatchSwapPair {
 
 const MAX_BATCH_PAIRS = 3;
 
-/**
- * Fetch optimal routes for multiple swap pairs.
- * - If all pairs share the same output token → Fibrous routeBatch API (single request).
- * - Otherwise → parallel individual route requests (different output tokens).
- * Max 3 pairs per request.
- */
+/** Fetch routes for multiple swap pairs (max 3). */
 export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteResponse[]> {
 	if (pairs.length > MAX_BATCH_PAIRS) {
 		throw new StarkfiError(
@@ -148,7 +141,6 @@ export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteRespon
 		);
 	}
 
-	// routeBatch only supports shared output token (many-to-one swaps)
 	const allSameOutput = pairs.every(
 		(p) => p.tokenOut.address.toLowerCase() === pairs[0].tokenOut.address.toLowerCase()
 	);
@@ -187,14 +179,10 @@ export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteRespon
 		}
 	}
 
-	// Fallback / different output tokens: parallel individual route requests
 	return Promise.all(pairs.map((p) => getRoute(p.tokenIn, p.tokenOut, p.amount)));
 }
 
-/**
- * Fetch calldata for multiple swap pairs in parallel.
- * Each pair gets its own calldata to be combined into a single multicall.
- */
+/** Fetch calldata for multiple swap pairs in parallel. */
 export async function getCalldataBatch(
 	pairs: BatchSwapPair[],
 	slippage: number = DEFAULT_SLIPPAGE,
@@ -214,15 +202,13 @@ export async function getCalldataBatch(
 	);
 }
 
-// Fetches the current USD price of a token via Fibrous routing data.
-// Simulates a 1-unit swap to USDC and reads the `inputToken.price` from the response.
+/** Fetch current USD price of a token via Fibrous routing data. */
 export async function getTokenUsdPrice(token: Token): Promise<number> {
 	if (token.symbol.toUpperCase() === "USDC" || token.symbol.toUpperCase() === "USDT") {
 		return 1.0;
 	}
 
 	try {
-		// Dynamic import to avoid circular dependency (route.ts → tokens.ts → route.ts)
 		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC"));
 		const oneUnit = (10n ** BigInt(token.decimals)).toString();
 		const routeData = await getRoute(token, usdc, oneUnit);
@@ -231,7 +217,7 @@ export async function getTokenUsdPrice(token: Token): Promise<number> {
 			return parseFloat(routeData.inputToken.price);
 		}
 	} catch {
-		// Best-effort — return 0 if pricing fails
+		// Best-effort pricing
 	}
 	return 0;
 }

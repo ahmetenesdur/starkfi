@@ -11,8 +11,6 @@ import { getValidatorPools, resolvePoolForToken } from "../staking/staking.js";
 import { validateAddress } from "../../lib/validation.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-// ─── Types ───────────────────────────────────────────────────
-
 export type BatchOperationType = "swap" | "stake" | "supply" | "send";
 
 export interface BatchSwapParams {
@@ -53,12 +51,7 @@ export interface BatchOperation {
 	params: BatchParams;
 }
 
-// ─── Builder ─────────────────────────────────────────────────
-
-/**
- * Resolves each operation and chains their calls onto a shared TxBuilder.
- * Returns the builder ready for `.send()` or simulation.
- */
+/** Resolve each operation and chain calls onto a shared TxBuilder. */
 export async function buildBatch(
 	wallet: Wallet,
 	session: Session,
@@ -99,8 +92,6 @@ export async function buildBatch(
 
 	return { builder, summary };
 }
-
-// ─── Operation Builders ──────────────────────────────────────
 
 async function addSwapCalls(
 	builder: TxBuilder,
@@ -171,7 +162,6 @@ async function addSupplyCalls(
 	const token = await resolveToken(params.token);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const userAddress = wallet.address.toString();
-
 	const vTokenAddress = await getVTokenAddress(wallet, params.pool, token);
 
 	builder.approve(token, fromAddress(vTokenAddress), parsedAmount).add({
@@ -188,8 +178,6 @@ async function addSendCalls(builder: TxBuilder, params: BatchSendParams): Promis
 
 	builder.transfer(token, { to: fromAddress(validatedTo), amount: parsedAmount });
 }
-
-// ─── Formatting ──────────────────────────────────────────────
 
 function formatOpSummary(op: BatchOperation): string {
 	const p = op.params;

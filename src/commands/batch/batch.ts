@@ -6,23 +6,12 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-/**
- * Commander collect helper for repeatable options.
- * `--swap "10 USDC ETH"` can be passed multiple times.
- */
+/** Collect repeatable options into array. */
 function collect(value: string, previous: string[]): string[] {
 	return previous.concat([value]);
 }
 
-/**
- * Parse a raw operation string into a BatchOperation.
- *
- * Formats:
- *   --swap  "100 USDC ETH"           → swap 100 USDC → ETH
- *   --stake "50 STRK karnot"         → stake 50 STRK at validator karnot
- *   --supply "200 USDC 0xPool..."    → supply 200 USDC to Vesu pool
- *   --send  "10 STRK 0x04a3..."      → send 10 STRK to address
- */
+/** Parse "100 USDC ETH" into a typed BatchOperation. */
 function parseOperation(type: string, raw: string): BatchOperation {
 	const parts = raw.trim().split(/\s+/);
 
@@ -101,7 +90,6 @@ export function registerBatchCommand(program: Command): void {
 			const spinner = createSpinner("Preparing batch...").start();
 
 			try {
-				// Collect all operations
 				const operations: BatchOperation[] = [
 					...(opts.swap as string[]).map((s: string) => parseOperation("swap", s)),
 					...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
@@ -124,7 +112,6 @@ export function registerBatchCommand(program: Command): void {
 				spinner.text = "Building batch transaction...";
 				const { builder, summary } = await buildBatch(wallet, session, operations);
 
-				// Show operation summary
 				spinner.stop();
 				console.log("\n  📦 Batch Operations:\n");
 				summary.forEach((s, i) => console.log(`    ${i + 1}. ${s}`));

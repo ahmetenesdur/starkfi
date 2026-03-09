@@ -26,7 +26,7 @@ export function registerPortfolioCommand(program: Command): void {
 					return;
 				}
 
-				// ── Balances ─────────────────────────────
+				// Balances
 				console.log(`\n  💰 Token Balances\n`);
 
 				if (portfolio.balances.length > 0) {
@@ -44,7 +44,7 @@ export function registerPortfolioCommand(program: Command): void {
 					console.log("  No token balances found.\n");
 				}
 
-				// ── Staking ─────────────────────────────
+				// Staking
 				console.log(`\n  📈 Staking Positions\n`);
 
 				if (portfolio.staking.length > 0) {
@@ -64,7 +64,7 @@ export function registerPortfolioCommand(program: Command): void {
 					console.log("  No staking positions found.\n");
 				}
 
-				// ── Lending ─────────────────────────────
+				// Lending
 				console.log(`\n  🏦 Lending Positions (Vesu)\n`);
 
 				if (portfolio.lending.length > 0) {
@@ -78,7 +78,7 @@ export function registerPortfolioCommand(program: Command): void {
 					console.log("  No lending positions found.\n");
 				}
 
-				// ── Summary ─────────────────────────────
+				// Summary
 				console.log();
 				console.log(
 					formatResult({

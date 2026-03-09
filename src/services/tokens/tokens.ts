@@ -2,7 +2,6 @@ import { ChainId, getPresets, type Token } from "starkzap";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 export function fetchTokens(): Token[] {
-	// getPresets returns a Record<string, Token>. We convert it to an array.
 	const presetTokens = getPresets(ChainId.MAINNET);
 	return Object.values(presetTokens);
 }

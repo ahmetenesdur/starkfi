@@ -6,7 +6,7 @@ import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 export interface SimulationResult {
 	success: boolean;
-	/** Estimated fee in ETH (e.g. "0.000012") */
+	/** Estimated fee in ETH (e.g. "0.000012 ETH") */
 	estimatedFee: string;
 	/** Estimated fee in USD (e.g. "$0.02") */
 	estimatedFeeUsd: string;
@@ -17,16 +17,10 @@ export interface SimulationResult {
 }
 
 /**
- * Simulate a transaction built via StarkZap's TxBuilder without sending it on-chain.
- *
- * Runs two steps:
- * 1. `preflight()` — checks if the tx would succeed or revert
- * 2. `estimateFee()` — calculates gas cost
- *
- * The ETH fee is converted to USD via Fibrous pricing.
+ * Simulate a transaction without sending it on-chain.
+ * Runs preflight check, then estimates gas cost and converts to USD.
  */
 export async function simulateTransaction(builder: TxBuilder): Promise<SimulationResult> {
-	// 1. Get the call count for reporting
 	const calls = await builder.calls();
 	const callCount = calls.length;
 
@@ -37,7 +31,6 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 		);
 	}
 
-	// 2. Run preflight simulation
 	const preflight = await builder.preflight();
 
 	if (!preflight.ok) {
@@ -50,17 +43,14 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 		};
 	}
 
-	// 3. Estimate fee (only if preflight passed)
 	try {
 		const feeEstimate = await builder.estimateFee();
 		const overallFee = BigInt(feeEstimate.overall_fee);
 
-		// Convert from wei to ETH
 		const ethToken = await resolveToken("ETH");
 		const feeAmount = Amount.fromRaw(overallFee, ethToken);
 		const feeFormatted = feeAmount.toUnit();
 
-		// Convert to USD
 		let feeUsd = "unknown";
 		try {
 			const ethPrice = await getTokenUsdPrice(ethToken);
@@ -79,7 +69,6 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 			callCount,
 		};
 	} catch (error) {
-		// Fee estimation can fail even if preflight passed (e.g. paymaster issues)
 		return {
 			success: true,
 			estimatedFee: "estimation failed",

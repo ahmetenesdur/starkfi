@@ -59,7 +59,6 @@ export async function getPortfolio(
 
 	const balanceUsd = balances.reduce((sum, b) => sum + b.usdValue, 0);
 	const stakingUsd = staking.reduce((sum, s) => sum + s.usdValue, 0);
-	const totalUsdValue = balanceUsd + stakingUsd;
 
 	return {
 		address: session.address,
@@ -67,18 +66,14 @@ export async function getPortfolio(
 		balances,
 		staking,
 		lending,
-		totalUsdValue,
+		totalUsdValue: balanceUsd + stakingUsd,
 	};
 }
-
-// ─── Internal Helpers ─────────────────────────────────────────
 
 const USD_PRICE_CONCURRENCY = 5;
 
 async function fetchBalancesWithUsd(wallet: Wallet): Promise<PortfolioBalance[]> {
 	const rawBalances = await getBalances(wallet);
-
-	// Fetch USD prices concurrently with a sliding window
 	const results: PortfolioBalance[] = [];
 	let index = 0;
 
@@ -94,7 +89,7 @@ async function fetchBalancesWithUsd(wallet: Wallet): Promise<PortfolioBalance[]>
 				const price = await getTokenUsdPrice(token);
 				usdValue = parseFloat(bal.balance) * price;
 			} catch {
-				// Price unavailable — show balance without USD
+				// Price unavailable
 			}
 
 			results.push({
@@ -112,7 +107,6 @@ async function fetchBalancesWithUsd(wallet: Wallet): Promise<PortfolioBalance[]>
 	);
 	await Promise.all(workers);
 
-	// Sort by USD value descending
 	return results.sort((a, b) => b.usdValue - a.usdValue);
 }
 
@@ -122,10 +116,8 @@ async function fetchStaking(
 	session: Session
 ): Promise<PortfolioStaking[]> {
 	const overview = await getStakingOverview(sdk, wallet, session.network, session.address);
-
 	if (overview.positions.length === 0) return [];
 
-	// Get STRK price once for all positions
 	let strkPrice = 0;
 	try {
 		const strk = await resolveToken("STRK");
@@ -144,10 +136,6 @@ async function fetchStaking(
 	}));
 }
 
-/**
- * Extract the numeric part from a formatted amount string.
- * e.g. "STRK 2.9004" → 2.9004, "0.093643" → 0.093643
- */
 function parseNumericPart(formatted: string): number {
 	const match = formatted.match(/([\d.]+)/);
 	return match ? parseFloat(match[1]) : 0;
@@ -162,11 +150,7 @@ async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
 			try {
 				const supplied = await getSuppliedBalance(wallet, pool.address, asset.symbol);
 				if (supplied && supplied !== "0") {
-					results.push({
-						pool: pool.name,
-						asset: asset.symbol,
-						supplied,
-					});
+					results.push({ pool: pool.name, asset: asset.symbol, supplied });
 				}
 			} catch {
 				// Skip assets that fail

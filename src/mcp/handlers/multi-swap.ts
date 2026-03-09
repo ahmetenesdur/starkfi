@@ -11,9 +11,6 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { jsonResult } from "./utils.js";
 
-// ─── Shared Helpers ──────────────────────────────────────────
-
-/** Resolve tokens and build BatchSwapPair[] from raw MCP args. */
 async function resolvePairs(
 	swaps: { amount: string; from_token: string; to_token: string }[]
 ): Promise<BatchSwapPair[]> {
@@ -26,8 +23,6 @@ async function resolvePairs(
 		})
 	);
 }
-
-// ─── Handlers ────────────────────────────────────────────────
 
 export async function handleGetMultiSwapQuote(args: {
 	swaps: { amount: string; from_token: string; to_token: string }[];
@@ -59,7 +54,6 @@ export async function handleMultiSwap(args: {
 	const pairs = await resolvePairs(args.swaps);
 	const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
 
-	// Build multicall: approve + swap for each pair
 	const builder = wallet.tx();
 	for (let i = 0; i < pairs.length; i++) {
 		const pair = pairs[i];
@@ -73,7 +67,6 @@ export async function handleMultiSwap(args: {
 		});
 	}
 
-	// Format expected outputs from calldata responses
 	const formatSwap = (i: number) => ({
 		amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
 		expectedAmountOut: `~${Amount.fromRaw(BigInt(calldataResults[i].route.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
