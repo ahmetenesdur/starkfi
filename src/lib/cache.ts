@@ -32,7 +32,7 @@ export function setCache<T>(key: string, data: T, ttl = CACHE_TTL): void {
 	const dir = dirname(filePath);
 
 	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
+		mkdirSync(dir, { recursive: true, mode: 0o700 });
 	}
 
 	const entry: CacheEntry<T> = {
@@ -41,5 +41,8 @@ export function setCache<T>(key: string, data: T, ttl = CACHE_TTL): void {
 		ttl,
 	};
 
-	writeFileSync(filePath, JSON.stringify(entry), "utf-8");
+	writeFileSync(filePath, JSON.stringify(entry), {
+		encoding: "utf-8",
+		mode: 0o600,
+	});
 }

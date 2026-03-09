@@ -58,8 +58,11 @@ export class ConfigService {
 
 	private save(): void {
 		if (!existsSync(CONFIG_DIR)) {
-			mkdirSync(CONFIG_DIR, { recursive: true });
+			mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
 		}
-		writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), "utf-8");
+		writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), {
+			encoding: "utf-8",
+			mode: 0o600,
+		});
 	}
 }
