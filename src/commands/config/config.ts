@@ -64,25 +64,6 @@ export function registerConfigCommand(program: Command): void {
 			}
 		});
 
-	// Kept as hidden alias for backwards compatibility
-	configCmd
-		.command("set-gasless", { hidden: true })
-		.description("Alias for set-gasfree (deprecated)")
-		.argument("<mode>", "on or off")
-		.action((mode: string) => {
-			if (!["on", "off"].includes(mode)) {
-				console.log(warn("Mode must be 'on' or 'off'"));
-				process.exit(1);
-			}
-			const configService = ConfigService.getInstance();
-			configService.set("gasfreeMode", mode === "on");
-			if (mode === "on") configService.delete("gasToken");
-			console.log(
-				warn("Hint: 'set-gasless' is deprecated. Use 'starkfi config set-gasfree' instead.")
-			);
-			console.log(success(`Gasfree mode: ${mode}`));
-		});
-
 	// Gas token selection: default is STRK, user can switch to any supported token
 	configCmd
 		.command("set-gas-token")

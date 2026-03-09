@@ -8,7 +8,6 @@ export async function handleConfigAction(args: {
 		| "get-rpc"
 		| "set-network"
 		| "set-gasfree"
-		| "set-gasless"
 		| "set-gas-token"
 		| "list";
 	value?: string;
@@ -32,7 +31,6 @@ export async function handleConfigAction(args: {
 			configService.set("network", args.value);
 			return jsonResult({ success: true, network: args.value });
 		}
-		case "set-gasless": // deprecated alias
 		case "set-gasfree": {
 			if (!args.value || !["on", "off"].includes(args.value)) {
 				return textResult("Gasfree mode must be 'on' or 'off'.");

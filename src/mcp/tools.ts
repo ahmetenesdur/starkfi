@@ -270,7 +270,6 @@ export function registerTools(server: McpServer): void {
 					"set-network",
 					"set-gasfree",
 					"set-gas-token",
-					"set-gasless",
 				])
 				.describe(
 					"list: view all. set-gasfree: dev pays gas using paymaster credits. set-gas-token: user pays gas in ERC20 token instead of STRK."
