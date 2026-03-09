@@ -4,6 +4,7 @@ import { ConfigService } from "../../services/config/config.js";
 import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { Amount, fromAddress } from "starkzap";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { jsonResult } from "./utils.js";
 
 export async function handleGetBalance(args: { token?: string }) {
@@ -50,7 +51,12 @@ export async function handleDeployAccount() {
 	});
 }
 
-export async function handleSendTokens(args: { amount: string; token: string; recipient: string }) {
+export async function handleSendTokens(args: {
+	amount: string;
+	token: string;
+	recipient: string;
+	simulate?: boolean;
+}) {
 	const session = requireSession();
 	const { wallet } = await initSDKAndWallet(session);
 
@@ -68,8 +74,23 @@ export async function handleSendTokens(args: { amount: string; token: string; re
 		});
 	}
 
-	const tx = await wallet.transfer(token, [{ to: fromAddress(args.recipient), amount }]);
+	const builder = wallet.tx().transfer(token, [{ to: fromAddress(args.recipient), amount }]);
 
+	if (args.simulate) {
+		const sim = await simulateTransaction(builder);
+		return jsonResult({
+			success: sim.success,
+			mode: "SIMULATION (no TX sent)",
+			amount: `${args.amount} ${args.token.toUpperCase()}`,
+			to: args.recipient,
+			estimatedFee: sim.estimatedFee,
+			estimatedFeeUsd: sim.estimatedFeeUsd,
+			callCount: sim.callCount,
+			...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+		});
+	}
+
+	const tx = await builder.send();
 	await tx.wait();
 
 	return jsonResult({

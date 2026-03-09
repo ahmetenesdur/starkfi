@@ -14,7 +14,6 @@ export async function handleBatchExecute(args: {
 
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	// Cast zod-inferred params to typed BatchOperation[]
 	const operations = args.operations as unknown as BatchOperation[];
 
 	const { builder, summary } = await buildBatch(wallet, session, operations);

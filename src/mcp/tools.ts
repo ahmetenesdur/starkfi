@@ -31,10 +31,8 @@ import {
 } from "./handlers/index.js";
 import { StarkfiError } from "../lib/errors.js";
 
-// Standardised error handling wrapper for all MCP tools.
 function withErrorHandling<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	T extends (...args: any[]) => Promise<{ content: { type: "text"; text: string }[] }>,
+	T extends (...args: never[]) => Promise<{ content: { type: "text"; text: string }[] }>,
 >(fn: T) {
 	return async (
 		...args: Parameters<T>
@@ -69,8 +67,6 @@ function withErrorHandling<
 }
 
 export function registerTools(server: McpServer): void {
-	// Auth & Generic Info
-
 	server.tool(
 		"get_auth_status",
 		"Check authentication status and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
@@ -88,8 +84,6 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetTxStatus)
 	);
-
-	// Wallet & Assets
 
 	server.tool(
 		"get_balance",
@@ -116,11 +110,17 @@ export function registerTools(server: McpServer): void {
 
 	server.tool(
 		"send_tokens",
-		"Transfer tokens to a recipient on Starknet. Simulates the transfer before broadcasting to catch insufficient funds early.",
+		"Transfer tokens to a recipient on Starknet. Set simulate=true to estimate fees without executing.",
 		{
 			amount: z.string().describe("Amount to send (e.g. '0.1', '100')"),
 			token: z.string().describe("Token symbol (e.g. 'STRK', 'ETH', 'USDC')"),
 			recipient: z.string().describe("Recipient Starknet address (0x...)"),
+			simulate: z
+				.boolean()
+				.optional()
+				.describe(
+					"Set true to simulate only — estimates fees without sending a transaction"
+				),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSendTokens)
@@ -133,8 +133,6 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetPortfolio)
 	);
-
-	// Trading (Fibrous API)
 
 	server.tool(
 		"get_swap_quote",
@@ -206,8 +204,6 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleMultiSwap)
 	);
 
-	// Batch (Multicall)
-
 	server.tool(
 		"batch_execute",
 		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap, stake, supply, send. Requires at least 2 operations.",
@@ -235,8 +231,6 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleBatchExecute)
 	);
-
-	// Staking
 
 	server.tool(
 		"list_validators",
@@ -343,8 +337,6 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleCompoundRewards)
 	);
 
-	// Config / Utilities
-
 	server.tool(
 		"config_action",
 		"View and modify starkfi global configuration such as active network, RPC URL, and Gas Payment mechanisms.",
@@ -364,8 +356,6 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: false },
 		withErrorHandling(handleConfigAction)
 	);
-
-	// Lending (Vesu V2)
 
 	server.tool(
 		"list_lending_pools",

@@ -20,7 +20,7 @@ export async function handleGetSwapQuote(args: {
 
 	const routeResponse = await getRoute(tokenIn, tokenOut, rawAmount);
 
-	const outputAmount = Amount.fromRaw(routeResponse.outputAmount, tokenOut);
+	const outputAmount = Amount.fromRaw(BigInt(routeResponse.outputAmount), tokenOut);
 	const outputFormatted = outputAmount.toUnit();
 
 	return jsonResult({
@@ -70,7 +70,7 @@ export async function handleSwapTokens(args: {
 			calldata: calldataResponse.calldata,
 		});
 
-	const outputAmount = Amount.fromRaw(calldataResponse.route.outputAmount, tokenOut);
+	const outputAmount = Amount.fromRaw(BigInt(calldataResponse.route.outputAmount), tokenOut);
 	const outputFormatted = outputAmount.toUnit();
 
 	if (args.simulate) {
