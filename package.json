@@ -1,6 +1,6 @@
 {
 	"name": "starkfi",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Starknet DeFi CLI + MCP Server — Swaps, multi-swap, batch (multicall), staking, lending, simulation, portfolio, gasless transactions",
 	"type": "module",
 	"bin": {
@@ -15,7 +15,9 @@
 	},
 	"files": [
 		"dist",
+		"skills",
 		"README.md",
+		"MCP.md",
 		"LICENSE"
 	],
 	"scripts": {
