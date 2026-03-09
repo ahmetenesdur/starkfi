@@ -17,7 +17,7 @@ To integrate StarkFi into your AI environment, configure your specific MCP clien
 }
 ```
 
-**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi auth login` or `npx starkfi auth import`) before the MCP server can execute any state-mutating transactions on behalf of the user.
+**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi auth login`) before the MCP server can execute any state-mutating transactions on behalf of the user.
 
 ## Comprehensive Tool Registry
 
@@ -65,6 +65,6 @@ These tools construct and broadcast transactions. The connecting AI client is st
 
 ### Configuration Utilities
 
-| Tool Identifier | Functional Description                                                                                                                                                                                          |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config_action` | Modifies global CLI behavior including RPC routing, network selection, and Gas Abstraction (default: gasless via Paymaster in STRK; configurable to ETH, USDC, USDT, DAI; or developer-sponsored Gasfree mode). |
+| Tool Identifier | Functional Description                                                                                                                                                                                                     |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config_action` | Views and modifies global CLI behavior: RPC routing (set/get), network selection, and Gas Abstraction (default: gasless via Paymaster in STRK; configurable to ETH, USDC, USDT, DAI; or developer-sponsored Gasfree mode). |

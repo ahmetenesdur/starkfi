@@ -44,16 +44,16 @@ npx starkfi auth logout                # Terminate active session
 npx starkfi status                     # Check authentication status and API health
 npx starkfi address                    # Display active Starknet address
 npx starkfi deploy                     # Deploy smart account contract on-chain
-npx starkfi balance [token]            # Query all token balances (STRK, ETH, ERC-20)
-npx starkfi send <amount> <token> <recipient> [--simulate]  # Execute token transfer
-npx starkfi portfolio [--json]         # Complete DeFi portfolio (balances, staking, lending)
+npx starkfi balance [--token <symbol>] [--json]             # Query token balances (STRK, ETH, ERC-20)
+npx starkfi send <amount> <token> <recipient> [--simulate] [--json]  # Execute token transfer
+npx starkfi portfolio [--json]                              # Complete DeFi portfolio (balances, staking, lending)
 ```
 
 #### Trading and Aggregation (Fibrous)
 
 ```bash
-npx starkfi trade <amount> <from> <to> [--simulate]               # Execute aggregated token swap
-npx starkfi multi-swap "<pairs>" [--simulate]                     # Multi-token swap (2-3 pairs)
+npx starkfi trade <amount> <from> <to> [--slippage <percent>] [--simulate] [--json]
+npx starkfi multi-swap "<pairs>" [--slippage <percent>] [--simulate] [--json]
 # Example: npx starkfi multi-swap "100 USDC>ETH, 50 USDT>STRK"
 ```
 
@@ -71,10 +71,10 @@ npx starkfi batch [--simulate] \
 #### Staking Operations
 
 ```bash
-npx starkfi validators                        # Retrieve active validator set
-npx starkfi pools <validator>                 # Query delegation pools per validator (multi-token)
-npx starkfi stake-status [validator]          # Display comprehensive or filtered staking dashboard
-npx starkfi stake <amount> --validator <name> [--token <symbol>]  # Smart stake (default: STRK)
+npx starkfi validators [--json]               # Retrieve active validator set
+npx starkfi pools <validator> [--json]        # Query delegation pools per validator (multi-token)
+npx starkfi stake-status [validator] [--json] # Display comprehensive or filtered staking dashboard
+npx starkfi stake <amount> --validator <name> [--token <symbol>] [--simulate]  # Smart stake (default: STRK)
 npx starkfi rewards --validator <name> [--token <symbol>] <--claim|--compound>
 npx starkfi unstake <intent|exit> --validator <name> [--token <symbol>] [--amount <amount>]
 ```
@@ -85,6 +85,7 @@ npx starkfi unstake <intent|exit> --validator <name> [--token <symbol>] [--amoun
 npx starkfi tx-status <hash>                  # Query transaction receipt and status
 npx starkfi config list                       # Display current environment configuration
 npx starkfi config set-rpc <url>              # Override default RPC endpoint
+npx starkfi config get-rpc                    # Show current RPC URL
 npx starkfi config set-network <mainnet|sepolia> # Modify target network
 npx starkfi config set-gasfree <on|off>       # Toggle developer-sponsored gas (Paymaster credits)
 npx starkfi config set-gas-token <token|reset> # Set gas payment token (default: STRK)
@@ -120,6 +121,24 @@ npx starkfi mcp-start
 ```
 
 For detailed integration instructions and the complete LLM tool registry, refer to the [MCP Documentation](MCP.md).
+
+## Agent Skills
+
+StarkFi ships with **10 agent skills** — structured instruction sets that teach AI coding assistants (Cursor, Claude, Antigravity) how to use the CLI without custom prompting.
+
+| Category    | Skills                                                       |
+| ----------- | ------------------------------------------------------------ |
+| Auth        | `authenticate-wallet`                                        |
+| Wallet Data | `balance`, `portfolio`                                       |
+| Transaction | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending` |
+| Utility     | `config`                                                     |
+
+```bash
+# Install via Skills CLI
+npx skills add ahmetenesdur/starkfi
+```
+
+Each skill documents the exact commands, parameters, error handling, and multi-step workflows an agent should follow. For full details, see the [Skills Documentation](skills/README.md).
 
 ## License
 
