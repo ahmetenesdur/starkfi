@@ -81,7 +81,7 @@ export async function stake(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	amount: string,
-	tokenSymbol: string = "STRK"
+	tokenSymbol = "STRK"
 ): Promise<{ hash: string; explorerUrl: string }> {
 	const token = await resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
@@ -144,7 +144,7 @@ export async function exitPoolIntent(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	amount: string,
-	tokenSymbol: string = "STRK"
+	tokenSymbol = "STRK"
 ): Promise<{ hash: string; explorerUrl: string }> {
 	const token = await resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);

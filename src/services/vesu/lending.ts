@@ -107,7 +107,7 @@ export async function borrow(
 	collateralAmount: string,
 	debtTokenSymbol: string,
 	debtAmount: string,
-	useSupplied: boolean = false
+	useSupplied = false
 ): Promise<TxResult> {
 	const collateralToken = await resolveToken(collateralTokenSymbol);
 	const debtToken = await resolveToken(debtTokenSymbol);

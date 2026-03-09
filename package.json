@@ -19,7 +19,7 @@
 		"LICENSE"
 	],
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc -p tsconfig.build.json",
 		"dev": "node --import tsx/esm src/index.ts",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint src/",
@@ -65,16 +65,16 @@
 		"env-paths": "^3.0.0",
 		"inquirer": "^13.3.0",
 		"ora": "^9.3.0",
-		"starknet": "^9.2.1",
+		"starknet": "^9.4.2",
 		"starkzap": "^1.0.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^22.19.11",
-		"eslint": "^10.0.2",
+		"@types/node": "^22.19.15",
+		"eslint": "^10.0.3",
 		"eslint-config-prettier": "^10.1.8",
-		"globals": "^17.3.0",
+		"globals": "^17.4.0",
 		"jiti": "^2.6.1",
 		"prettier": "^3.8.1",
 		"tsx": "^4.21.0",

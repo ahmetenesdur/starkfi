@@ -31,10 +31,10 @@ interface RouteResponse {
 	outputAmount: string;
 	estimatedGasUsed?: string;
 	estimatedGasUsedInUsd?: number;
-	route: Array<{
+	route: {
 		percent: string;
 		swaps: RouteSwap[][];
-	}>;
+	}[];
 	time?: number;
 	errorMessage?: string;
 }
