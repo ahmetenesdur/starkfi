@@ -1,3 +1,0 @@
-## 2024-05-19 - Concurrent Balance Queries RPC Bottleneck
-**Learning:** `Promise.all` mapping over 72+ token balance queries via `wallet.balanceOf` severely bottlenecks due to RPC rate limiting and network latency, bringing query times up significantly. Chunking with a `for` loop resolves rate limiting but introduces wait times equal to the slowest request in each chunk.
-**Action:** Implemented a concurrent sliding window (worker pool) approach for any large array of RPC requests in Starknet integrations to maintain max throughput without hitting rate limits. Apply this pattern to any future large map loops making RPC calls.
