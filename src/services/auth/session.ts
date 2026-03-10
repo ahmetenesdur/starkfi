@@ -54,8 +54,9 @@ function isSessionExpired(token: string): boolean {
 		};
 		if (!payload.exp) return false;
 
-		// 5-minute buffer — catch sessions about to expire
-		return Date.now() >= (payload.exp - 300) * 1000;
+		// Buffer before actual expiry to avoid mid-request failures
+		const SESSION_EXPIRY_BUFFER_SECONDS = 300;
+		return Date.now() >= (payload.exp - SESSION_EXPIRY_BUFFER_SECONDS) * 1000;
 	} catch {
 		return false;
 	}

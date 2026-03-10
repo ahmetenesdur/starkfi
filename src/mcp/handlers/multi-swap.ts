@@ -16,8 +16,8 @@ async function resolvePairs(
 ): Promise<BatchSwapPair[]> {
 	return Promise.all(
 		swaps.map(async (s) => {
-			const tokenIn = await resolveToken(s.from_token);
-			const tokenOut = await resolveToken(s.to_token);
+			const tokenIn = resolveToken(s.from_token);
+			const tokenOut = resolveToken(s.to_token);
 			const parsedAmount = Amount.parse(s.amount, tokenIn);
 			return { tokenIn, tokenOut, amount: parsedAmount.toBase().toString() };
 		})

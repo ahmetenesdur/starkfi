@@ -2,6 +2,7 @@ import { Amount, fromAddress, type Token } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import type { TxResult } from "../../lib/types.js";
 import { POOL_FACTORY_ADDRESS, DENOMINATION_ASSETS } from "./config.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
 import { fetchPool } from "./api.js";
@@ -13,11 +14,6 @@ export interface LendingPosition {
 	debtAmount: string;
 	healthFactor?: number;
 	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "UNKNOWN";
-}
-
-export interface TxResult {
-	hash: string;
-	explorerUrl: string;
 }
 
 export function splitU256(value: bigint): [string, string] {
@@ -42,7 +38,7 @@ export async function supply(
 	tokenSymbol: string,
 	amount: string
 ): Promise<TxResult> {
-	const token = await resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const userAddress = wallet.address.toString();
 
@@ -81,7 +77,7 @@ export async function withdraw(
 	tokenSymbol: string,
 	amount: string
 ): Promise<TxResult> {
-	const token = await resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
 	const userAddress = wallet.address.toString();
@@ -109,8 +105,8 @@ export async function borrow(
 	debtAmount: string,
 	useSupplied = false
 ): Promise<TxResult> {
-	const collateralToken = await resolveToken(collateralTokenSymbol);
-	const debtToken = await resolveToken(debtTokenSymbol);
+	const collateralToken = resolveToken(collateralTokenSymbol);
+	const debtToken = resolveToken(debtTokenSymbol);
 	const parsedCollateral = Amount.parse(collateralAmount, collateralToken);
 	const parsedDebt = Amount.parse(debtAmount, debtToken);
 	const userAddress = wallet.address.toString();
@@ -178,8 +174,8 @@ export async function repay(
 	debtTokenSymbol: string,
 	repayAmount: string
 ): Promise<TxResult> {
-	const collateralToken = await resolveToken(collateralTokenSymbol);
-	const debtToken = await resolveToken(debtTokenSymbol);
+	const collateralToken = resolveToken(collateralTokenSymbol);
+	const debtToken = resolveToken(debtTokenSymbol);
 	const parsedRepay = Amount.parse(repayAmount, debtToken);
 	const userAddress = wallet.address.toString();
 
@@ -218,8 +214,8 @@ export async function closePosition(
 		throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
 	}
 
-	const collateralToken = await resolveToken(collateralTokenSymbol);
-	const debtToken = await resolveToken(debtTokenSymbol);
+	const collateralToken = resolveToken(collateralTokenSymbol);
+	const debtToken = resolveToken(debtTokenSymbol);
 
 	const parsedCollateral = Amount.parse(position.collateralAmount, collateralToken);
 	const parsedDebt = Amount.parse(position.debtAmount, debtToken);
@@ -255,8 +251,8 @@ export async function getPosition(
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string
 ): Promise<LendingPosition | null> {
-	const collateralToken = await resolveToken(collateralTokenSymbol);
-	const debtToken = await resolveToken(debtTokenSymbol);
+	const collateralToken = resolveToken(collateralTokenSymbol);
+	const debtToken = resolveToken(debtTokenSymbol);
 	const userAddress = wallet.address.toString();
 
 	try {
@@ -356,7 +352,7 @@ export async function getSuppliedBalance(
 	poolAddress: string,
 	tokenSymbol: string
 ): Promise<string | null> {
-	const token = await resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol);
 	const userAddress = wallet.address.toString();
 
 	try {

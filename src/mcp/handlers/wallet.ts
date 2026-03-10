@@ -12,7 +12,7 @@ export async function handleGetBalance(args: { token?: string }) {
 	const { wallet } = await initSDKAndWallet(session);
 
 	if (args.token) {
-		const tokenType = await resolveToken(args.token);
+		const tokenType = resolveToken(args.token);
 
 		const balanceAmount = await wallet.balanceOf(tokenType);
 		return jsonResult({
@@ -62,7 +62,7 @@ export async function handleSendTokens(args: {
 
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const token = await resolveToken(args.token);
+	const token = resolveToken(args.token);
 
 	const amount = Amount.parse(args.amount, token);
 

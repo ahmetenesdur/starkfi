@@ -1,6 +1,7 @@
 import { VESU_API_BASE, V2_POOLS } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
+import { fetchWithTimeout } from "../../lib/fetch.js";
 
 export interface VesuAsset {
 	address: string;
@@ -61,7 +62,7 @@ interface RawPoolResponse {
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const REQUEST_TIMEOUT_MS = 15_000;
+const VESU_REQUEST_TIMEOUT_MS = 15_000;
 
 interface CacheEntry {
 	data: VesuPoolData;
@@ -115,14 +116,12 @@ export async function fetchPool(address: string): Promise<VesuPoolData> {
 	const cached = getCached(address);
 	if (cached) return cached;
 
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
 	try {
 		const url = `${VESU_API_BASE}/pools/${address}`;
-		const res = await withRetry(() => fetch(url, { signal: controller.signal }), {
-			retryOnCodes: [ErrorCode.NETWORK_ERROR],
-		});
+		const res = await withRetry(
+			() => fetchWithTimeout(url, { timeoutMs: VESU_REQUEST_TIMEOUT_MS }),
+			{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
+		);
 
 		if (!res.ok) {
 			throw new StarkfiError(
@@ -164,8 +163,6 @@ export async function fetchPool(address: string): Promise<VesuPoolData> {
 			ErrorCode.NETWORK_ERROR,
 			`Failed to fetch pool data from Vesu API: ${error instanceof Error ? error.message : String(error)}`
 		);
-	} finally {
-		clearTimeout(timer);
 	}
 }
 

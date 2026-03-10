@@ -6,6 +6,7 @@ import { resolveToken } from "../tokens/tokens.js";
 import { getStakingOverview } from "../staking/staking.js";
 import { getSuppliedBalance } from "../vesu/lending.js";
 import { getVesuPools } from "../vesu/pools.js";
+import { runConcurrent } from "../../lib/concurrency.js";
 
 export interface PortfolioBalance {
 	symbol: string;
@@ -38,10 +39,7 @@ export interface PortfolioData {
 	totalUsdValue: number;
 }
 
-/**
- * Fetch complete DeFi portfolio: balances (with USD), staking, and lending.
- * Uses Promise.allSettled so partial failures don't block the rest.
- */
+// Fetch complete DeFi portfolio: balances (with USD), staking, and lending.
 export async function getPortfolio(
 	sdk: StarkZap,
 	wallet: Wallet,
@@ -74,38 +72,24 @@ const USD_PRICE_CONCURRENCY = 5;
 
 async function fetchBalancesWithUsd(wallet: Wallet): Promise<PortfolioBalance[]> {
 	const rawBalances = await getBalances(wallet);
-	const results: PortfolioBalance[] = [];
-	let index = 0;
 
-	const worker = async () => {
-		while (index < rawBalances.length) {
-			const current = index++;
-			const bal = rawBalances[current];
-			if (!bal) continue;
-
-			let usdValue = 0;
-			try {
-				const token = await resolveToken(bal.symbol);
-				const price = await getTokenUsdPrice(token);
-				usdValue = parseFloat(bal.balance) * price;
-			} catch {
-				// Price unavailable
-			}
-
-			results.push({
-				symbol: bal.symbol,
-				name: bal.name,
-				amount: bal.balance,
-				usdValue,
-			});
+	const results = await runConcurrent(rawBalances, USD_PRICE_CONCURRENCY, async (bal) => {
+		let usdValue = 0;
+		try {
+			const token = resolveToken(bal.symbol);
+			const price = await getTokenUsdPrice(token);
+			usdValue = parseFloat(bal.balance) * price;
+		} catch {
+			// Price unavailable
 		}
-	};
 
-	const workers = Array.from(
-		{ length: Math.min(USD_PRICE_CONCURRENCY, rawBalances.length) },
-		() => worker()
-	);
-	await Promise.all(workers);
+		return {
+			symbol: bal.symbol,
+			name: bal.name,
+			amount: bal.balance,
+			usdValue,
+		} as PortfolioBalance;
+	});
 
 	return results.sort((a, b) => b.usdValue - a.usdValue);
 }
@@ -120,7 +104,7 @@ async function fetchStaking(
 
 	let strkPrice = 0;
 	try {
-		const strk = await resolveToken("STRK");
+		const strk = resolveToken("STRK");
 		strkPrice = await getTokenUsdPrice(strk);
 	} catch {
 		// Price unavailable

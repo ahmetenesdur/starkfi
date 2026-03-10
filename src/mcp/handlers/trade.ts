@@ -12,8 +12,8 @@ export async function handleGetSwapQuote(args: {
 	from_token: string;
 	to_token: string;
 }) {
-	const tokenIn = await resolveToken(args.from_token);
-	const tokenOut = await resolveToken(args.to_token);
+	const tokenIn = resolveToken(args.from_token);
+	const tokenOut = resolveToken(args.to_token);
 
 	const parsedAmount = Amount.parse(args.amount, tokenIn);
 	const rawAmount = parsedAmount.toBase().toString();
@@ -47,8 +47,8 @@ export async function handleSwapTokens(args: {
 
 	await wallet.ensureReady({ deploy: "if_needed" });
 
-	const tokenIn = await resolveToken(args.from_token);
-	const tokenOut = await resolveToken(args.to_token);
+	const tokenIn = resolveToken(args.from_token);
+	const tokenOut = resolveToken(args.to_token);
 
 	const parsedAmount = Amount.parse(args.amount, tokenIn);
 	const rawAmount = parsedAmount.toBase().toString();

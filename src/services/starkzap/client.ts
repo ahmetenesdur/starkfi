@@ -2,6 +2,7 @@ import type { Wallet } from "starkzap";
 import { StarkZap, PrivySigner, ArgentXV050Preset, type FeeMode } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
+import type { Network } from "../../lib/types.js";
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
@@ -68,11 +69,8 @@ function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 		return originalExecutePaymaster(calls, patchedDetails, ...rest);
 	};
 }
-
-let sdkInstance: StarkZap | null = null;
-
 export function createSDK(
-	network: "mainnet" | "sepolia" = "mainnet",
+	network: Network = "mainnet",
 	rpcUrl?: string,
 	needsPaymaster = false,
 	paymasterUrl?: string
@@ -85,8 +83,7 @@ export function createSDK(
 		config.paymaster = { nodeUrl: paymasterUrl ?? defaultUrl };
 	}
 
-	sdkInstance = new StarkZap(config);
-	return sdkInstance;
+	return new StarkZap(config);
 }
 
 export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wallet> {
