@@ -66,7 +66,7 @@ function withErrorHandling<
 	};
 }
 
-export function registerTools(server: McpServer): void {
+function registerAuthAndConfigTools(server: McpServer): void {
 	server.tool(
 		"get_auth_status",
 		"Check authentication status and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
@@ -75,6 +75,28 @@ export function registerTools(server: McpServer): void {
 		withErrorHandling(handleGetAuthStatus)
 	);
 
+	server.tool(
+		"config_action",
+		"View and modify starkfi global configuration such as active network, RPC URL, and Gas Payment mechanisms.",
+		{
+			action: z
+				.enum(["list", "set-rpc", "get-rpc", "set-network", "set-gasfree", "set-gas-token"])
+				.describe(
+					"list: view all. set-gasfree: dev pays gas using paymaster credits. set-gas-token: user pays gas in ERC20 token instead of STRK."
+				),
+			value: z
+				.string()
+				.optional()
+				.describe(
+					"set-gasfree: 'on'/'off'. set-gas-token: symbol 'USDC'/'ETH' or 'off'. set-rpc: URL string. set-network: 'mainnet'/'sepolia'."
+				),
+		},
+		{ readOnlyHint: false, destructiveHint: false },
+		withErrorHandling(handleConfigAction)
+	);
+}
+
+function registerWalletTools(server: McpServer): void {
 	server.tool(
 		"get_tx_status",
 		"Check Starknet transaction status by hash. Use this to verify if a recently submitted transaction has been accepted on L2 or L1.",
@@ -133,7 +155,9 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetPortfolio)
 	);
+}
 
+function registerTradeTools(server: McpServer): void {
 	server.tool(
 		"get_swap_quote",
 		"Get an expected output and route from Fibrous *without* executing the swap. ALWAYS use this BEFORE calling swap_tokens so the user can review the expected output amount and slippage.",
@@ -231,7 +255,9 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleBatchExecute)
 	);
+}
 
+function registerStakingTools(server: McpServer): void {
 	server.tool(
 		"list_validators",
 		"List all known Starknet staking validators. Use this FIRST to see available validators and their names before trying to find pools.",
@@ -336,27 +362,9 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleCompoundRewards)
 	);
+}
 
-	server.tool(
-		"config_action",
-		"View and modify starkfi global configuration such as active network, RPC URL, and Gas Payment mechanisms.",
-		{
-			action: z
-				.enum(["list", "set-rpc", "get-rpc", "set-network", "set-gasfree", "set-gas-token"])
-				.describe(
-					"list: view all. set-gasfree: dev pays gas using paymaster credits. set-gas-token: user pays gas in ERC20 token instead of STRK."
-				),
-			value: z
-				.string()
-				.optional()
-				.describe(
-					"set-gasfree: 'on'/'off'. set-gas-token: symbol 'USDC'/'ETH' or 'off'. set-rpc: URL string. set-network: 'mainnet'/'sepolia'."
-				),
-		},
-		{ readOnlyHint: false, destructiveHint: false },
-		withErrorHandling(handleConfigAction)
-	);
-
+function registerLendingTools(server: McpServer): void {
 	server.tool(
 		"list_lending_pools",
 		"List available Vesu V2 lending pools on Starknet with their supported collateral/debt pairs. Use this FIRST to discover available pools before supplying, borrowing, or checking positions.",
@@ -473,4 +481,12 @@ export function registerTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleClosePosition)
 	);
+}
+
+export function registerTools(server: McpServer): void {
+	registerAuthAndConfigTools(server);
+	registerWalletTools(server);
+	registerTradeTools(server);
+	registerStakingTools(server);
+	registerLendingTools(server);
 }
