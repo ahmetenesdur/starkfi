@@ -127,20 +127,22 @@ function parseNumericPart(formatted: string): number {
 
 async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
 	const pools = await getVesuPools("mainnet");
-	const results: PortfolioLending[] = [];
 
-	for (const pool of pools) {
-		for (const asset of pool.assets) {
-			try {
-				const supplied = await getSuppliedBalance(wallet, pool.address, asset.symbol);
-				if (supplied && supplied !== "0") {
-					results.push({ pool: pool.name, asset: asset.symbol, supplied });
-				}
-			} catch {
-				// Skip assets that fail
+	const tasks = pools.flatMap((pool) =>
+		pool.assets.map(async (asset) => {
+			const supplied = await getSuppliedBalance(wallet, pool.address, asset.symbol);
+			if (supplied && supplied !== "0") {
+				return { pool: pool.name, asset: asset.symbol, supplied } as PortfolioLending;
 			}
-		}
-	}
+			return null;
+		})
+	);
 
-	return results;
+	const results = await Promise.allSettled(tasks);
+	return results
+		.filter(
+			(r): r is PromiseFulfilledResult<PortfolioLending> =>
+				r.status === "fulfilled" && r.value !== null
+		)
+		.map((r) => r.value);
 }
