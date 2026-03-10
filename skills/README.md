@@ -49,7 +49,7 @@ npx skills add ahmetenesdur/starkfi
 | "Swap USDC to ETH and USDT to STRK" | `multi-swap`          |
 | "Swap ETH and then stake STRK"      | `batch`               |
 | "Stake 1000 STRK with Juno"         | `staking`             |
-| "Supply 500 USDC to Genesis pool"   | `lending`             |
+| "Supply 500 USDC to Prime pool"     | `lending`             |
 | "Show me my portfolio"              | `portfolio`           |
 | "I'm getting rate limit errors"     | `config`              |
 

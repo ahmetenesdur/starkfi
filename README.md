@@ -94,7 +94,7 @@ Bundle multiple DeFi operations into a single Starknet multicall. Minimum 2 oper
 npx starkfi batch \
   --swap "100 USDC ETH" \
   --stake "50 STRK karnot" \
-  --supply "200 USDC 0xPool" \
+  --supply "200 USDC Prime" \
   --send "10 STRK 0xAddr"
 ```
 
@@ -103,10 +103,10 @@ npx starkfi batch \
 Full staking lifecycle across multiple validators with STRK, WBTC, tBTC, SolvBTC, and LBTC support.
 
 ```bash
-npx starkfi stake 100 --validator karnot
-npx starkfi rewards --validator karnot --compound
-npx starkfi unstake intent --validator karnot --amount 50
-npx starkfi unstake exit --validator karnot
+npx starkfi stake 100 -v karnot
+npx starkfi rewards -v karnot --compound
+npx starkfi unstake intent -v karnot -a 50
+npx starkfi unstake exit -v karnot
 ```
 
 ### 🏦 Lending & Borrowing (Vesu V2)
@@ -349,7 +349,7 @@ npx starkfi trade 10 STRK ETH               # Execute
 ```
 starkfi/
 ├── src/
-│   ├── commands/         # 9 CLI command groups (25+ commands)
+│   ├── commands/         # 9 CLI command groups (26+ commands)
 │   ├── services/         # 11 core service modules
 │   │   ├── starkzap/     # SDK init, wallet, gas abstraction
 │   │   ├── fibrous/      # DEX routing, quotes, calldata
