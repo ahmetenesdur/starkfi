@@ -49,7 +49,6 @@ export class ConfigService {
 		return { ...this.config };
 	}
 
-	/** Re-read config from disk if the file was modified externally. */
 	private refreshIfChanged(): void {
 		try {
 			if (!existsSync(CONFIG_FILE)) return;

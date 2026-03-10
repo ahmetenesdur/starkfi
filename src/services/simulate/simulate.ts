@@ -6,20 +6,12 @@ import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 export interface SimulationResult {
 	success: boolean;
-	/** Estimated fee in ETH (e.g. "0.000012 ETH") */
 	estimatedFee: string;
-	/** Estimated fee in USD (e.g. "$0.02") */
 	estimatedFeeUsd: string;
-	/** Number of individual contract calls in the multicall */
 	callCount: number;
-	/** Human-readable revert reason if simulation fails */
 	revertReason?: string;
 }
 
-/**
- * Simulate a transaction without sending it on-chain.
- * Runs preflight check, then estimates gas cost and converts to USD.
- */
 export async function simulateTransaction(builder: TxBuilder): Promise<SimulationResult> {
 	const calls = await builder.calls();
 	const callCount = calls.length;

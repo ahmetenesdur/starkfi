@@ -42,7 +42,6 @@ export async function supply(
 	const parsedAmount = Amount.parse(amount, token);
 	const userAddress = wallet.address.toString();
 
-	// Proactive Dust Limit Check
 	const usdPrice = await getTokenUsdPrice(token);
 	if (usdPrice > 0) {
 		const usdValue = parseFloat(amount) * usdPrice;
@@ -111,7 +110,6 @@ export async function borrow(
 	const parsedDebt = Amount.parse(debtAmount, debtToken);
 	const userAddress = wallet.address.toString();
 
-	// Proactive Dust Limit Check
 	const collateralUsdPrice = await getTokenUsdPrice(collateralToken);
 	if (collateralUsdPrice > 0) {
 		const collateralUsdValue = parseFloat(collateralAmount) * collateralUsdPrice;
@@ -149,7 +147,7 @@ export async function borrow(
 		txBuilder = txBuilder.add({
 			contractAddress: fromAddress(vTokenAddress),
 			entrypoint: "withdraw",
-			calldata: [parsedCollateral.toBase().toString(), userAddress, userAddress],
+			calldata: [...splitU256(parsedCollateral.toBase()), userAddress, userAddress],
 		});
 	}
 
@@ -231,7 +229,6 @@ export async function closePosition(
 
 	const tx = await wallet
 		.tx()
-		// We only need to approve the debt token for repayment, withdrawing collateral doesn't need allowance
 		.approve(debtToken, fromAddress(poolAddress), parsedDebt)
 		.add({
 			contractAddress: fromAddress(poolAddress),
@@ -276,7 +273,6 @@ export async function getPosition(
 		const collFormatted = Amount.fromRaw(collateralRaw, collateralToken).toFormatted(true);
 		const debtFormatted = Amount.fromRaw(debtRaw, debtToken).toFormatted(true);
 
-		// Calculate Health Factor
 		let healthFactor: number | undefined;
 		let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
 
@@ -303,7 +299,8 @@ export async function getPosition(
 						else if (healthFactor > 1.1) riskLevel = "WARNING";
 						else riskLevel = "DANGER";
 					} else {
-						healthFactor = Infinity; // No debt = infinitely safe
+						// No debt → treat as infinite health; cap at a sentinel for JSON safety
+						healthFactor = 9999;
 						riskLevel = "SAFE";
 					}
 				}

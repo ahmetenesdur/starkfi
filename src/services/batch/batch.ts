@@ -51,7 +51,6 @@ export interface BatchOperation {
 	params: BatchParams;
 }
 
-/** Resolve each operation and chain calls onto a shared TxBuilder. */
 export async function buildBatch(
 	wallet: Wallet,
 	session: Session,
