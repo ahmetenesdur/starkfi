@@ -13,7 +13,7 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 /** Staking delegation, validator discovery, and reward management tools. */
-export function registerStakingTools(server: McpServer): void {
+export function registerStakingTools(server: McpServer): number {
 	server.tool(
 		"list_validators",
 		"List all known Starknet staking validators. Use this FIRST to see available validators and their names before trying to find pools.",
@@ -118,4 +118,6 @@ export function registerStakingTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleCompoundRewards)
 	);
+
+	return 8;
 }

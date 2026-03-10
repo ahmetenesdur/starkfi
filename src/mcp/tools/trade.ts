@@ -10,7 +10,7 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 /** Token swap, multi-swap, and batch execution tools. */
-export function registerTradeTools(server: McpServer): void {
+export function registerTradeTools(server: McpServer): number {
 	server.tool(
 		"get_swap_quote",
 		"Get an expected output and route from Fibrous *without* executing the swap. ALWAYS use this BEFORE calling swap_tokens so the user can review the expected output amount and slippage.",
@@ -108,4 +108,6 @@ export function registerTradeTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleBatchExecute)
 	);
+
+	return 5;
 }

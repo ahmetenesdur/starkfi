@@ -4,7 +4,7 @@ import { handleGetAuthStatus, handleConfigAction } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
 /** Authentication and global configuration tools. */
-export function registerAuthAndConfigTools(server: McpServer): void {
+export function registerAuthAndConfigTools(server: McpServer): number {
 	server.tool(
 		"get_auth_status",
 		"Check authentication status and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
@@ -32,4 +32,6 @@ export function registerAuthAndConfigTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: false },
 		withErrorHandling(handleConfigAction)
 	);
+
+	return 2;
 }

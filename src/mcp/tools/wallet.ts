@@ -10,7 +10,7 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 /** Wallet management, balances, transfers, and portfolio overview tools. */
-export function registerWalletTools(server: McpServer): void {
+export function registerWalletTools(server: McpServer): number {
 	server.tool(
 		"get_tx_status",
 		"Check Starknet transaction status by hash. Use this to verify if a recently submitted transaction has been accepted on L2 or L1.",
@@ -69,4 +69,6 @@ export function registerWalletTools(server: McpServer): void {
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetPortfolio)
 	);
+
+	return 5;
 }

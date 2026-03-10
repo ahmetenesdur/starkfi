@@ -12,7 +12,7 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 /** Vesu V2 lending pool tools: supply, borrow, repay, withdraw, close. */
-export function registerLendingTools(server: McpServer): void {
+export function registerLendingTools(server: McpServer): number {
 	server.tool(
 		"list_lending_pools",
 		"List available Vesu V2 lending pools on Starknet with their supported collateral/debt pairs. Use this FIRST to discover available pools before supplying, borrowing, or checking positions.",
@@ -129,4 +129,6 @@ export function registerLendingTools(server: McpServer): void {
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleClosePosition)
 	);
+
+	return 7;
 }

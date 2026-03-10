@@ -5,11 +5,28 @@ import { registerTradeTools } from "./trade.js";
 import { registerStakingTools } from "./staking.js";
 import { registerLendingTools } from "./lending.js";
 
-/** Register all MCP tools with the server. */
-export function registerTools(server: McpServer): void {
-	registerAuthAndConfigTools(server);
-	registerWalletTools(server);
-	registerTradeTools(server);
-	registerStakingTools(server);
-	registerLendingTools(server);
+export interface ToolCategory {
+	name: string;
+	count: number;
+}
+
+export interface ToolSummary {
+	total: number;
+	categories: ToolCategory[];
+}
+
+/** Register all MCP tools with the server and return a summary. */
+export function registerTools(server: McpServer): ToolSummary {
+	const categories: ToolCategory[] = [
+		{ name: "Auth & Config", count: registerAuthAndConfigTools(server) },
+		{ name: "Wallet", count: registerWalletTools(server) },
+		{ name: "Trade", count: registerTradeTools(server) },
+		{ name: "Staking", count: registerStakingTools(server) },
+		{ name: "Lending", count: registerLendingTools(server) },
+	];
+
+	return {
+		total: categories.reduce((sum, c) => sum + c.count, 0),
+		categories,
+	};
 }
