@@ -1,20 +1,28 @@
 import chalk from "chalk";
 import ora from "ora";
 
-/** ANSI terminal hyperlink (iTerm2, Wezterm, Windows Terminal). Graceful fallback in unsupported terminals. */
+// Brand palette (matches docs/index.html)
+const BLUE = "#a5b4fc"; // pastel-blue
+const MINT = "#99f6e4"; // pastel-mint
+const SLATE = "#cbd5e1"; // slate-300 — table even rows
+
 function hyperlink(text: string, url: string): string {
 	return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
 }
 
-/** Apply semantic coloring based on key name. */
+// Semantic color by key name for formatResult values.
 function colorizeValue(key: string, value: string): string {
 	if (key === "explorer") return chalk.dim(hyperlink(value, value));
-	if (key === "txHash") return chalk.dim(value);
+	if (key === "txHash") return chalk.hex(BLUE).dim(value);
 	if (key === "revertReason") return chalk.red(value);
 	if (key === "mode" && value.includes("SIMULATION")) return chalk.yellow(value);
 	if (/fee/i.test(key) && !/usd/i.test(key)) return chalk.yellow(value);
-	if (/usd/i.test(key)) return chalk.green(value);
+	if (/usd/i.test(key)) return chalk.hex(MINT)(value);
 	return chalk.white(value);
+}
+
+function bigintReplacer(_key: string, value: unknown): unknown {
+	return typeof value === "bigint" ? value.toString() : value;
 }
 
 export function formatResult(data: Record<string, unknown>, options?: { json?: boolean }): string {
@@ -22,78 +30,94 @@ export function formatResult(data: Record<string, unknown>, options?: { json?: b
 		return JSON.stringify(data, bigintReplacer, 2);
 	}
 
-	const lines: string[] = [];
-	for (const [key, value] of Object.entries(data)) {
-		const label = chalk.gray(key.padEnd(20));
-		const val =
-			typeof value === "string" || typeof value === "number"
-				? colorizeValue(key, String(value))
-				: chalk.dim(JSON.stringify(value, bigintReplacer));
-		lines.push(`  ${label} ${val}`);
-	}
-	return lines.join("\n");
+	const keys = Object.keys(data);
+	// Dynamic label width — auto-sizes to prevent truncation
+	const labelWidth = Math.max(12, ...keys.map((k) => k.length)) + 2;
+
+	return Object.entries(data)
+		.map(([key, value]) => {
+			const label = chalk.dim(key.padEnd(labelWidth));
+			const val =
+				typeof value === "string" || typeof value === "number"
+					? colorizeValue(key, String(value))
+					: chalk.dim(JSON.stringify(value, bigintReplacer));
+			return `  ${label}${val}`;
+		})
+		.join("\n");
 }
 
 export function formatError(error: unknown): string {
-	if (error instanceof Error) {
-		return chalk.red(`✖ ${error.message}`);
-	}
-	return chalk.red(`✖ ${String(error)}`);
+	const msg = error instanceof Error ? error.message : String(error);
+	return chalk.red(`✖ ${msg}`);
 }
 
 export function formatTable(headers: string[], rows: string[][]): string {
-	const colWidths = headers.map((h, i) =>
-		Math.max(h.length, ...rows.map((r) => (r[i] || "").length))
+	const colWidths = headers.map((h, colIdx) =>
+		Math.max(h.length, ...rows.map((r) => (r[colIdx] ?? "").length))
 	);
 
-	const headerLine = headers.map((h, i) => chalk.bold(h.padEnd(colWidths[i]))).join("  ");
-	const separator = colWidths.map((w) => "─".repeat(w)).join("──");
-	const dataLines = rows.map((row) => row.map((cell, i) => cell.padEnd(colWidths[i])).join("  "));
+	const headerLine =
+		"  " + headers.map((h, i) => chalk.bold.white(h.padEnd(colWidths[i]))).join("  ");
+	const separator = "  " + colWidths.map((w) => chalk.dim("─".repeat(w))).join("  ");
+
+	const dataLines = rows.map((row, rowIdx) => {
+		const isEven = rowIdx % 2 === 0;
+		return (
+			"  " +
+			row
+				.map((cell, colIdx) => {
+					const padded = (cell ?? "").padEnd(colWidths[colIdx]);
+					if (colIdx === 0) return chalk.white(padded);
+					return isEven ? chalk.hex(SLATE)(padded) : chalk.dim(padded);
+				})
+				.join("  ")
+		);
+	});
 
 	return [headerLine, separator, ...dataLines].join("\n");
 }
 
-export function createSpinner(text: string) {
-	if (!process.stdout.isTTY) {
-		let currentText = text;
-		return {
-			start() {
-				return this;
-			},
-			stop() {
-				return this;
-			},
-			succeed(msg: string) {
-				console.log(success(msg));
-				return this;
-			},
-			fail(msg: string) {
-				console.error(chalk.red(`✖ ${msg}`));
-				return this;
-			},
-			info(msg: string) {
-				console.log(chalk.blue(`ℹ ${msg}`));
-				return this;
-			},
-			set text(t: string) {
-				currentText = t;
-			},
-			get text() {
-				return currentText;
-			},
-		};
-	}
-	return ora({ text, spinner: "dots" });
+export function sectionHeader(title: string): string {
+	return chalk.bold.hex(MINT)(title);
 }
 
 export function success(msg: string): string {
-	return chalk.green.bold(`✔ ${msg}`);
+	return chalk.hex(MINT).bold(`✔ ${msg}`);
 }
 
 export function warn(msg: string): string {
 	return chalk.yellow(`⚠ ${msg}`);
 }
 
-function bigintReplacer(_key: string, value: unknown): unknown {
-	return typeof value === "bigint" ? value.toString() : value;
+export function createSpinner(text: string) {
+	if (!process.stdout.isTTY) {
+		return new NonTtySpinner(text);
+	}
+	return ora({ text, spinner: "dots" });
+}
+
+// Minimal shim for non-TTY environments (CI, piped output).
+class NonTtySpinner {
+	text: string;
+	constructor(initialText: string) {
+		this.text = initialText;
+	}
+	start(): this {
+		return this;
+	}
+	stop(): this {
+		return this;
+	}
+	succeed(msg: string): this {
+		console.log(success(msg));
+		return this;
+	}
+	fail(msg: string): this {
+		console.error(formatError(new Error(msg)));
+		return this;
+	}
+	info(msg: string): this {
+		console.log(chalk.hex(BLUE)(`ℹ ${msg}`));
+		return this;
+	}
 }
