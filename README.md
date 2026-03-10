@@ -1,15 +1,6 @@
-<p align="center">
-  <img src="https://img.shields.io/npm/v/starkfi?style=flat-square&color=blue" alt="npm version" />
-  <img src="https://img.shields.io/npm/l/starkfi?style=flat-square" alt="license" />
-  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square" alt="node" />
-  <img src="https://img.shields.io/badge/starkzap-v1.0.0-orange?style=flat-square" alt="starkzap" />
-  <img src="https://img.shields.io/badge/MCP_Tools-27-purple?style=flat-square" alt="MCP tools" />
-  <img src="https://img.shields.io/badge/Agent_Skills-10-teal?style=flat-square" alt="skills" />
-</p>
-
 # StarkFi
 
-**The first AI-native DeFi toolkit for Starknet.** A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the [StarkZap SDK](https://github.com/keep-starknet-strange/x).
+**The first AI-native DeFi toolkit for Starknet.** A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the [Starkzap SDK](https://github.com/keep-starknet-strange/x).
 
 ```
 npx starkfi --help
@@ -51,7 +42,7 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘           │    │
 │  │       │            │          │            │                 │    │
 │  │  ┌────┴────────────┴──────────┴────────────┴────┐           │    │
-│  │  │          StarkZap SDK (starkzap v1.0.0)       │           │    │
+│  │  │          Starkzap SDK (starkzap v1.0.0)       │           │    │
 │  │  │  Wallet · TxBuilder · Tokens · Paymaster      │           │    │
 │  │  └───────────────────┬───────────────────────────┘           │    │
 │  └──────────────────────┼───────────────────────────────────────┘    │
@@ -70,9 +61,9 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 
 ---
 
-## StarkZap Modules Used
+## Starkzap Modules Used
 
-StarkFi leverages **all core StarkZap modules**:
+StarkFi leverages **all core Starkzap modules**:
 
 | Module                               | Usage in StarkFi                                                                                             |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
@@ -342,8 +333,7 @@ npx starkfi trade 10 STRK ETH               # Execute
 
 | Layer           | Technology                                                                       |
 | --------------- | -------------------------------------------------------------------------------- |
-| **Core SDK**    | [StarkZap](https://github.com/keep-starknet-strange/x) v1.0.0                    |
-| **Blockchain**  | [starknet.js](https://www.starknetjs.com/) v9.2.1                                |
+| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/x) v1.0.0                    |
 | **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
 | **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
 | **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
