@@ -102,22 +102,36 @@ async function fetchStaking(
 	const overview = await getStakingOverview(sdk, wallet, session.network, session.address);
 	if (overview.positions.length === 0) return [];
 
-	let strkPrice = 0;
-	try {
-		const strk = resolveToken("STRK");
-		strkPrice = await getTokenUsdPrice(strk);
-	} catch {
-		// Price unavailable
+	// Cache prices per token symbol to avoid duplicate API calls.
+	const priceCache = new Map<string, number>();
+
+	async function getPrice(symbol: string): Promise<number> {
+		const cached = priceCache.get(symbol);
+		if (cached !== undefined) return cached;
+		try {
+			const token = resolveToken(symbol);
+			const price = await getTokenUsdPrice(token);
+			priceCache.set(symbol, price);
+			return price;
+		} catch {
+			priceCache.set(symbol, 0);
+			return 0;
+		}
 	}
 
-	return overview.positions.map((p) => ({
-		validator: p.validator,
-		pool: p.pool,
-		token: p.token,
-		staked: p.staked,
-		rewards: p.rewards,
-		usdValue: parseNumericPart(p.total) * strkPrice,
-	}));
+	const results: PortfolioStaking[] = [];
+	for (const p of overview.positions) {
+		const price = await getPrice(p.token);
+		results.push({
+			validator: p.validator,
+			pool: p.pool,
+			token: p.token,
+			staked: p.staked,
+			rewards: p.rewards,
+			usdValue: parseNumericPart(p.total) * price,
+		});
+	}
+	return results;
 }
 
 function parseNumericPart(formatted: string): number {

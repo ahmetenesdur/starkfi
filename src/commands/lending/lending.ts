@@ -151,7 +151,7 @@ export function registerLendPoolsCommand(program: Command): void {
 				);
 			} catch (error) {
 				spinner.fail("Failed to list pools");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
@@ -457,7 +457,7 @@ export function registerLendStatusCommand(program: Command): void {
 					);
 				}
 
-				if (!position && (!suppliedBalance || suppliedBalance === "0.0")) {
+				if (!position && (!suppliedBalance || suppliedBalance === "0")) {
 					spinner.info("No active position or supply found in this pool");
 					return;
 				}
@@ -503,7 +503,7 @@ export function registerLendStatusCommand(program: Command): void {
 				console.log(formatResult(resultObj));
 			} catch (error) {
 				spinner.fail("Failed to fetch position");
-				console.error(error instanceof Error ? error.message : error);
+				console.error(formatError(error));
 				process.exit(1);
 			}
 		});
