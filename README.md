@@ -1,145 +1,393 @@
+<p align="center">
+  <img src="https://img.shields.io/npm/v/starkfi?style=flat-square&color=blue" alt="npm version" />
+  <img src="https://img.shields.io/npm/l/starkfi?style=flat-square" alt="license" />
+  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square" alt="node" />
+  <img src="https://img.shields.io/badge/starkzap-v1.0.0-orange?style=flat-square" alt="starkzap" />
+  <img src="https://img.shields.io/badge/MCP_Tools-27-purple?style=flat-square" alt="MCP tools" />
+  <img src="https://img.shields.io/badge/Agent_Skills-10-teal?style=flat-square" alt="skills" />
+</p>
+
 # StarkFi
 
-StarkFi is an advanced command-line interface and Model Context Protocol (MCP) toolkit designed for decentralized finance operations on Starknet. Engineered for both direct developer interaction and artificial intelligence agent workflows, it provides a highly optimized, abstracted layer over complex DeFi protocols.
+**The first AI-native DeFi toolkit for Starknet.** A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the [StarkZap SDK](https://github.com/keep-starknet-strange/x).
 
-The toolkit integrates the StarkZap SDK, Privy authentication, Fibrous trade aggregation, Vesu V2 lending, and AVNU paymaster services into a unified, secure environment.
-
-## System Architecture Overview
-
-StarkFi abstracts the complexities of the Starknet ecosystem through the following core capabilities:
-
-- **Intelligent Trade Routing:** Seamless token swaps aggregated via Fibrous for optimal execution paths.
-- **Multi-Swap:** Execute up to 3 token swaps in a single transaction via Fibrous batch routing.
-- **Transaction Batching:** Bundle different operations (swap + stake + supply + send) into a single Starknet multicall.
-- **Simulation / Dry Run:** Estimate fees and validate any transaction without broadcasting — available on swap, send, multi-swap, and batch.
-- **Portfolio Dashboard:** Consolidated view of all DeFi positions — token balances (with USD), staking, and lending.
-- **Advanced Gas Abstraction:** All transactions are routed through the Paymaster by default. Gas is paid in STRK (configurable to ETH, USDC, USDT, DAI). Developer-sponsored (Gasfree) mode is also available.
-- **Delegation and Staking Management:** Multi-token staking lifecycle controls (STRK, WBTC, tBTC, SolvBTC, LBTC), including entering pools, restaking, atomic compounding, and intent-based unstaking.
-- **Protocol-Level Lending:** Direct integration with Vesu V2 for supplying collateral, borrowing assets, and managing debt positions.
-- **Native AI Integration:** An embedded Model Context Protocol (MCP) server that exposes the entire toolkit to LLM-driven environments such as Cursor and Claude.
-
-## System Requirements
-
-- **Node.js:** v18.0.0+
-- **Starknet Auth Server:** Required for Email OTP (Privy TEE) and AVNU Paymaster gas abstraction.
-
-## Quick Start Configuration
-
-### 1. Secure Authentication
-
-StarkFi utilizes a remote Auth Server for email-based OTP.
-
-```bash
-# Email OTP Authentication (Requires running starkfi-server)
-npx starkfi auth login <user@example.com>
-npx starkfi auth verify <user@example.com> <verification_code>
+```
+npx starkfi --help
 ```
 
-### 2. Primary Command Reference
+---
 
-#### Session and Wallet Management
+## Why StarkFi?
 
-```bash
-npx starkfi auth logout                # Terminate active session
-npx starkfi status                     # Check authentication status and API health
-npx starkfi address                    # Display active Starknet address
-npx starkfi deploy                     # Deploy smart account contract on-chain
-npx starkfi balance [--token <symbol>] [--json]             # Query token balances (STRK, ETH, ERC-20)
-npx starkfi send <amount> <token> <recipient> [--simulate] [--json]  # Execute token transfer
-npx starkfi portfolio [--json]                              # Complete DeFi portfolio (balances, staking, lending)
+Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
+
+- 🤖 **27 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
+- 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
+- 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
+- 🧪 **Simulate Everything** — Dry-run any transaction to estimate fees before broadcasting
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                           StarkFi                                    │
+│                                                                      │
+│  ┌─────────────┐     ┌─────────────────────────────────────────┐     │
+│  │   CLI (25+   │     │         MCP Server (27 tools)           │     │
+│  │   commands)  │     │  AI agents connect via stdio transport  │     │
+│  └──────┬───────┘     └──────────────┬──────────────────────────┘     │
+│         │                            │                               │
+│         └────────────┬───────────────┘                               │
+│                      ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │                    Service Layer                              │    │
+│  │                                                               │    │
+│  │  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌─────────┐           │    │
+│  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │           │    │
+│  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│           │    │
+│  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘           │    │
+│  │       │            │          │            │                 │    │
+│  │  ┌────┴────────────┴──────────┴────────────┴────┐           │    │
+│  │  │          StarkZap SDK (starkzap v1.0.0)       │           │    │
+│  │  │  Wallet · TxBuilder · Tokens · Paymaster      │           │    │
+│  │  └───────────────────┬───────────────────────────┘           │    │
+│  └──────────────────────┼───────────────────────────────────────┘    │
+│                         ▼                                            │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────┐   │
+│  │  Auth Server (Hono + Privy TEE)     │  │  AVNU Paymaster     │   │
+│  │  Email OTP · Wallet · Sign · Gas    │  │  Gas Abstraction    │   │
+│  └─────────────────────────────────────┘  └─────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │  Starknet (L2)   │
+                    └──────────────────┘
 ```
 
-#### Trading and Aggregation (Fibrous)
+---
+
+## StarkZap Modules Used
+
+StarkFi leverages **all core StarkZap modules**:
+
+| Module                               | Usage in StarkFi                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Wallets**                          | `PrivySigner` + `ArgentXV050Preset` for email-based wallet management via Privy TEE                          |
+| **Gasless Transactions (Paymaster)** | AVNU Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode |
+| **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step)   |
+| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send in one transaction                          |
+| **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                         |
+
+---
+
+## Features
+
+### 🔄 Intelligent Swap Routing (Fibrous)
+
+DEX-aggregated swaps with optimal routing. Single swaps, multi-swap (up to 3 pairs), and batch routing.
 
 ```bash
-npx starkfi trade <amount> <from> <to> [--slippage <percent>] [--simulate] [--json]
-npx starkfi multi-swap "<pairs>" [--slippage <percent>] [--simulate] [--json]
-# Example: npx starkfi multi-swap "100 USDC>ETH, 50 USDT>STRK"
+npx starkfi trade 100 USDC ETH --slippage 1
+npx starkfi multi-swap "100 USDC>ETH, 50 USDT>ETH"
 ```
 
-#### Transaction Batching (Multicall)
+### ⚛️ Atomic Transaction Batching
+
+Bundle multiple DeFi operations into a single Starknet multicall. Minimum 2 operations.
 
 ```bash
-npx starkfi batch [--simulate] \
+npx starkfi batch \
   --swap "100 USDC ETH" \
   --stake "50 STRK karnot" \
   --supply "200 USDC 0xPool" \
   --send "10 STRK 0xAddr"
-# All options are repeatable. Minimum 2 operations required.
 ```
 
-#### Staking Operations
+### 🥩 Multi-Token Staking Lifecycle
+
+Full staking lifecycle across multiple validators with STRK, WBTC, tBTC, SolvBTC, and LBTC support.
 
 ```bash
-npx starkfi validators [--json]               # Retrieve active validator set
-npx starkfi pools <validator> [--json]        # Query delegation pools per validator (multi-token)
-npx starkfi stake-status [validator] [--json] # Display comprehensive or filtered staking dashboard
-npx starkfi stake <amount> --validator <name> [--token <symbol>] [--simulate]  # Smart stake (default: STRK)
-npx starkfi rewards --validator <name> [--token <symbol>] <--claim|--compound>
-npx starkfi unstake <intent|exit> --validator <name> [--token <symbol>] [--amount <amount>]
+npx starkfi stake 100 --validator karnot
+npx starkfi rewards --validator karnot --compound
+npx starkfi unstake intent --validator karnot --amount 50
+npx starkfi unstake exit --validator karnot
 ```
 
-#### Environment Configuration
+### 🏦 Lending & Borrowing (Vesu V2)
+
+Supply collateral, borrow assets, monitor health factors, and atomically close positions.
 
 ```bash
-npx starkfi tx-status <hash>                  # Query transaction receipt and status
-npx starkfi config list                       # Display current environment configuration
-npx starkfi config set-rpc <url>              # Override default RPC endpoint
-npx starkfi config get-rpc                    # Show current RPC URL
-npx starkfi config set-network <mainnet|sepolia> # Modify target network
-npx starkfi config set-gasfree <on|off>       # Toggle developer-sponsored gas (Paymaster credits)
-npx starkfi config set-gas-token <token|reset> # Set gas payment token (default: STRK)
+npx starkfi lend-supply 100 -p Prime -t STRK
+npx starkfi lend-borrow -p Prime \
+  --collateral-amount 200 --collateral-token STRK \
+  --borrow-amount 50 --borrow-token USDC
+npx starkfi lend-status -p Prime --collateral-token STRK --borrow-token USDC
+npx starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDC
 ```
 
-#### Lending and Borrowing (Vesu V2)
+### 💸 Gas Abstraction
 
-Pool data (assets, APY, pairs) is fetched dynamically from the Vesu API.
+All transactions are gasless by default. Users pay gas fees in their preferred ERC-20 token via AVNU Paymaster.
 
 ```bash
-npx starkfi lend-pools                                   # Summary table (name, version, asset/pair counts)
-npx starkfi lend-pools <name>                            # Detail view (assets with APY, pairs, pool address)
-npx starkfi lend-supply <amount> -p <pool> -t <token>    # Supply liquidity
-npx starkfi lend-withdraw <amount> -p <pool> -t <token>  # Withdraw supplied liquidity
-npx starkfi lend-borrow -p <pool> \                      # Initiate collateralized borrow
-  --collateral-amount <n> --collateral-token <token> \
-  --borrow-amount <n> --borrow-token <token> \
-  [--use-supplied]
-npx starkfi lend-repay <amount> -p <pool> -t <token> \   # Repay outstanding debt
-  --collateral-token <token>
-npx starkfi lend-status -p <pool> \                      # Query active position status
-  --collateral-token <token> [--borrow-token <token>]
-npx starkfi lend-close -p <pool> \                       # Atomically repay debt and withdraw collateral
-  --collateral-token <token> --borrow-token <token>
+# Pay gas in USDC instead of STRK
+npx starkfi config set-gas-token USDC
+
+# Developer pays all gas (gasfree mode)
+npx starkfi config set-gasfree on
 ```
 
-## Artificial Intelligence Integration (MCP)
+| Mode                  | Who Pays  | Gas Tokens                 | Description                       |
+| --------------------- | --------- | -------------------------- | --------------------------------- |
+| **Gasless** (default) | User      | STRK, ETH, USDC, USDT, DAI | User pays in ERC-20 via Paymaster |
+| **Gasfree**           | Developer | —                          | Developer sponsors all gas        |
 
-StarkFi is built from the ground up to operate as an MCP server, allowing AI assistants to reason about and execute DeFi operations.
+### 🧪 Simulation / Dry-Run
+
+Estimate fees and validate any transaction before broadcasting.
 
 ```bash
+npx starkfi trade 100 USDC ETH --simulate
+# → mode: SIMULATION, estimatedFee: 0.000142 ETH ($0.52), callCount: 4
+```
+
+### 📊 Portfolio Dashboard
+
+Consolidated view of all DeFi positions in one call.
+
+```bash
+npx starkfi portfolio
+# → Token Balances (USD), Staking Positions, Lending Positions, Total Value
+```
+
+---
+
+## AI Integration (MCP)
+
+StarkFi exposes **27 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
+
+```bash
+# Start the MCP server
 npx starkfi mcp-start
 ```
 
-For detailed integration instructions and the complete LLM tool registry, refer to the [MCP Documentation](MCP.md).
+### Tool Categories
+
+| Category          | Tools                                                                                                                                                          | Type       |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                             | Read/Write |
+| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`                                                                               | Read/Write |
+| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                         | Read/Write |
+| **Staking**       | `list_validators`, `list_pools`, `get_stake_status`, `get_staking_info`, `stake_tokens`, `claim_rewards`, `compound_rewards`, `unstake_intent`, `unstake_exit` | Read/Write |
+| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`                              | Read/Write |
+
+### Example — AI Agent Workflow
+
+```
+User: "Swap 100 USDC to STRK and stake half on Karnot"
+
+Agent:
+  1. get_swap_quote(amount: "100", from: "USDC", to: "STRK")   → 500 STRK
+  2. swap_tokens(amount: "100", from: "USDC", to: "STRK")       → txHash: 0x...
+  3. stake_tokens(amount: "250", validator: "karnot", token: "STRK") → txHash: 0x...
+```
+
+### MCP Configuration
+
+Add to your AI assistant's MCP config (Cursor, Claude, etc.):
+
+```json
+{
+	"mcpServers": {
+		"starkfi": {
+			"command": "npx",
+			"args": ["-y", "starkfi", "mcp-start"]
+		}
+	}
+}
+```
+
+For the complete tool registry and schemas, see [MCP.md](MCP.md).
+
+---
 
 ## Agent Skills
 
-StarkFi ships with **10 agent skills** — structured instruction sets that teach AI coding assistants (Cursor, Claude, Antigravity) how to use the CLI without custom prompting.
+StarkFi ships with **10 agent skills** — structured instruction sets that teach AI coding assistants how to use StarkFi without custom prompting.
 
-| Category    | Skills                                                       |
-| ----------- | ------------------------------------------------------------ |
-| Auth        | `authenticate-wallet`                                        |
-| Wallet Data | `balance`, `portfolio`                                       |
-| Transaction | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending` |
-| Utility     | `config`                                                     |
+| Category         | Skills                                                       |
+| ---------------- | ------------------------------------------------------------ |
+| **Auth**         | `authenticate-wallet`                                        |
+| **Wallet Data**  | `balance`, `portfolio`                                       |
+| **Transactions** | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending` |
+| **Utility**      | `config`                                                     |
 
 ```bash
-# Install via Skills CLI
+# Install skills for your AI assistant
 npx skills add ahmetenesdur/starkfi
 ```
 
-Each skill documents the exact commands, parameters, error handling, and multi-step workflows an agent should follow. For full details, see the [Skills Documentation](skills/README.md).
+See [Skills Documentation](skills/README.md) for details.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- **Node.js** v18+
+- **StarkFi Auth Server** running (required for Privy email OTP and Paymaster proxy)
+
+### 1. Authenticate
+
+```bash
+npx starkfi auth login user@example.com
+npx starkfi auth verify user@example.com <OTP_CODE>
+```
+
+### 2. Deploy Account
+
+```bash
+npx starkfi deploy
+```
+
+### 3. Check Balance
+
+```bash
+npx starkfi balance
+```
+
+### 4. Start Trading
+
+```bash
+npx starkfi trade 10 STRK ETH --simulate    # Preview first
+npx starkfi trade 10 STRK ETH               # Execute
+```
+
+---
+
+## Command Reference
+
+### Session & Wallet
+
+| Command                                                   | Description                      |
+| --------------------------------------------------------- | -------------------------------- |
+| `auth login <email>`                                      | Start email OTP authentication   |
+| `auth verify <email> <code>`                              | Complete authentication          |
+| `auth logout`                                             | Terminate session                |
+| `status`                                                  | Check auth status and API health |
+| `address`                                                 | Display Starknet address         |
+| `deploy`                                                  | Deploy smart account on-chain    |
+| `balance [--token <symbol>] [--json]`                     | Query token balances             |
+| `send <amount> <token> <recipient> [--simulate] [--json]` | Transfer tokens                  |
+| `portfolio [--json]`                                      | Full DeFi portfolio              |
+
+### Trading (Fibrous)
+
+| Command                                                             | Description                 |
+| ------------------------------------------------------------------- | --------------------------- |
+| `trade <amount> <from> <to> [--slippage <%>] [--simulate] [--json]` | Swap tokens                 |
+| `multi-swap "<pairs>" [--slippage <%>] [--simulate] [--json]`       | Multi-pair swap (2-3 pairs) |
+
+### Batching (Multicall)
+
+| Command                                                                     | Description                  |
+| --------------------------------------------------------------------------- | ---------------------------- |
+| `batch [--simulate] --swap "..." --stake "..." --supply "..." --send "..."` | Atomic multicall (min 2 ops) |
+
+### Staking
+
+| Command                                                                       | Description            |
+| ----------------------------------------------------------------------------- | ---------------------- |
+| `validators [--json]`                                                         | List active validators |
+| `pools <validator> [--json]`                                                  | Show delegation pools  |
+| `stake <amount> --validator <name> [--token <symbol>] [--simulate]`           | Stake tokens           |
+| `stake-status [validator] [--json]`                                           | Staking dashboard      |
+| `rewards --validator <name> [--token <symbol>] <--claim\|--compound>`         | Manage rewards         |
+| `unstake <intent\|exit> --validator <name> [--token <symbol>] [--amount <n>]` | Unstake (2-step)       |
+
+### Lending (Vesu V2)
+
+| Command                                                                                                                        | Description               |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| `lend-pools [name]`                                                                                                            | List lending pools        |
+| `lend-supply <amount> -p <pool> -t <token>`                                                                                    | Supply assets             |
+| `lend-withdraw <amount> -p <pool> -t <token>`                                                                                  | Withdraw assets           |
+| `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied]` | Borrow                    |
+| `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                |
+| `lend-status -p <pool> --collateral-token <t> [--borrow-token <t>]`                                                            | Position status           |
+| `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically |
+
+### Configuration
+
+| Command                                 | Description                    |
+| --------------------------------------- | ------------------------------ |
+| `config list`                           | Show current configuration     |
+| `config set-rpc <url>`                  | Set custom RPC endpoint        |
+| `config get-rpc`                        | Show current RPC               |
+| `config set-network <mainnet\|sepolia>` | Switch network                 |
+| `config set-gas-token <token\|reset>`   | Set gas payment token          |
+| `config set-gasfree <on\|off>`          | Toggle developer-sponsored gas |
+| `tx-status <hash>`                      | Check transaction status       |
+
+---
+
+## Tech Stack
+
+| Layer           | Technology                                                                       |
+| --------------- | -------------------------------------------------------------------------------- |
+| **Core SDK**    | [StarkZap](https://github.com/keep-starknet-strange/x) v1.0.0                    |
+| **Blockchain**  | [starknet.js](https://www.starknetjs.com/) v9.2.1                                |
+| **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
+| **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
+| **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
+| **Auth Server** | [Hono](https://hono.dev/) v4.12.2 + [Privy TEE](https://privy.io/)               |
+| **DEX Routing** | [Fibrous](https://fibrous.finance/) Aggregator                                   |
+| **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                             |
+| **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                               |
+
+---
+
+## Project Structure
+
+```
+starkfi/
+├── src/
+│   ├── commands/         # 9 CLI command groups (25+ commands)
+│   ├── services/         # 11 core service modules
+│   │   ├── starkzap/     # SDK init, wallet, gas abstraction
+│   │   ├── fibrous/      # DEX routing, quotes, calldata
+│   │   ├── vesu/         # Vesu V2 lending, pools, positions
+│   │   ├── staking/      # Delegation, rewards, unstake
+│   │   ├── batch/        # Multicall transaction builder
+│   │   ├── simulate/     # Dry-run fee estimator
+│   │   ├── portfolio/    # Aggregated DeFi dashboard
+│   │   └── ...           # auth, config, tokens, api
+│   ├── mcp/              # MCP server, tools, handlers
+│   └── lib/              # Shared utilities, errors, types
+├── server/               # Auth Server (Hono + Privy)
+├── skills/               # 10 AI agent skill definitions
+└── MCP.md                # MCP tool documentation
+```
+
+---
+
+## Error Handling
+
+StarkFi implements **26 specific error codes** with a custom `StarkfiError` class, automatic retry with exponential backoff for network errors, and comprehensive validation for all user inputs.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please open an issue or submit a pull request.
 
 ## License
 
-MIT License.
+[MIT](LICENSE) — ahmetenesdur
