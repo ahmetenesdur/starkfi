@@ -1,18 +1,30 @@
 import { ChainId, getPresets, type Token } from "starkzap";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
+let tokensCache: Token[] | null = null;
+let tokenMapCache: Record<string, Token> | null = null;
+
 export function fetchTokens(): Token[] {
-	const presetTokens = getPresets(ChainId.MAINNET);
-	return Object.values(presetTokens);
+	if (!tokensCache) {
+		const presetTokens = getPresets(ChainId.MAINNET);
+		tokensCache = Object.values(presetTokens);
+	}
+	return tokensCache;
 }
 
 export function resolveToken(symbol: string): Token {
-	const tokens = fetchTokens();
-	const upperSymbol = symbol.toUpperCase();
+	if (!tokenMapCache) {
+		tokenMapCache = {};
+		for (const t of fetchTokens()) {
+			tokenMapCache[t.symbol.toUpperCase()] = t;
+		}
+	}
 
-	const token = tokens.find((t) => t.symbol.toUpperCase() === upperSymbol);
+	const upperSymbol = symbol.toUpperCase();
+	const token = tokenMapCache[upperSymbol];
 
 	if (!token) {
+		const tokens = fetchTokens();
 		throw new StarkfiError(
 			ErrorCode.NO_ROUTE_FOUND,
 			`Token not found: ${symbol}. Available tokens: ${tokens
