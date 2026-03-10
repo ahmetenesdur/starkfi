@@ -12,7 +12,6 @@ import {
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
-/** Staking delegation, validator discovery, and reward management tools. */
 export function registerStakingTools(server: McpServer): number {
 	server.tool(
 		"list_validators",

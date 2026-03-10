@@ -1,5 +1,9 @@
 import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet, createSDK } from "../../services/starkzap/client.js";
+import {
+	initSDKAndWallet,
+	createSDK,
+	resolveFeeModeConfig,
+} from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
 import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
@@ -37,7 +41,12 @@ export async function handleDeployAccount() {
 	const alreadyDeployed = await wallet.isDeployed();
 
 	if (!alreadyDeployed) {
-		await wallet.ensureReady({ deploy: "if_needed" });
+		const configService = ConfigService.getInstance();
+		const gasfreeMode = configService.get("gasfreeMode") === true;
+		const gasToken = configService.get("gasToken") as string | undefined;
+		const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
+
+		await wallet.ensureReady({ deploy: "if_needed", feeMode });
 	}
 
 	return jsonResult({

@@ -3,7 +3,6 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleGetAuthStatus, handleConfigAction } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
-/** Authentication and global configuration tools. */
 export function registerAuthAndConfigTools(server: McpServer): number {
 	server.tool(
 		"get_auth_status",

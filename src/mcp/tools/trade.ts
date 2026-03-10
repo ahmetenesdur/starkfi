@@ -9,7 +9,6 @@ import {
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
-/** Token swap, multi-swap, and batch execution tools. */
 export function registerTradeTools(server: McpServer): number {
 	server.tool(
 		"get_swap_quote",

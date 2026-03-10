@@ -1,10 +1,5 @@
 import { StarkfiError } from "../../lib/errors.js";
 
-/**
- * Wraps an MCP tool handler with standardized error handling.
- * Catches errors and returns a structured JSON error response
- * with StarkFi error codes when applicable.
- */
 export function withErrorHandling<
 	T extends (...args: never[]) => Promise<{ content: { type: "text"; text: string }[] }>,
 >(fn: T) {

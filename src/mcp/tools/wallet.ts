@@ -9,7 +9,6 @@ import {
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
-/** Wallet management, balances, transfers, and portfolio overview tools. */
 export function registerWalletTools(server: McpServer): number {
 	server.tool(
 		"get_tx_status",

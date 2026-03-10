@@ -15,7 +15,6 @@ export interface ToolSummary {
 	categories: ToolCategory[];
 }
 
-/** Register all MCP tools with the server and return a summary. */
 export function registerTools(server: McpServer): ToolSummary {
 	const categories: ToolCategory[] = [
 		{ name: "Auth & Config", count: registerAuthAndConfigTools(server) },

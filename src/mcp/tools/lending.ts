@@ -11,7 +11,6 @@ import {
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
-/** Vesu V2 lending pool tools: supply, borrow, repay, withdraw, close. */
 export function registerLendingTools(server: McpServer): number {
 	server.tool(
 		"list_lending_pools",
