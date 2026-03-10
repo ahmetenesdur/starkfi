@@ -22,13 +22,8 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 Install with [Vercel's Skills CLI](https://skills.sh):
 
 ```bash
+# Add skills to your AI assistant (e.g. Antigravity)
 npx skills add ahmetenesdur/starkfi
-```
-
-Or clone directly:
-
-```bash
-git clone https://github.com/ahmetenesdur/starkfi.git
 ```
 
 ## Getting Started
