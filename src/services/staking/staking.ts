@@ -2,6 +2,7 @@ import { Amount, fromAddress, type StarkZap } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { StarkfiError, ErrorCode } from "../../lib/errors.js";
+import type { TxResult, Network } from "../../lib/types.js";
 
 export interface ValidatorInfo {
 	name: string;
@@ -82,8 +83,8 @@ export async function stake(
 	poolAddress: string,
 	amount: string,
 	tokenSymbol = "STRK"
-): Promise<{ hash: string; explorerUrl: string }> {
-	const token = await resolveToken(tokenSymbol);
+): Promise<TxResult> {
+	const token = resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.stake(fromAddress(poolAddress), parsedAmount);
 
@@ -93,10 +94,7 @@ export async function stake(
 	};
 }
 
-export async function claimRewards(
-	wallet: StarkZapWallet,
-	poolAddress: string
-): Promise<{ hash: string; explorerUrl: string }> {
+export async function claimRewards(wallet: StarkZapWallet, poolAddress: string): Promise<TxResult> {
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position || position.rewards.isZero()) {
@@ -115,7 +113,7 @@ export async function claimRewards(
 export async function compoundRewards(
 	wallet: StarkZapWallet,
 	poolAddress: string
-): Promise<{ hash: string; explorerUrl: string; compounded: string }> {
+): Promise<TxResult & { compounded: string }> {
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position || position.rewards.isZero()) {
@@ -145,8 +143,8 @@ export async function exitPoolIntent(
 	poolAddress: string,
 	amount: string,
 	tokenSymbol = "STRK"
-): Promise<{ hash: string; explorerUrl: string }> {
-	const token = await resolveToken(tokenSymbol);
+): Promise<TxResult> {
+	const token = resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.exitPoolIntent(fromAddress(poolAddress), parsedAmount);
 
@@ -157,10 +155,7 @@ export async function exitPoolIntent(
 }
 
 // Step 2 of 2-step exit: complete withdrawal after cooldown.
-export async function exitPool(
-	wallet: StarkZapWallet,
-	poolAddress: string
-): Promise<{ hash: string; explorerUrl: string }> {
+export async function exitPool(wallet: StarkZapWallet, poolAddress: string): Promise<TxResult> {
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
 	if (!position) {
@@ -212,16 +207,16 @@ export async function getPosition(
 export async function getStakingOverview(
 	sdk: StarkZap,
 	wallet: StarkZapWallet,
-	network: string,
+	network: Network,
 	address: string,
 	targetValidator?: string
 ): Promise<StakingOverview> {
 	const { getValidators, findValidator } = await import("./validators.js");
 
-	let validators = getValidators(network as "mainnet" | "sepolia");
+	let validators = getValidators(network);
 
 	if (targetValidator) {
-		const found = findValidator(targetValidator, network as "mainnet" | "sepolia");
+		const found = findValidator(targetValidator, network);
 		if (found) {
 			validators = [found];
 		} else {

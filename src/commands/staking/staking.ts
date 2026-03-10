@@ -56,7 +56,7 @@ export function registerStakeCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating stake...";
-					const token = await resolveToken(tokenSymbol);
+					const token = resolveToken(tokenSymbol);
 					const parsedAmount = Amount.parse(amount, token);
 					const builder = wallet.tx().stake(fromAddress(poolAddress), parsedAmount);
 					const sim = await simulateTransaction(builder);

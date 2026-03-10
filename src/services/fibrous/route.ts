@@ -126,13 +126,13 @@ export async function getCalldata(
 export interface BatchSwapPair {
 	tokenIn: Token;
 	tokenOut: Token;
-	/** Raw amount in base units (wei) */
+	// Raw amount in base units (wei)
 	amount: string;
 }
 
 const MAX_BATCH_PAIRS = 3;
 
-/** Fetch routes for multiple swap pairs (max 3). */
+// Fetch routes for multiple swap pairs (max 3).
 export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteResponse[]> {
 	if (pairs.length > MAX_BATCH_PAIRS) {
 		throw new StarkfiError(
@@ -182,7 +182,7 @@ export async function getRouteBatch(pairs: BatchSwapPair[]): Promise<RouteRespon
 	return Promise.all(pairs.map((p) => getRoute(p.tokenIn, p.tokenOut, p.amount)));
 }
 
-/** Fetch calldata for multiple swap pairs in parallel. */
+// Fetch calldata for multiple swap pairs in parallel.
 export async function getCalldataBatch(
 	pairs: BatchSwapPair[],
 	slippage: number = DEFAULT_SLIPPAGE,
@@ -202,7 +202,7 @@ export async function getCalldataBatch(
 	);
 }
 
-/** Fetch current USD price of a token via Fibrous routing data. */
+// Fetch current USD price of a token via Fibrous routing data.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
 	if (token.symbol.toUpperCase() === "USDC" || token.symbol.toUpperCase() === "USDT") {
 		return 1.0;

@@ -27,8 +27,8 @@ export function registerSwapCommand(program: Command): void {
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const tokenIn = await resolveToken(from);
-				const tokenOut = await resolveToken(to);
+				const tokenIn = resolveToken(from);
+				const tokenOut = resolveToken(to);
 
 				const parsedAmount = Amount.parse(amount, tokenIn);
 				const rawAmount = parsedAmount.toBase().toString();

@@ -98,8 +98,8 @@ async function addSwapCalls(
 	params: BatchSwapParams,
 	session: Session
 ): Promise<void> {
-	const tokenIn = await resolveToken(params.from_token);
-	const tokenOut = await resolveToken(params.to_token);
+	const tokenIn = resolveToken(params.from_token);
+	const tokenOut = resolveToken(params.to_token);
 	const parsedAmount = Amount.parse(params.amount, tokenIn);
 	const rawAmount = parsedAmount.toBase().toString();
 
@@ -125,7 +125,7 @@ async function addStakeCalls(
 	session: Session
 ): Promise<void> {
 	const tokenSymbol = (params.token ?? "STRK").toUpperCase();
-	const token = await resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol);
 	const parsedAmount = Amount.parse(params.amount, token);
 
 	let poolAddress = params.pool;
@@ -159,7 +159,7 @@ async function addSupplyCalls(
 	params: BatchSupplyParams,
 	wallet: Wallet
 ): Promise<void> {
-	const token = await resolveToken(params.token);
+	const token = resolveToken(params.token);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const userAddress = wallet.address.toString();
 	const vTokenAddress = await getVTokenAddress(wallet, params.pool, token);
@@ -172,7 +172,7 @@ async function addSupplyCalls(
 }
 
 async function addSendCalls(builder: TxBuilder, params: BatchSendParams): Promise<void> {
-	const token = await resolveToken(params.token);
+	const token = resolveToken(params.token);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const validatedTo = validateAddress(params.to);
 

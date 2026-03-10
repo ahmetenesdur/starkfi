@@ -1,9 +1,8 @@
 import { V2_POOLS, type PoolEntry } from "./config.js";
 import { fetchAllPools, type VesuPoolData } from "./api.js";
+import type { Network } from "../../lib/types.js";
 
 export type { VesuPoolData } from "./api.js";
-
-type Network = "mainnet" | "sepolia";
 
 export async function getVesuPools(network: Network): Promise<VesuPoolData[]> {
 	if (network !== "mainnet") return [];

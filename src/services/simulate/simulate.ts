@@ -47,7 +47,7 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 		const feeEstimate = await builder.estimateFee();
 		const overallFee = BigInt(feeEstimate.overall_fee);
 
-		const ethToken = await resolveToken("ETH");
+		const ethToken = resolveToken("ETH");
 		const feeAmount = Amount.fromRaw(overallFee, ethToken);
 		const feeFormatted = feeAmount.toUnit();
 

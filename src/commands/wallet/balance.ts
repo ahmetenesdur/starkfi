@@ -19,7 +19,7 @@ export function registerBalanceCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 
 				if (opts.token) {
-					const tokenType = await resolveToken(opts.token);
+					const tokenType = resolveToken(opts.token);
 
 					const balanceAmount = await wallet.balanceOf(tokenType);
 					spinner.stop();

@@ -27,7 +27,7 @@ export function registerSendCommand(program: Command): void {
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const tokenObj = await resolveToken(token);
+				const tokenObj = resolveToken(token);
 
 				const parsedAmount = Amount.parse(amount, tokenObj);
 

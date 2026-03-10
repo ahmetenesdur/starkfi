@@ -21,7 +21,7 @@ To integrate StarkFi into your AI environment, configure your specific MCP clien
 
 ## Comprehensive Tool Registry
 
-Upon initialization, the StarkFi server dynamically provisions the following tool schemas to the connected AI client.
+Upon initialization, the StarkFi server dynamically provisions 27 tool schemas to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (5), **trade** (5), **staking** (8), and **lending** (7).
 
 ### Read-Only Tools (State Verification and Information Gathering)
 

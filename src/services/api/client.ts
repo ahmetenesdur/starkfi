@@ -1,8 +1,9 @@
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
 import { STARKFI_API_URL_DEFAULT } from "../../lib/config.js";
+import { fetchWithTimeout } from "../../lib/fetch.js";
 
-const REQUEST_TIMEOUT_MS = 30_000;
+const API_REQUEST_TIMEOUT_MS = 30_000;
 
 function getBaseUrl(): string {
 	return process.env.STARKFI_API_URL ?? STARKFI_API_URL_DEFAULT;
@@ -19,7 +20,7 @@ async function request<T>(
 	options?: ApiOptions
 ): Promise<T> {
 	const url = `${getBaseUrl()}${path}`;
-	const timeout = options?.timeoutMs ?? REQUEST_TIMEOUT_MS;
+	const timeout = options?.timeoutMs ?? API_REQUEST_TIMEOUT_MS;
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",
@@ -29,17 +30,14 @@ async function request<T>(
 		headers.Authorization = `Bearer ${options.token}`;
 	}
 
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), timeout);
-
 	try {
 		const res = await withRetry(
 			() =>
-				fetch(url, {
+				fetchWithTimeout(url, {
 					method: "POST",
 					headers,
 					body: JSON.stringify(body),
-					signal: controller.signal,
+					timeoutMs: timeout,
 				}),
 			{ retryOnCodes: [ErrorCode.NETWORK_ERROR] }
 		);
@@ -69,8 +67,6 @@ async function request<T>(
 			ErrorCode.NETWORK_ERROR,
 			`Failed to connect to starkfi-server at ${getBaseUrl()}. Is the server running?`
 		);
-	} finally {
-		clearTimeout(timer);
 	}
 }
 

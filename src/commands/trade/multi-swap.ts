@@ -65,8 +65,8 @@ export function registerMultiSwapCommand(program: Command): void {
 				spinner.text = "Resolving tokens...";
 				const pairs: BatchSwapPair[] = await Promise.all(
 					parsed.map(async (p) => {
-						const tokenIn = await resolveToken(p.fromToken);
-						const tokenOut = await resolveToken(p.toToken);
+						const tokenIn = resolveToken(p.fromToken);
+						const tokenOut = resolveToken(p.toToken);
 						const parsedAmount = Amount.parse(p.amount, tokenIn);
 						return {
 							tokenIn,
