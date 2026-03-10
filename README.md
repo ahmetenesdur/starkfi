@@ -349,7 +349,7 @@ npx starkfi trade 10 STRK ETH               # Execute
 ```
 starkfi/
 ├── src/
-│   ├── commands/         # 9 CLI command groups (26+ commands)
+│   ├── commands/         # 9 CLI command groups (25+ commands)
 │   ├── services/         # 11 core service modules
 │   │   ├── starkzap/     # SDK init, wallet, gas abstraction
 │   │   ├── fibrous/      # DEX routing, quotes, calldata
