@@ -87,6 +87,21 @@ export function registerBatchCommand(program: Command): void {
 		.option("--send <args>", 'Send tokens: "10 STRK 0xAddr" (repeatable)', collect, [])
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			`
+Examples:
+  $ starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"
+  $ starkfi batch --swap "100 USDC ETH" --supply "200 USDC 0xABC" --simulate
+
+Flag formats:
+  --swap   "<amount> <from> <to>"          e.g. "0.5 ETH USDC"
+  --stake  "<amount> <token> <validator>"  e.g. "50 STRK karnot"
+  --supply "<amount> <token> <pool>"       e.g. "200 USDC 0xABC..."
+  --send   "<amount> <token> <address>"    e.g. "10 STRK 0x04a3..."
+
+Minimum 2 operations required. Each flag can be repeated.`
+		)
 		.action(async (opts) => {
 			const spinner = createSpinner("Preparing batch...").start();
 

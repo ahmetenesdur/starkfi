@@ -51,6 +51,10 @@ export function registerMultiSwapCommand(program: Command): void {
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			'\nExamples:\n  $ starkfi multi-swap "100 USDC>ETH, 50 USDC>STRK"\n  $ starkfi multi-swap "0.1 ETH>USDC, 0.05 ETH>STRK" --slippage 0.5\n  $ starkfi multi-swap "100 USDC>ETH, 50 STRK>ETH" --simulate\n\nPair format: "<amount> <from>><to>" — separate pairs with commas.'
+		)
 		.action(async (pairsInput: string, opts) => {
 			const spinner = createSpinner("Parsing swap pairs...").start();
 

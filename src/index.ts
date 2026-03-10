@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 
 import { createRequire } from "node:module";
-import { Command } from "commander";
+import { Command, type Help } from "commander";
+import chalk from "chalk";
 import { formatError } from "./lib/format.js";
 import { startMcpServer } from "./mcp/server.js";
-
-// Graceful shutdown on signals
-process.on("SIGINT", () => process.exit(0));
-process.on("SIGTERM", () => process.exit(0));
-
-const require = createRequire(import.meta.url);
-const { version } = require("../package.json") as { version: string };
-
 import { registerLoginCommand } from "./commands/auth/login.js";
 import { registerVerifyCommand } from "./commands/auth/verify.js";
 import { registerLogoutCommand } from "./commands/auth/logout.js";
@@ -20,6 +13,7 @@ import { registerBalanceCommand } from "./commands/wallet/balance.js";
 import { registerSendCommand } from "./commands/wallet/send.js";
 import { registerDeployCommand } from "./commands/wallet/deploy.js";
 import { registerSwapCommand } from "./commands/trade/swap.js";
+import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
 import { registerStatusCommand } from "./commands/trade/status.js";
 import { registerTxStatusCommand } from "./commands/chain/tx-status.js";
 import {
@@ -30,7 +24,6 @@ import {
 	registerValidatorsCommand,
 	registerStakeStatusCommand,
 } from "./commands/staking/staking.js";
-import { registerConfigCommand } from "./commands/config/config.js";
 import {
 	registerLendPoolsCommand,
 	registerLendSupplyCommand,
@@ -41,26 +34,196 @@ import {
 	registerLendStatusCommand,
 } from "./commands/lending/lending.js";
 import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
-import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
 import { registerBatchCommand } from "./commands/batch/batch.js";
+import { registerConfigCommand } from "./commands/config/config.js";
 
-const banner = `
-  ┌───────────────────────────────────────┐
-  │  StarkFi  v${version.padEnd(26)}│
-  │  Starknet DeFi CLI + MCP Server      │
-  └───────────────────────────────────────┘
+process.on("SIGINT", () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
+
+// Brand palette (matches docs/index.html)
+const BLUE = "#a5b4fc";
+const MINT = "#99f6e4";
+
+// Blue → mint gradient, one shade per logo row
+const LOGO_ROW_COLORS = ["#a5b4fc", "#adbcfc", "#b5c4fb", "#bdccfb", "#c6d4fa", "#99f6e4"] as const;
+
+const LOGO_LINES = [
+	"███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗",
+	"██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║",
+	"███████╗   ██║   ███████║██████╔╝█████╔╝ █████╗  ██║",
+	"╚════██║   ██║   ██╔══██║██╔══██╗██╔═██╗ ██╔══╝  ██║",
+	"███████║   ██║   ██║  ██║██║  ██║██║  ██╗██║     ██║",
+	"╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝",
+] as const;
+
+const coloredLogo = LOGO_LINES.map((line, i) =>
+	chalk.bold.hex(LOGO_ROW_COLORS[i] ?? MINT)(line)
+).join("\n");
+
+const tagline =
+	chalk.dim("v") +
+	chalk.hex(BLUE).bold(version) +
+	chalk.dim("  ·  ") +
+	chalk.white("Starknet DeFi CLI + MCP Server");
+
+const banner = `\n${coloredLogo}\n\n${tagline}\n`;
+
+const dim = chalk.dim.bind(chalk);
+const white = chalk.white.bind(chalk);
+
+// Quick Start block shown only on the root --help page.
+const footer = `
+${chalk.bold.hex(MINT)("Quick Start")}
+
+  ${dim("$")} ${white("starkfi auth login <email>")}              ${dim("# Sign in with Privy OTP")}
+  ${dim("$")} ${white("starkfi trade 0.1 ETH USDC")}             ${dim("# Best-price swap via Fibrous")}
+  ${dim("$")} ${white("starkfi balance")}                         ${dim("# View all token balances")}
+  ${dim("$")} ${white("starkfi stake 10 STRK -v karnot")}        ${dim("# Stake STRK with a validator")}
+  ${dim("$")} ${white("starkfi lend-supply 100 USDC -p Prime -t USDC")}   ${dim("# Supply to Vesu")}
+  ${dim("$")} ${white('starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"')}   ${dim("# Multicall")}
+
+  ${dim("Run")} ${white("starkfi <command> --help")} ${dim("for detailed flags and examples.")}
+  ${dim("Docs →")} ${chalk.hex(BLUE).underline("https://github.com/ahmetenesdur/starkfi")}
 `;
+
+const COMMAND_GROUPS: Record<string, string[]> = {
+	Authentication: ["auth"],
+	Wallet: ["address", "balance", "send", "deploy"],
+	Trading: ["trade", "multi-swap", "status"],
+	Staking: ["stake", "unstake", "rewards", "pools", "validators", "stake-status"],
+	Lending: [
+		"lend-pools",
+		"lend-supply",
+		"lend-withdraw",
+		"lend-borrow",
+		"lend-repay",
+		"lend-close",
+		"lend-status",
+	],
+	Portfolio: ["portfolio"],
+	Operations: ["batch"],
+	Configuration: ["config"],
+	System: ["tx-status", "mcp-start", "help"],
+};
 
 const program = new Command();
 
 program
 	.name("starkfi")
-	.description(
-		"Starknet DeFi CLI + MCP — Swaps, multi-swap, batch, staking, lending, simulation, portfolio"
-	)
+	.description("Starknet DeFi CLI + MCP Server")
 	.version(version)
 	.showHelpAfterError()
 	.addHelpText("beforeAll", banner);
+
+program.configureHelp({
+	formatHelp(cmd: Command, helper: Help): string {
+		if (cmd.name() !== "starkfi") {
+			// Sub-command pages: clean styled layout, no grouping
+			const lines: string[] = [];
+			const width = helper.padWidth(cmd, helper);
+
+			const usage = helper.commandUsage(cmd);
+			if (usage) lines.push(`${chalk.bold("Usage:")} ${usage}`, "");
+
+			const desc = helper.commandDescription(cmd);
+			if (desc) lines.push(desc, "");
+
+			const args = helper.visibleArguments(cmd);
+			if (args.length) {
+				lines.push(chalk.bold("Arguments:"));
+				for (const a of args) {
+					lines.push(
+						`  ${chalk.white(helper.argumentTerm(a).padEnd(width))}  ${chalk.dim(helper.argumentDescription(a))}`
+					);
+				}
+				lines.push("");
+			}
+
+			const opts = helper.visibleOptions(cmd);
+			if (opts.length) {
+				lines.push(chalk.bold("Options:"));
+				for (const o of opts) {
+					lines.push(
+						`  ${chalk.white(helper.optionTerm(o).padEnd(width))}  ${chalk.dim(helper.optionDescription(o))}`
+					);
+				}
+				lines.push("");
+			}
+
+			const subs = helper.visibleCommands(cmd);
+			if (subs.length) {
+				lines.push(chalk.bold("Commands:"));
+				for (const s of subs) {
+					lines.push(
+						`  ${chalk.white(helper.subcommandTerm(s).padEnd(width))}  ${chalk.dim(helper.subcommandDescription(s))}`
+					);
+				}
+				lines.push("");
+			}
+
+			return lines.join("\n");
+		}
+
+		// Root command: grouped layout + Quick Start footer
+		const lines: string[] = [];
+		const width = helper.padWidth(cmd, helper);
+
+		lines.push(
+			`${chalk.bold("Usage:")} starkfi ${chalk.dim("[command]")} ${chalk.dim("[options]")}`,
+			""
+		);
+
+		const opts = helper.visibleOptions(cmd);
+		if (opts.length) {
+			lines.push(chalk.bold("Options:"));
+			for (const o of opts) {
+				lines.push(
+					`  ${chalk.hex(BLUE)(helper.optionTerm(o).padEnd(width))}  ${chalk.dim(helper.optionDescription(o))}`
+				);
+			}
+			lines.push("");
+		}
+
+		lines.push(chalk.bold("Commands:"));
+
+		const allCmds = helper.visibleCommands(cmd);
+		const cmdMap = new Map(allCmds.map((c) => [c.name(), c]));
+		const rendered = new Set<string>();
+
+		for (const [groupLabel, cmdNames] of Object.entries(COMMAND_GROUPS)) {
+			const groupCmds = cmdNames
+				.map((n) => cmdMap.get(n))
+				.filter((c): c is Command => c !== undefined);
+
+			if (groupCmds.length === 0) continue;
+
+			lines.push(`\n  ${chalk.bold.hex(BLUE)(groupLabel)}`);
+			for (const c of groupCmds) {
+				lines.push(
+					`    ${chalk.white(helper.subcommandTerm(c).padEnd(width))}  ${chalk.dim(helper.subcommandDescription(c))}`
+				);
+				rendered.add(c.name());
+			}
+		}
+
+		// Catch-all for commands not listed in COMMAND_GROUPS
+		const ungrouped = allCmds.filter((c) => !rendered.has(c.name()));
+		if (ungrouped.length) {
+			lines.push(`\n  ${chalk.bold("Other")}`);
+			for (const c of ungrouped) {
+				lines.push(
+					`    ${chalk.white(helper.subcommandTerm(c).padEnd(width))}  ${chalk.dim(helper.subcommandDescription(c))}`
+				);
+			}
+		}
+
+		lines.push("", footer);
+		return lines.join("\n");
+	},
+});
 
 registerLoginCommand(program);
 registerVerifyCommand(program);
@@ -93,14 +256,27 @@ registerLendCloseCommand(program);
 registerLendStatusCommand(program);
 
 registerPortfolioCommand(program);
-
 registerBatchCommand(program);
-
 registerConfigCommand(program);
 
 program
 	.command("mcp-start")
 	.description("Start the MCP server (stdio transport)")
+	.addHelpText(
+		"after",
+		`
+Notes:
+  Communicates via stdin/stdout (stdio transport — standard MCP protocol).
+  Add to your AI client config (Claude, Cursor, etc.):
+
+    {
+      "mcpServers": {
+        "starkfi": { "command": "starkfi", "args": ["mcp-start"] }
+      }
+    }
+
+  See MCP.md for the full integration guide.`
+	)
 	.action(async () => {
 		await startMcpServer();
 	});

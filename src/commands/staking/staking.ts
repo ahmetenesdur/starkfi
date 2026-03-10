@@ -21,6 +21,10 @@ export function registerStakeCommand(program: Command): void {
 		)
 		.option("-t, --token <symbol>", "Token to stake (default: STRK)", "STRK")
 		.option("--simulate", "Estimate fees and validate without executing")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi stake 10 STRK -v karnot\n  $ starkfi stake 50 STRK -v fibrous --simulate\n  $ starkfi stake 100 STRK -p 0x04a3..."
+		)
 		.action(async (amount: string, opts) => {
 			if (!opts.pool && !opts.validator) {
 				console.error("Provide --pool <address> or --validator <name>");
@@ -109,6 +113,10 @@ export function registerUnstakeCommand(program: Command): void {
 		.option("-v, --validator <name>", "Validator name (use with --token to find pool)")
 		.option("-t, --token <symbol>", "Token symbol (default: STRK)", "STRK")
 		.option("-a, --amount <amount>", "Amount to unstake (required for intent)")
+		.addHelpText(
+			"after",
+			"\nNote: Unstaking is a 2-step process with a cooldown period.\n\nExamples:\n  $ starkfi unstake intent -v karnot -a 10\n  $ starkfi unstake exit -v karnot"
+		)
 		.action(async (action: string, opts) => {
 			if (!opts.pool && !opts.validator) {
 				console.error("Provide --pool <address> or --validator <name>");
@@ -197,6 +205,10 @@ export function registerRewardsCommand(program: Command): void {
 		.option("-t, --token <symbol>", "Token symbol (default: STRK)", "STRK")
 		.option("--claim", "Claim rewards currently available in the pool")
 		.option("--compound", "Claim and immediately restake rewards")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi rewards --claim -v karnot\n  $ starkfi rewards --compound -v fibrous\n  $ starkfi rewards --claim --pool 0x04a3..."
+		)
 		.action(async (opts) => {
 			if (!opts.claim && !opts.compound) {
 				console.error(
@@ -265,11 +277,6 @@ export function registerRewardsCommand(program: Command): void {
 					);
 					return;
 				}
-
-				// The remaining code that used to show positions was removed because
-				// this command is now strictly for claiming/compounding.
-
-				// Error mapping is standard
 			} catch (error) {
 				spinner.fail("Failed to fetch staking info");
 				console.error(formatError(error));
@@ -284,6 +291,10 @@ export function registerPoolsCommand(program: Command): void {
 		.description("List staking pools for a validator (by name or address)")
 		.argument("<validator>", "Validator name (e.g. 'Karnot') or staker address")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi pools karnot\n  $ starkfi pools fibrous --json\n  $ starkfi pools 0x04a3..."
+		)
 		.action(async (validator: string, opts) => {
 			const spinner = createSpinner("Fetching pools...").start();
 
@@ -353,6 +364,7 @@ export function registerValidatorsCommand(program: Command): void {
 		.command("validators")
 		.description("List all known Starknet staking validators")
 		.option("--json", "Output raw JSON")
+		.addHelpText("after", "\nExamples:\n  $ starkfi validators\n  $ starkfi validators --json")
 		.action(async (opts) => {
 			const spinner = createSpinner("Loading validators...").start();
 

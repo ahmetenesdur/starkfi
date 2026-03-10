@@ -8,8 +8,12 @@ export function registerConfigCommand(program: Command): void {
 
 	configCmd
 		.command("set-rpc")
-		.description("Set custom RPC URL for Starknet")
-		.argument("<url>", "RPC URL")
+		.description("Set a custom RPC URL for Starknet")
+		.argument("<url>", "RPC endpoint URL")
+		.addHelpText(
+			"after",
+			"\nExample:\n  $ starkfi config set-rpc https://starknet-mainnet.g.alchemy.com/v2/<key>"
+		)
 		.action((url: string) => {
 			const configService = ConfigService.getInstance();
 			configService.set("rpcUrl", url);
@@ -18,7 +22,8 @@ export function registerConfigCommand(program: Command): void {
 
 	configCmd
 		.command("get-rpc")
-		.description("Show current RPC URL")
+		.description("Show the current RPC URL")
+		.addHelpText("after", "\nExample:\n  $ starkfi config get-rpc")
 		.action(() => {
 			const configService = ConfigService.getInstance();
 			const rpcUrl = configService.get("rpcUrl") as string | undefined;
@@ -33,6 +38,10 @@ export function registerConfigCommand(program: Command): void {
 		.command("set-network")
 		.description("Set default network (mainnet or sepolia)")
 		.argument("<network>", "mainnet or sepolia")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi config set-network mainnet\n  $ starkfi config set-network sepolia"
+		)
 		.action((network: string) => {
 			if (!["mainnet", "sepolia"].includes(network)) {
 				console.log(warn("Network must be 'mainnet' or 'sepolia'"));
@@ -46,8 +55,12 @@ export function registerConfigCommand(program: Command): void {
 	// Gasfree mode: developer sponsors gas via Paymaster API key
 	configCmd
 		.command("set-gasfree")
-		.description("Enable/disable Gasfree mode — developer sponsors all gas costs via Paymaster")
+		.description("Enable/disable Gasfree mode — developer sponsors gas via Paymaster")
 		.argument("<mode>", "on or off")
+		.addHelpText(
+			"after",
+			"\nNote:\n  Gasfree and Gasless modes are mutually exclusive.\n  Enabling gasfree clears any gas token setting.\n\nExamples:\n  $ starkfi config set-gasfree on\n  $ starkfi config set-gasfree off"
+		)
 		.action((mode: string) => {
 			if (!["on", "off"].includes(mode)) {
 				console.log(warn("Mode must be 'on' or 'off'"));
@@ -68,11 +81,15 @@ export function registerConfigCommand(program: Command): void {
 	configCmd
 		.command("set-gas-token")
 		.description(
-			`Set gas payment token via Paymaster.\nDefault: STRK. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}\nUse 'reset' to revert to STRK.`
+			`Set gas payment token via Paymaster (default: STRK, supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")})`
 		)
 		.argument(
 			"<token>",
-			`Token symbol or 'reset'. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}`
+			`Token symbol or 'reset' (supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")})`
+		)
+		.addHelpText(
+			"after",
+			`\nExamples:\n  $ starkfi config set-gas-token ETH\n  $ starkfi config set-gas-token USDC\n  $ starkfi config set-gas-token reset    # revert to STRK`
 		)
 		.action((token: string) => {
 			const configService = ConfigService.getInstance();
@@ -101,6 +118,7 @@ export function registerConfigCommand(program: Command): void {
 	configCmd
 		.command("list")
 		.description("Show all configuration settings")
+		.addHelpText("after", "\nExample:\n  $ starkfi config list")
 		.action(() => {
 			const configService = ConfigService.getInstance();
 			const all = configService.getAll();

@@ -18,6 +18,10 @@ export function registerSwapCommand(program: Command): void {
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi trade 0.1 ETH USDC\n  $ starkfi trade 100 USDC STRK --slippage 0.5\n  $ starkfi trade 0.5 ETH DAI --simulate"
+		)
 		.action(async (amount: string, from: string, to: string, opts) => {
 			const spinner = createSpinner("Finding best route...").start();
 

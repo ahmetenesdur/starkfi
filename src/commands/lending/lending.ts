@@ -4,7 +4,7 @@ import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as lendingService from "../../services/vesu/lending.js";
 import chalk from "chalk";
 import { getVesuPools, findPoolEntry } from "../../services/vesu/pools.js";
-import { createSpinner, formatResult, formatTable } from "../../lib/format.js";
+import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 
 function resolvePoolAddress(
@@ -18,19 +18,24 @@ function resolvePoolAddress(
 
 function handleLendingError(error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
-
 	if (msg.includes("dusty-collateral-balance")) {
 		console.error(
-			chalk.red("Error:"),
-			"The collateral amount is below the pool's minimum dollar value limit (dust limit). Please increase the amount."
+			formatError(
+				new Error(
+					"Collateral amount is below the pool's minimum (dust limit). Please increase the amount."
+				)
+			)
 		);
 	} else if (msg.includes("dusty-debt-balance")) {
 		console.error(
-			chalk.red("Error:"),
-			"The borrow amount is below the pool's minimum dollar value limit (dust limit). Please increase the amount."
+			formatError(
+				new Error(
+					"Borrow amount is below the pool's minimum (dust limit). Please increase the amount."
+				)
+			)
 		);
 	} else {
-		console.error(msg);
+		console.error(formatError(error));
 	}
 	process.exit(1);
 }
@@ -41,6 +46,10 @@ export function registerLendPoolsCommand(program: Command): void {
 		.description("List available Vesu V2 lending pools")
 		.argument("[name]", "Filter pools by name (partial match, shows details)")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-pools\n  $ starkfi lend-pools prime\n  $ starkfi lend-pools --json"
+		)
 		.action(async (name: string | undefined, opts) => {
 			const spinner = createSpinner("Fetching Vesu pools...").start();
 
@@ -82,7 +91,7 @@ export function registerLendPoolsCommand(program: Command): void {
 					for (const pool of pools) {
 						console.log("");
 						console.log(
-							chalk.bold.cyan(`  ${pool.name}`) +
+							chalk.bold.hex("#a5b4fc")(`  ${pool.name}`) +
 								chalk.dim(` (${pool.protocolVersion})`)
 						);
 						console.log(chalk.gray(`  ${pool.address}`));
@@ -155,6 +164,10 @@ export function registerLendSupplyCommand(program: Command): void {
 		.argument("<amount>", "Amount to supply")
 		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.requiredOption("-t, --token <symbol>", "Token symbol (e.g. 'STRK', 'ETH', 'USDC')")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-supply 100 USDC -p Prime -t USDC\n  $ starkfi lend-supply 0.5 ETH -p Prime -t ETH"
+		)
 		.action(async (amount: string, opts) => {
 			const spinner = createSpinner(`Supplying ${amount} ${opts.token}...`).start();
 
@@ -194,6 +207,10 @@ export function registerLendWithdrawCommand(program: Command): void {
 		.argument("<amount>", "Amount to withdraw")
 		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.requiredOption("-t, --token <symbol>", "Token symbol (e.g. 'STRK', 'ETH', 'USDC')")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-withdraw 50 -p Prime -t USDC\n  $ starkfi lend-withdraw 0.2 -p Prime -t ETH"
+		)
 		.action(async (amount: string, opts) => {
 			const spinner = createSpinner(`Withdrawing ${amount} ${opts.token}...`).start();
 
@@ -241,6 +258,10 @@ export function registerLendBorrowCommand(program: Command): void {
 		.option(
 			"--use-supplied",
 			"Use your previously supplied yield tokens as collateral instead of transferring from wallet"
+		)
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-borrow -p Prime --collateral-amount 0.5 --collateral-token ETH --borrow-amount 500 --borrow-token USDC\n  $ starkfi lend-borrow -p Prime --collateral-amount 100 --collateral-token STRK --borrow-amount 50 --borrow-token USDT --use-supplied"
 		)
 		.action(async (opts) => {
 			const spinner = createSpinner(
@@ -309,6 +330,10 @@ export function registerLendRepayCommand(program: Command): void {
 			"--collateral-token <symbol>",
 			"Collateral token of the position (e.g. 'ETH', 'STRK')"
 		)
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-repay 500 -p Prime -t USDC --collateral-token ETH\n  $ starkfi lend-repay 50 -p Prime -t USDT --collateral-token STRK"
+		)
 		.action(async (amount: string, opts) => {
 			const spinner = createSpinner(`Repaying ${amount} ${opts.token}...`).start();
 
@@ -354,6 +379,10 @@ export function registerLendCloseCommand(program: Command): void {
 			"Collateral token symbol (e.g. 'ETH', 'STRK')"
 		)
 		.requiredOption("--borrow-token <symbol>", "Borrowed token symbol (e.g. 'USDC', 'USDT')")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-close -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDT"
+		)
 		.action(async (opts) => {
 			const spinner = createSpinner("Closing position...").start();
 
@@ -398,6 +427,10 @@ export function registerLendStatusCommand(program: Command): void {
 		.option(
 			"--borrow-token <symbol>",
 			"Borrow token (e.g. 'USDC', 'USDT'), required to see debt position"
+		)
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC"
 		)
 		.action(async (opts) => {
 			const spinner = createSpinner("Fetching lending position...").start();
