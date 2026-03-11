@@ -1,6 +1,6 @@
 {
 	"name": "starkfi",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Starknet DeFi CLI + MCP Server — Swaps, multi-swap, batch (multicall), staking, lending, simulation, portfolio, gasless transactions",
 	"type": "module",
 	"bin": {
@@ -15,6 +15,7 @@
 	},
 	"files": [
 		"dist",
+		"scripts",
 		"skills",
 		"README.md",
 		"MCP.md",
@@ -30,7 +31,8 @@
 		"format:check": "prettier --check src/",
 		"start": "node dist/index.js",
 		"mcp-start": "node dist/index.js mcp-start",
-		"prepublishOnly": "pnpm run build"
+		"prepublishOnly": "pnpm run build",
+		"postinstall": "node scripts/patch-esm.mjs"
 	},
 	"keywords": [
 		"starknet",
