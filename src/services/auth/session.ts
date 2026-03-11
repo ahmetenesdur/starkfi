@@ -32,9 +32,14 @@ export function loadSession(): Session | null {
 export function saveSession(session: Session): void {
 	const dir = DATA_DIR;
 	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
+		// 🔒 Ensure secure directory permissions (0o700) for sensitive session data
+		mkdirSync(dir, { recursive: true, mode: 0o700 });
 	}
-	writeFileSync(SESSION_FILE, JSON.stringify(session, null, 2), "utf-8");
+	// 🔒 Ensure secure file permissions (0o600) for sensitive session data
+	writeFileSync(SESSION_FILE, JSON.stringify(session, null, 2), {
+		encoding: "utf-8",
+		mode: 0o600,
+	});
 }
 
 export function clearSession(): void {
