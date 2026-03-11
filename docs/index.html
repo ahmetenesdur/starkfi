@@ -1,6 +1,17 @@
 <!doctype html>
 <html class="dark" lang="en">
 	<head>
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-9NZS1BQRFV"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() {
+				dataLayer.push(arguments);
+			}
+			gtag("js", new Date());
+
+			gtag("config", "G-9NZS1BQRFV");
+		</script>
 		<meta charset="utf-8" />
 		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
 		<title>StarkFi | Starknet DeFi CLI + MCP Server + Agent Skills</title>
@@ -8,7 +19,77 @@
 			name="description"
 			content="StarkFi — Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster. Built with Starkzap SDK."
 		/>
+
+		<!-- SEO Essentials -->
+		<meta
+			name="keywords"
+			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain"
+		/>
+		<meta name="author" content="ahmetenesdur" />
+		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href="https://starkfi.app" />
+		<meta name="theme-color" content="#020617" />
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://starkfi.app" />
+		<meta
+			property="og:title"
+			content="StarkFi | Starknet DeFi CLI + MCP Server + Agent Skills"
+		/>
+		<meta
+			property="og:description"
+			content="Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster."
+		/>
+		<meta property="og:image" content="https://starkfi.app/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:site_name" content="StarkFi" />
+		<meta property="og:locale" content="en_US" />
+
+		<!-- Twitter Card -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:url" content="https://starkfi.app" />
+		<meta name="twitter:title" content="StarkFi | Starknet DeFi from your Terminal & AI" />
+		<meta
+			name="twitter:description"
+			content="Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster."
+		/>
+		<meta name="twitter:image" content="https://starkfi.app/og-image.png" />
+		<meta name="twitter:creator" content="@ahmetenesdur" />
+
+		<!-- Structured Data (JSON-LD) -->
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "SoftwareApplication",
+				"name": "StarkFi",
+				"url": "https://starkfi.app",
+				"description": "Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster.",
+				"applicationCategory": "DeveloperApplication",
+				"operatingSystem": "Cross-platform",
+				"offers": {
+					"@type": "Offer",
+					"price": "0",
+					"priceCurrency": "USD"
+				},
+				"author": {
+					"@type": "Person",
+					"name": "ahmetenesdur",
+					"url": "https://github.com/ahmetenesdur"
+				},
+				"license": "https://opensource.org/licenses/MIT",
+				"codeRepository": "https://github.com/ahmetenesdur/starkfi",
+				"programmingLanguage": "TypeScript"
+			}
+		</script>
+
 		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
 			rel="stylesheet"
@@ -23,10 +104,9 @@
 				theme: {
 					extend: {
 						colors: {
-							"slate-950": "#03050C", // Deep premium dark background
-							"pastel-blue": "#a5b4fc", // Indigo tinted pastel
-							"pastel-mint": "#99f6e4", // Teal tinted pastel
-							"pastel-lavender": "#e9d5ff",
+							"pastel-blue": "#a1a1aa", // zinc-400 (repurposed to metallic silver)
+							"pastel-mint": "#71717a", // zinc-500 (repurposed to steel gray)
+							"pastel-lavender": "#52525b", // zinc-600 (repurposed to deep titanium)
 						},
 						fontFamily: {
 							display: ["'Plus Jakarta Sans'", "sans-serif"],
@@ -34,16 +114,9 @@
 							mono: ["'JetBrains Mono'", "monospace"],
 						},
 						animation: {
-							blob: "blob 7s infinite",
 							float: "float 6s ease-in-out infinite",
 						},
 						keyframes: {
-							blob: {
-								"0%": { transform: "translate(0px, 0px) scale(1)" },
-								"33%": { transform: "translate(30px, -50px) scale(1.1)" },
-								"66%": { transform: "translate(-20px, 20px) scale(0.9)" },
-								"100%": { transform: "translate(0px, 0px) scale(1)" },
-							},
 							float: {
 								"0%, 100%": { transform: "translateY(0)" },
 								"50%": { transform: "translateY(-15px)" },
@@ -72,24 +145,50 @@
 						0 16px 48px -4px rgba(0, 0, 0, 0.6);
 					transform: translateY(-2px);
 				}
-				.subtle-grid {
-					background-image:
-						linear-gradient(rgba(165, 180, 252, 0.05) 1px, transparent 1px),
-						linear-gradient(90deg, rgba(165, 180, 252, 0.05) 1px, transparent 1px);
-					background-size: 64px 64px;
-					background-position: center top;
+
+				.spotlight-card {
+					position: relative;
+					overflow: hidden;
+					transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 				}
+				.spotlight-card::before {
+					content: "";
+					position: absolute;
+					inset: 0;
+					pointer-events: none;
+					background: radial-gradient(
+						800px circle at var(--mouse-x, 0) var(--mouse-y, 0),
+						rgba(255, 255, 255, 0.06),
+						transparent 40%
+					);
+					opacity: 0;
+					transition: opacity 0.5s ease;
+					z-index: 0;
+				}
+				.spotlight-card:hover::before {
+					opacity: 1;
+				}
+				.spotlight-card:hover {
+					border-color: rgba(255, 255, 255, 0.15);
+					box-shadow: 0 20px 40px -4px rgba(0, 0, 0, 0.6);
+					transform: translateY(-2px);
+				}
+				.spotlight-card > * {
+					position: relative;
+					z-index: 1;
+				}
+
 				.text-gradient {
 					background-clip: text;
 					-webkit-background-clip: text;
 					-webkit-text-fill-color: transparent;
-					background-image: linear-gradient(110deg, #a5b4fc, #99f6e4, #e9d5ff);
+					background-image: linear-gradient(
+						110deg,
+						#e4e4e7,
+						#a1a1aa,
+						#e4e4e7
+					); /* Brushed metal silver */
 					background-size: 200% auto;
-				}
-				.hero-button-glow {
-					box-shadow:
-						0 0 15px rgba(165, 180, 252, 0.15),
-						inset 0 1px 1px rgba(255, 255, 255, 0.4);
 				}
 			}
 
@@ -104,59 +203,51 @@
 		</style>
 	</head>
 	<body
-		class="bg-slate-950 font-body text-slate-300 selection:bg-pastel-blue/30 selection:text-white antialiased"
+		class="bg-zinc-950 font-body text-zinc-300 selection:bg-zinc-700/50 selection:text-white antialiased"
 	>
-		<div class="relative min-h-screen overflow-x-hidden subtle-grid">
-			<!-- Animated Background Blobs -->
-			<div
-				class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none z-0"
-			>
-				<div
-					class="absolute top-10 left-10 w-96 h-96 bg-pastel-blue/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob"
-				></div>
-				<div
-					class="absolute top-10 right-10 w-96 h-96 bg-pastel-mint/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"
-				></div>
-				<div
-					class="absolute -bottom-10 left-32 w-96 h-96 bg-pastel-lavender/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"
-				></div>
-			</div>
+		<!-- Subtle Noise Texture Overlay -->
+		<div class="fixed inset-0 pointer-events-none z-0 opacity-[0.03] mix-blend-overlay">
+			<svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+				<filter id="noise">
+					<feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+				</filter>
+				<rect width="100%" height="100%" filter="url(#noise)" />
+			</svg>
+		</div>
 
+		<div class="relative min-h-screen overflow-x-hidden">
 			<!-- Header -->
-			<header class="relative z-50 w-full px-6 py-6 transition-all duration-300">
+			<header class="relative z-50 w-full px-6 py-6 transition-all duration-300 reveal-on-scroll">
 				<div
 					class="mx-auto max-w-[1200px] flex items-center justify-between px-6 py-3 frosted-glass rounded-2xl"
 				>
 					<div class="flex items-center gap-3">
-						<div
-							class="size-8 bg-gradient-to-tr from-pastel-blue to-pastel-mint rounded-lg flex items-center justify-center shadow-lg shadow-pastel-blue/10"
-						>
-							<span
-								class="material-symbols-outlined text-slate-900 text-lg font-medium"
-								>terminal</span
-							>
-						</div>
-						<h2 class="text-white text-xl font-display font-bold tracking-tight">
+						<!-- Brand Logo (Referencing Favicon) -->
+						<img src="favicon.svg" alt="StarkFi Logo" class="size-8 drop-shadow-lg" />
+						<span class="text-zinc-100 text-xl font-display font-bold tracking-tight">
 							StarkFi
-						</h2>
+						</span>
 					</div>
 					<nav class="hidden md:flex items-center gap-8">
 						<a
-							class="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+							class="text-zinc-600 hover:text-zinc-100 transition-colors text-sm font-medium"
 							href="https://github.com/ahmetenesdur/starkfi"
 							target="_blank"
+							rel="noopener noreferrer"
 							>GitHub</a
 						>
 						<a
-							class="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+							class="text-zinc-600 hover:text-zinc-100 transition-colors text-sm font-medium"
 							href="https://github.com/ahmetenesdur/starkfi/blob/main/MCP.md"
 							target="_blank"
+							rel="noopener noreferrer"
 							>MCP Docs</a
 						>
 						<a
-							class="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+							class="text-zinc-600 hover:text-zinc-100 transition-colors text-sm font-medium"
 							href="https://github.com/ahmetenesdur/starkfi/blob/main/skills/README.md"
 							target="_blank"
+							rel="noopener noreferrer"
 							>Skills</a
 						>
 					</nav>
@@ -164,7 +255,8 @@
 						<a
 							href="https://github.com/ahmetenesdur/starkfi"
 							target="_blank"
-							class="flex items-center gap-2 frosted-glass frosted-hover border border-white/10 text-white px-6 py-3 rounded-xl text-sm font-semibold tracking-wide transition-all"
+							rel="noopener noreferrer"
+							class="flex items-center gap-2 frosted-glass frosted-hover border border-white/10 text-zinc-100 px-6 py-3 rounded-xl text-sm font-semibold tracking-wide transition-all"
 						>
 							Get Started
 						</a>
@@ -175,31 +267,32 @@
 			<!-- Main Content -->
 			<main class="relative z-10 mx-auto max-w-[1200px] px-6 pt-20 pb-32">
 				<!-- Hero Section -->
-				<div class="flex flex-col items-center text-center max-w-4xl mx-auto mb-28">
+				<div class="flex flex-col items-center text-center max-w-4xl mx-auto mb-28 reveal-on-scroll">
 					<a
 						href="https://starkzap.io"
 						target="_blank"
+						rel="noopener noreferrer"
 						class="group inline-flex items-center gap-2 px-4 py-1.5 rounded-full frosted-glass hover:bg-white/5 border border-white/10 mb-8 transition-all cursor-pointer"
 					>
 						<div class="size-2 rounded-full bg-pastel-mint animate-pulse"></div>
 						<span
-							class="text-slate-300 group-hover:text-white text-[12px] font-medium tracking-wide"
+							class="text-zinc-600 group-hover:text-zinc-100 text-[12px] font-medium tracking-wide"
 							>Built with Starkzap SDK</span
 						>
 						<span
-							class="material-symbols-outlined text-sm text-slate-500 group-hover:translate-x-0.5 transition-transform"
+							class="material-symbols-outlined text-sm text-zinc-600 group-hover:translate-x-0.5 transition-transform"
 							>arrow_forward</span
 						>
 					</a>
 					<h1
-						class="text-white font-display text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8"
+						class="text-zinc-100 font-display text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8"
 					>
 						Starknet DeFi from <br />
 						<span class="text-gradient">your Terminal</span> &amp;
-						<span class="text-white">your AI</span>
+						<span class="text-zinc-100">your AI</span>
 					</h1>
 					<p
-						class="text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
+						class="text-zinc-600 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
 					>
 						Swap, stake, lend, batch &mdash; all from the CLI. Or let your AI agent
 						handle it through 27 MCP tools and 10 ready-made Skills. Powered by Starkzap
@@ -210,13 +303,11 @@
 							class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-5 w-full"
 						>
 							<div class="relative group w-full sm:w-auto flex justify-center">
-								<div
-									class="absolute -inset-1 bg-gradient-to-r from-pastel-blue to-pastel-mint rounded-2xl blur-md opacity-20 group-hover:opacity-40 transition duration-500 hidden sm:block"
-								></div>
 								<a
 									href="https://www.npmjs.com/package/starkfi"
 									target="_blank"
-									class="relative flex items-center justify-center gap-3 bg-white text-slate-950 px-8 py-3.5 sm:py-3 rounded-xl text-base font-semibold tracking-wide transition-all hero-button-glow hover:scale-[1.02] w-full shadow-lg sm:shadow-none"
+									rel="noopener noreferrer"
+									class="magnetic-btn relative flex items-center justify-center gap-3 bg-zinc-100 text-zinc-950 px-8 py-3.5 sm:py-3 rounded-xl text-base font-semibold tracking-wide transition-transform hover:scale-[1.02] w-full shadow-lg shadow-black/20 sm:shadow-none"
 								>
 									<span class="material-symbols-outlined text-[20px]"
 										>terminal</span
@@ -227,7 +318,8 @@
 							<a
 								href="https://github.com/ahmetenesdur/starkfi"
 								target="_blank"
-								class="flex items-center justify-center gap-3 frosted-glass frosted-hover text-white px-8 py-3.5 sm:py-3 rounded-xl text-base font-semibold tracking-wide transition-all w-full sm:w-auto"
+								rel="noopener noreferrer"
+								class="flex items-center justify-center gap-3 frosted-glass frosted-hover text-zinc-100 px-8 py-3.5 sm:py-3 rounded-xl text-base font-semibold tracking-wide transition-all w-full sm:w-auto"
 							>
 								<svg
 									class="size-5 fill-current"
@@ -242,11 +334,11 @@
 							</a>
 						</div>
 						<p
-							class="text-slate-400 text-sm font-light flex flex-col sm:flex-row items-center justify-center gap-2 mt-2"
+							class="text-zinc-600 text-sm font-light flex flex-col sm:flex-row items-center justify-center gap-2 mt-2"
 						>
 							Or run directly without installing:
 							<code
-								class="text-pastel-blue bg-pastel-blue/10 border border-pastel-blue/20 px-2 py-1 rounded font-mono text-xs tracking-wider whitespace-nowrap"
+								class="text-pastel-blue bg-white/5 border border-white/10 px-2 py-1 rounded font-mono text-xs tracking-wider whitespace-nowrap"
 								>npx starkfi</code
 							>
 						</p>
@@ -254,10 +346,9 @@
 				</div>
 
 				<!-- Terminal Demo -->
-				<div class="relative max-w-4xl mx-auto mb-32 z-10 animate-float">
-					<div class="absolute -inset-10 bg-pastel-blue/5 blur-[60px] rounded-full"></div>
+				<div class="relative max-w-4xl mx-auto mb-32 z-10 animate-float reveal-on-scroll" style="animation-delay: 200ms;">
 					<div
-						class="relative frosted-glass rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+						class="relative frosted-glass rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10"
 					>
 						<!-- Terminal Header: macOS native look -->
 						<div
@@ -274,11 +365,11 @@
 									class="size-3.5 rounded-full bg-[#27c93f] shadow-inner shadow-white/20"
 								></div>
 							</div>
-							<div class="text-[12px] text-slate-400 font-mono tracking-wider">
+							<div class="text-[12px] text-zinc-600 font-mono tracking-wider">
 								starkfi v0.3.0
 							</div>
-							<div class="w-16"></div>
 							<!-- Spacer for balance -->
+							<div class="w-16"></div>
 						</div>
 						<!-- Terminal Body -->
 						<div
@@ -286,13 +377,13 @@
 						>
 							<div class="flex gap-3 mb-4 whitespace-nowrap">
 								<span class="text-pastel-blue font-bold">~</span>
-								<span class="text-slate-500">❯</span>
-								<span class="text-white"
+								<span class="text-zinc-600">❯</span>
+								<span class="text-zinc-100"
 									>starkfi trade 0.5 ETH USDC --slippage 1</span
 								>
 							</div>
 							<div
-								class="text-slate-500 mb-8 pl-6 border-l-2 border-white/10 py-2 space-y-1"
+								class="text-zinc-600 mb-8 pl-6 border-l-2 border-white/10 py-2 space-y-1"
 							>
 								<p class="flex gap-2 items-center">
 									<span
@@ -318,25 +409,25 @@
 
 							<div class="flex gap-3 mb-4">
 								<span class="text-pastel-blue font-bold">~</span>
-								<span class="text-slate-500">❯</span>
-								<span class="text-white">starkfi balance</span>
+								<span class="text-zinc-600">❯</span>
+								<span class="text-zinc-100">starkfi balance</span>
 							</div>
 
 							<div
 								class="mt-4 p-4 md:p-5 rounded-xl frosted-glass border border-white/10 min-w-max"
 							>
 								<div
-									class="flex justify-between gap-4 text-[10px] md:text-[11px] text-slate-400 mb-3 font-bold tracking-widest uppercase"
+									class="flex justify-between gap-4 text-[10px] md:text-[11px] text-zinc-600 mb-3 font-bold tracking-widest uppercase"
 								>
 									<span>Wallet Balances</span>
 									<span class="text-pastel-mint">Starknet Mainnet</span>
 								</div>
-								<div class="text-white text-base">
-									<span class="text-slate-500 mr-2">ETH</span> 1.42
-									<span class="text-white/20 mx-3">|</span>
-									<span class="text-slate-500 mr-2">STRK</span> 5,200
-									<span class="text-white/20 mx-3">|</span>
-									<span class="text-slate-500 mr-2">USDC</span>
+								<div class="text-zinc-100 text-base">
+									<span class="text-zinc-600 mr-2">ETH</span> 1.42
+									<span class="text-zinc-100/20 mx-3">|</span>
+									<span class="text-zinc-600 mr-2">STRK</span> 5,200
+									<span class="text-zinc-100/20 mx-3">|</span>
+									<span class="text-zinc-600 mr-2">USDC</span>
 									<span class="text-pastel-blue">1,247.50</span>
 								</div>
 							</div>
@@ -352,10 +443,10 @@
 						class="frosted-glass frosted-hover p-5 md:p-8 rounded-2xl flex flex-col gap-2 md:gap-3 text-center md:text-left transition-all duration-300"
 					>
 						<span
-							class="text-slate-400 text-xs font-display font-bold uppercase tracking-widest"
+							class="text-zinc-600 text-xs font-display font-bold uppercase tracking-widest"
 							>MCP Tools</span
 						>
-						<span class="text-4xl md:text-5xl font-display font-light text-white"
+						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
 							>27</span
 						>
 					</div>
@@ -363,10 +454,10 @@
 						class="frosted-glass frosted-hover p-5 md:p-8 rounded-2xl flex flex-col gap-2 md:gap-3 text-center md:text-left transition-all duration-300"
 					>
 						<span
-							class="text-slate-400 text-xs font-display font-bold uppercase tracking-widest"
+							class="text-zinc-600 text-xs font-display font-bold uppercase tracking-widest"
 							>Commands</span
 						>
-						<span class="text-4xl md:text-5xl font-display font-light text-white"
+						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
 							>25<span class="text-pastel-blue">+</span></span
 						>
 					</div>
@@ -374,10 +465,10 @@
 						class="frosted-glass frosted-hover p-5 md:p-8 rounded-2xl flex flex-col gap-2 md:gap-3 text-center md:text-left transition-all duration-300"
 					>
 						<span
-							class="text-slate-400 text-xs font-display font-bold uppercase tracking-widest"
+							class="text-zinc-600 text-xs font-display font-bold uppercase tracking-widest"
 							>Agent Skills</span
 						>
-						<span class="text-4xl md:text-5xl font-display font-light text-white"
+						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
 							>10</span
 						>
 					</div>
@@ -385,7 +476,7 @@
 						class="frosted-glass frosted-hover p-5 md:p-8 rounded-2xl flex flex-col gap-2 md:gap-3 text-center md:text-left transition-all duration-300"
 					>
 						<span
-							class="text-slate-400 text-xs font-display font-bold uppercase tracking-widest"
+							class="text-zinc-600 text-xs font-display font-bold uppercase tracking-widest"
 							>Gas Tokens</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-pastel-mint"
@@ -399,19 +490,20 @@
 					<div class="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
 						<div class="max-w-2xl">
 							<h2
-								class="text-white font-display text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight"
+								class="text-zinc-100 font-display text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight"
 							>
 								What Can You Do <br />With StarkFi?
 							</h2>
-							<p class="text-slate-400 text-lg">
+							<p class="text-zinc-600 text-lg">
 								Every DeFi primitive on Starknet — accessible from a single CLI or
 								through AI-powered automation.
 							</p>
 						</div>
 						<a
-							class="group text-pastel-blue font-medium hover:text-white transition-colors flex items-center gap-2 mb-2 px-6 py-3 rounded-full frosted-glass"
+							class="group text-pastel-blue font-medium hover:text-zinc-100 transition-colors flex items-center gap-2 mb-2 px-6 py-3 rounded-full frosted-glass"
 							href="https://github.com/ahmetenesdur/starkfi/blob/main/README.md"
 							target="_blank"
+							rel="noopener noreferrer"
 						>
 							Full Feature Map
 							<span
@@ -421,22 +513,23 @@
 						</a>
 					</div>
 
-					<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<!-- Features Grid -->
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-32 z-10 relative reveal-on-scroll">
 						<!-- Feature Card 1 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-pastel-blue/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span class="material-symbols-outlined text-pastel-blue text-2xl"
 									>currency_exchange</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Token Swaps
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								DEX-aggregated swaps with best-price routing via Fibrous. Single
 								swap or multi-swap up to 3 pairs in one multicall.
 							</p>
@@ -444,19 +537,19 @@
 
 						<!-- Feature Card 2 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-pastel-mint/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span class="material-symbols-outlined text-pastel-mint text-2xl"
 									>layers</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Batch Transactions
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								Combine swap + stake + send into one atomic multicall. Define your
 								steps inline via CLI flags, execute in a single tx.
 							</p>
@@ -464,20 +557,20 @@
 
 						<!-- Feature Card 3 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-pastel-lavender/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span
 									class="material-symbols-outlined text-pastel-lavender text-2xl"
 									>savings</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Lending &amp; Borrowing
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								Native Vesu V2 integration. Supply collateral, borrow assets, and
 								close positions with precise CLI control.
 							</p>
@@ -485,19 +578,19 @@
 
 						<!-- Feature Card 4 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-pastel-blue/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span class="material-symbols-outlined text-pastel-blue text-2xl"
 									>account_balance</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Liquid Staking
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								Stake, unstake, claim rewards and browse pools/validators. Supports
 								STRK, WBTC, tBTC, SolvBTC and LBTC.
 							</p>
@@ -505,19 +598,19 @@
 
 						<!-- Feature Card 5 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-pastel-mint/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span class="material-symbols-outlined text-pastel-mint text-2xl"
 									>local_fire_department</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Gas Abstraction
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								AVNU Paymaster built-in. Gasfree (sponsor gas) or Gasless (pay in
 								USDC, USDT, DAI, STRK, ETH).
 							</p>
@@ -525,20 +618,20 @@
 
 						<!-- Feature Card 6 -->
 						<div
-							class="frosted-glass frosted-hover p-8 rounded-3xl group cursor-default"
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
 						>
 							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-pastel-lavender/20 flex items-center justify-center mb-8"
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
 							>
 								<span
 									class="material-symbols-outlined text-pastel-lavender text-2xl"
 									>smart_toy</span
 								>
 							</div>
-							<h3 class="text-white font-display text-xl font-semibold mb-3">
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								MCP Server + Skills
 							</h3>
-							<p class="text-slate-400 text-sm leading-relaxed font-light">
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								27 MCP tools + 10 Agent Skills. Let Claude, Cursor or any
 								MCP-compatible agent trade autonomously.
 							</p>
@@ -547,17 +640,17 @@
 				</section>
 
 				<!-- Agent / MCP Section -->
-				<section class="mb-40 relative z-10">
-					<div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+				<!-- Agent Features Split Section -->
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center mb-32 z-10 relative reveal-on-scroll">
 						<div class="flex flex-col gap-10">
 							<div class="space-y-6">
 								<h2
-									class="text-white font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight"
+									class="text-zinc-100 font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight"
 								>
 									MCP Server <br />
 									<span class="text-gradient">&amp; Agent Skills</span>
 								</h2>
-								<p class="text-slate-400 text-lg font-light">
+								<p class="text-zinc-600 text-lg font-light">
 									StarkFi exposes every feature as an MCP tool, so AI agents like
 									Claude or Cursor can execute Starknet DeFi operations directly.
 									10 ready-made Agent Skills bundle multi-step workflows into
@@ -568,7 +661,7 @@
 							<div class="grid grid-cols-1 gap-8">
 								<div class="flex items-start gap-5">
 									<div
-										class="size-10 bg-gradient-to-br from-pastel-blue/20 to-transparent border border-pastel-blue/20 rounded-xl flex items-center justify-center shrink-0"
+										class="size-10 bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 rounded-xl flex items-center justify-center shrink-0"
 									>
 										<span
 											class="material-symbols-outlined text-pastel-blue text-lg"
@@ -576,14 +669,12 @@
 										>
 									</div>
 									<div>
-										<h4
-											class="text-white font-display text-lg font-semibold mb-2"
+										<h3
+											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
 											27 MCP Tools
-										</h4>
-										<p
-											class="text-slate-500 text-sm leading-relaxed font-light"
-										>
+										</h3>
+										<p class="text-zinc-600 text-sm leading-relaxed font-light">
 											Swap, stake, lend, send, batch, portfolio — all exposed
 											as typed JSON-schema tools for any MCP-compatible agent.
 										</p>
@@ -591,7 +682,7 @@
 								</div>
 								<div class="flex items-start gap-5">
 									<div
-										class="size-10 bg-gradient-to-br from-pastel-mint/20 to-transparent border border-pastel-mint/20 rounded-xl flex items-center justify-center shrink-0"
+										class="size-10 bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 rounded-xl flex items-center justify-center shrink-0"
 									>
 										<span
 											class="material-symbols-outlined text-pastel-mint text-lg"
@@ -599,14 +690,12 @@
 										>
 									</div>
 									<div>
-										<h4
-											class="text-white font-display text-lg font-semibold mb-2"
+										<h3
+											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
 											10 Agent Skills
-										</h4>
-										<p
-											class="text-slate-500 text-sm leading-relaxed font-light"
-										>
+										</h3>
+										<p class="text-zinc-600 text-sm leading-relaxed font-light">
 											Pre-packaged multi-step workflows — trade, stake, lend,
 											batch — that agents can invoke with zero config.
 										</p>
@@ -617,40 +706,35 @@
 
 						<!-- Agent Chat UI Mockup -->
 						<div
-							class="frosted-glass rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 relative"
+							class="frosted-glass rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 relative"
 						>
-							<!-- Glowing backdrop behind the chat -->
-							<div
-								class="absolute inset-0 bg-gradient-to-br from-pastel-blue/5 via-transparent to-pastel-mint/5 opacity-50"
-							></div>
-
 							<div
 								class="relative p-5 bg-white/5 border-b border-white/10 flex items-center gap-3 backdrop-blur-md"
 							>
 								<div
-									class="size-2.5 rounded-full bg-pastel-mint animate-pulse"
+									class="size-2.5 rounded-full bg-emerald-500 animate-pulse"
 								></div>
 								<span
-									class="text-[11px] font-bold text-slate-300 uppercase tracking-widest font-display"
+									class="text-[11px] font-bold text-zinc-600 uppercase tracking-widest font-display"
 									>Active MCP Session</span
 								>
 							</div>
 
 							<div
-								class="relative p-5 md:p-8 h-[400px] flex flex-col gap-6 overflow-y-auto bg-[#0a0f1c]/50"
+								class="relative p-5 md:p-8 h-[400px] flex flex-col gap-6 overflow-y-auto bg-black/20"
 							>
 								<!-- Human Message -->
 								<div class="flex gap-4 max-w-[90%]">
 									<div
-										class="size-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 flex items-center justify-center shrink-0 shadow-md"
+										class="size-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 border border-white/10 flex items-center justify-center shrink-0 shadow-md"
 									>
 										<span
-											class="material-symbols-outlined text-slate-400 text-sm"
+											class="material-symbols-outlined text-zinc-600 text-sm"
 											>person</span
 										>
 									</div>
 									<div
-										class="bg-white/10 border border-white/5 backdrop-blur-sm rounded-2xl rounded-tl-sm p-4 text-[14px] text-slate-200 leading-relaxed shadow-sm"
+										class="bg-white/10 border border-white/5 backdrop-blur-sm rounded-2xl rounded-tl-sm p-4 text-[14px] text-zinc-200 leading-relaxed shadow-sm"
 									>
 										Swap 500 STRK to USDC with max 0.5% slippage, then stake 200
 										STRK to the highest-yield validator.
@@ -660,54 +744,54 @@
 								<!-- Agent Message -->
 								<div class="flex gap-4 flex-row-reverse self-end max-w-[92%] mt-4">
 									<div
-										class="size-8 rounded-full bg-gradient-to-br from-pastel-blue to-pastel-mint flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(165,180,252,0.2)]"
+										class="size-8 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shrink-0 shadow-md shadow-black/20"
 									>
 										<span
-											class="material-symbols-outlined text-slate-900 text-sm font-bold"
+											class="material-symbols-outlined text-zinc-900 text-sm font-bold"
 											>memory</span
 										>
 									</div>
 									<div
-										class="bg-gradient-to-br from-pastel-blue/10 to-transparent border border-pastel-blue/20 backdrop-blur-md rounded-2xl rounded-tr-sm p-5 text-[14px] text-white leading-relaxed shadow-lg"
+										class="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl rounded-tr-sm p-5 text-[14px] text-zinc-100 leading-relaxed shadow-lg shadow-black/10"
 									>
 										<p class="mb-4">
 											Calling
 											<code
-												class="text-pastel-blue bg-white/5 px-1.5 py-0.5 rounded text-xs font-mono"
+												class="text-zinc-300 bg-white/5 px-1.5 py-0.5 rounded text-xs font-mono border border-white/10"
 												>swap_tokens</code
 											>
 											via Fibrous... <br />
-											<span class="text-slate-400 text-sm"
+											<span class="text-zinc-600 text-sm"
 												>Route: STRK → USDC (Ekubo)</span
 											>
 										</p>
 										<p class="mb-4">
 											Then calling
 											<code
-												class="text-pastel-mint bg-white/5 px-1.5 py-0.5 rounded text-xs font-mono"
+												class="text-zinc-300 bg-white/5 px-1.5 py-0.5 rounded text-xs font-mono border border-white/10"
 												>stake</code
 											>
 											with best validator...
 										</p>
 										<div
-											class="p-4 bg-black/60 rounded-xl border border-white/10 font-mono text-[12px] text-pastel-mint flex flex-col gap-2 shadow-inner"
+											class="p-4 bg-black/40 rounded-xl border border-white/10 font-mono text-[12px] text-zinc-400 flex flex-col gap-2 shadow-inner"
 										>
 											<div
-												class="flex justify-between items-center text-slate-400 text-[10px] tracking-wider font-bold mb-1"
+												class="flex justify-between items-center text-zinc-600 text-[10px] tracking-wider font-bold mb-1"
 											>
 												<span>MULTICALL STATUS</span>
 												<span
-													class="bg-pastel-mint/20 text-pastel-mint px-2 py-0.5 rounded"
+													class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded"
 													>ACCEPTED_ON_L2</span
 												>
 											</div>
 											<div class="flex items-center gap-2">
-												<span class="text-pastel-blue">❯</span> BATCH TX: 2
+												<span class="text-zinc-500">❯</span> BATCH TX: 2
 												operations
 											</div>
 											<div class="flex items-center gap-2">
-												<span class="text-pastel-blue">❯</span> GAS:
-												Sponsored by AVNU
+												<span class="text-zinc-500">❯</span> GAS: Sponsored
+												by AVNU
 											</div>
 										</div>
 									</div>
@@ -719,23 +803,15 @@
 
 				<!-- CTA Section -->
 				<section
-					class="relative py-16 px-6 md:py-28 md:px-10 rounded-3xl md:rounded-[2.5rem] overflow-hidden text-center frosted-glass shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-white/10 z-10"
+					class="relative py-16 px-6 md:py-28 md:px-10 rounded-3xl md:rounded-[2.5rem] overflow-hidden text-center frosted-glass shadow-2xl shadow-black/50 border border-white/10 z-10 reveal-on-scroll"
 				>
-					<!-- Vibrant radial gradients in background -->
-					<div
-						class="absolute -top-1/2 -left-1/4 w-full h-full bg-pastel-blue/10 blur-[100px] rounded-full mix-blend-screen opacity-30"
-					></div>
-					<div
-						class="absolute -bottom-1/2 -right-1/4 w-full h-full bg-pastel-mint/10 blur-[100px] rounded-full mix-blend-screen opacity-30"
-					></div>
-
 					<div class="relative z-10 max-w-3xl mx-auto flex flex-col gap-8">
 						<h2
-							class="text-white font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70"
+							class="text-zinc-100 font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
 						>
 							Ready to build on Starknet?
 						</h2>
-						<p class="text-slate-400 text-lg md:text-xl font-light">
+						<p class="text-zinc-600 text-lg md:text-xl font-light">
 							Install StarkFi with one command. Start swapping, staking and lending in
 							minutes. Open source, MIT licensed, community-driven.
 						</p>
@@ -745,14 +821,16 @@
 							<a
 								href="https://github.com/ahmetenesdur/starkfi/blob/main/MCP.md"
 								target="_blank"
-								class="inline-flex w-full sm:w-auto items-center justify-center bg-white text-slate-950 px-8 py-3.5 sm:px-10 sm:py-4 rounded-xl text-base sm:text-lg font-semibold tracking-wide transition-all hero-button-glow hover:scale-[1.02]"
+								rel="noopener noreferrer"
+								class="inline-flex w-full sm:w-auto items-center justify-center bg-zinc-100 text-zinc-950 px-8 py-3.5 sm:px-10 sm:py-4 rounded-xl text-base sm:text-lg font-semibold tracking-wide transition-all hover:scale-[1.02]"
 							>
 								View MCP Integration
 							</a>
 							<a
 								href="https://www.npmjs.com/package/starkfi"
 								target="_blank"
-								class="inline-flex w-full sm:w-auto items-center justify-center frosted-glass frosted-hover text-white px-8 py-3.5 sm:px-10 sm:py-4 rounded-xl text-base sm:text-lg font-semibold tracking-wide transition-all"
+								rel="noopener noreferrer"
+								class="inline-flex w-full sm:w-auto items-center justify-center frosted-glass frosted-hover text-zinc-100 px-8 py-3.5 sm:px-10 sm:py-4 rounded-xl text-base sm:text-lg font-semibold tracking-wide transition-all"
 							>
 								View on npm
 							</a>
@@ -762,42 +840,38 @@
 			</main>
 
 			<!-- Premium Footer -->
-			<footer class="relative border-t border-white/5 bg-[#010206] pt-24 pb-12 px-6 z-10">
-				<!-- Footer top subtle glow -->
-				<div
-					class="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
-				></div>
-
+			<footer class="relative border-t border-white/5 bg-zinc-950 pt-24 pb-12 px-6 z-10">
 				<div class="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12">
 					<div class="col-span-2 md:col-span-2 md:pr-12">
 						<div class="flex items-center gap-3 mb-8">
-							<div
-								class="size-8 bg-gradient-to-tr from-slate-700 to-slate-800 border border-white/10 rounded-lg flex items-center justify-center shadow-lg"
+							<!-- Brand Logo (Referencing Favicon) -->
+							<img src="favicon.svg" alt="StarkFi Logo" class="size-8 drop-shadow-lg" />
+							<h2
+								class="text-zinc-100 font-display text-2xl font-bold tracking-tight"
 							>
-								<span class="material-symbols-outlined text-white text-lg"
-									>terminal</span
-								>
-							</div>
-							<h2 class="text-white font-display text-2xl font-bold tracking-tight">
 								StarkFi
 							</h2>
 						</div>
-						<p class="text-slate-400 text-sm leading-relaxed mb-8 font-light max-w-sm">
+						<p class="text-zinc-600 text-sm leading-relaxed mb-8 font-light max-w-sm">
 							Starknet DeFi from your terminal or your AI agent. CLI + MCP Server +
 							Agent Skills. Powered by Starkzap.
 						</p>
 						<div class="flex gap-4">
 							<a
-								class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all shadow-sm"
+								class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-600 hover:text-zinc-100 hover:bg-white/10 hover:border-white/20 transition-all shadow-sm"
 								href="https://github.com/ahmetenesdur/starkfi"
 								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="GitHub Repository"
 							>
 								<span class="material-symbols-outlined text-[20px]">code</span>
 							</a>
 							<a
-								class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all shadow-sm"
+								class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-600 hover:text-zinc-100 hover:bg-white/10 hover:border-white/20 transition-all shadow-sm"
 								href="https://www.npmjs.com/package/starkfi"
 								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="npm Package"
 							>
 								<span class="material-symbols-outlined text-[20px]">terminal</span>
 							</a>
@@ -805,51 +879,43 @@
 					</div>
 
 					<div>
-						<h4 class="text-white font-display text-base font-semibold mb-6">
+						<h3 class="text-zinc-100 font-display text-base font-semibold mb-6">
 							Product
-						</h4>
-						<ul class="flex flex-col gap-4 text-slate-400 text-sm font-light">
+						</h3>
+						<ul class="flex flex-col gap-4 text-zinc-600 text-sm font-light">
 							<li>
 								<a
-									class="hover:text-pastel-blue transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur/starkfi"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-pastel-blue transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>CLI Tool</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-pastel-mint transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur/starkfi/blob/main/skills/README.md"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-pastel-mint transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Agent Skills</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-pastel-blue transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur/starkfi/blob/main/MCP.md"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-pastel-blue transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>MCP Server</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://www.npmjs.com/package/starkfi"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>npm Registry</a
 								>
 							</li>
@@ -857,40 +923,34 @@
 					</div>
 
 					<div>
-						<h4 class="text-white font-display text-base font-semibold mb-6">
+						<h3 class="text-zinc-100 font-display text-base font-semibold mb-6">
 							Resources
-						</h4>
-						<ul class="flex flex-col gap-4 text-slate-400 text-sm font-light">
+						</h3>
+						<ul class="flex flex-col gap-4 text-zinc-600 text-sm font-light">
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur/starkfi/blob/main/README.md"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Documentation</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/keep-starknet-strange/awesome-starkzap"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Awesome Starkzap</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur/starkfi/issues"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Issue Tracker</a
 								>
 							</li>
@@ -898,40 +958,34 @@
 					</div>
 
 					<div>
-						<h4 class="text-white font-display text-base font-semibold mb-6">
+						<h3 class="text-zinc-100 font-display text-base font-semibold mb-6">
 							Community
-						</h4>
-						<ul class="flex flex-col gap-4 text-slate-400 text-sm font-light">
+						</h3>
+						<ul class="flex flex-col gap-4 text-zinc-600 text-sm font-light">
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://x.com/ahmetenesdur"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Twitter / X</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://github.com/ahmetenesdur"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>GitHub Profile</a
 								>
 							</li>
 							<li>
 								<a
-									class="hover:text-white transition-colors flex items-center gap-2 group"
+									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
 									href="https://starknet.io/"
 									target="_blank"
-									><span
-										class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-white transition-colors"
-									></span
+									rel="noopener noreferrer"
 									>Starknet Ecosystem</a
 								>
 							</li>
@@ -940,11 +994,61 @@
 				</div>
 
 				<div
-					class="max-w-[1200px] mx-auto mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-500 text-sm font-light"
+					class="max-w-[1200px] mx-auto mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-zinc-600 text-sm font-light"
 				>
 					<p>&copy; 2026. Open Source under MIT License.</p>
 				</div>
 			</footer>
-		</div>
+		<script>
+			// Intersection Observer for Scroll Reveals
+			const observerOptions = {
+				root: null,
+				rootMargin: '0px',
+				threshold: 0.1
+			};
+
+			const observer = new IntersectionObserver((entries, observer) => {
+				entries.forEach((entry, index) => {
+					if (entry.isIntersecting) {
+						setTimeout(() => {
+							entry.target.classList.add('opacity-100', 'translate-y-0');
+							entry.target.classList.remove('opacity-0', 'translate-y-8');
+						}, index * 100); // Stagger effect
+						observer.unobserve(entry.target);
+					}
+				});
+			}, observerOptions);
+
+			// Initialize reveal classes
+			document.querySelectorAll('.reveal-on-scroll').forEach((el) => {
+				el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-1000', 'ease-out');
+				observer.observe(el);
+			});
+
+			// Magnetic Button Effect
+			document.querySelectorAll('.magnetic-btn').forEach(btn => {
+				btn.addEventListener('mousemove', (e) => {
+					const rect = btn.getBoundingClientRect();
+					const x = e.clientX - rect.left - rect.width / 2;
+					const y = e.clientY - rect.top - rect.height / 2;
+					// subtle movement + scale
+					btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) scale(1.02)`;
+				});
+				btn.addEventListener('mouseleave', () => {
+					btn.style.transform = 'translate(0px, 0px) scale(1)';
+				});
+			});
+
+			// Spotlight Card Effect
+			document.querySelectorAll('.spotlight-card').forEach(card => {
+				card.addEventListener('mousemove', (e) => {
+					const rect = card.getBoundingClientRect();
+					const x = e.clientX - rect.left;
+					const y = e.clientY - rect.top;
+					card.style.setProperty('--mouse-x', `${x}px`);
+					card.style.setProperty('--mouse-y', `${y}px`);
+				});
+			});
+		</script>
 	</body>
 </html>

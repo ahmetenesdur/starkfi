@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Background Gradient (Subtle depth) -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <!-- Border Gradient (Light catching top left) -->
+    <linearGradient id="border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#52525b" />
+      <stop offset="50%" stop-color="#27272a" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <!-- Metallic Gradient for Prompt -->
+    <linearGradient id="prompt-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#a1a1aa" />
+    </linearGradient>
+    <!-- Highlight Gradient for AI/Starknet Sparkle -->
+    <linearGradient id="star-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#e4e4e7" />
+      <stop offset="100%" stop-color="#71717a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer squircle -->
+  <rect width="100" height="100" rx="24" fill="url(#bg)" />
+
+  <!-- Inner glowing border -->
+  <rect x="1.5" y="1.5" width="97" height="97" rx="22.5" fill="none" stroke="url(#border)" stroke-width="3" />
+
+  <!-- The "Smart Prompt" Vector (>✦) -->
+  <g transform="translate(-2, 0)">
+    <!-- Terminal Prompt (>) -->
+    <path d="M 28 34 L 46 50 L 28 66" stroke="url(#prompt-g)" stroke-width="11" stroke-linecap="round"
+      stroke-linejoin="round" fill="none" />
+
+    <!-- AI Agent / Starknet Sparkle (✦) -->
+    <path d="M 68 34 Q 68 50 52 50 Q 68 50 68 66 Q 68 50 84 50 Q 68 50 68 34 Z" fill="url(#star-g)" />
+  </g>
+</svg>
