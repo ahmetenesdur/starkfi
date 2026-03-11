@@ -180,13 +180,13 @@ npx starkfi mcp-start
 
 ### Tool Categories
 
-| Category          | Tools                                                                                                                                                          | Type       |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                             | Read/Write |
-| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`                                                                               | Read/Write |
-| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                         | Read/Write |
-| **Staking**       | `list_validators`, `list_pools`, `get_stake_status`, `get_staking_info`, `stake_tokens`, `claim_rewards`, `compound_rewards`, `unstake_intent`, `unstake_exit` | Read/Write |
-| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`                              | Read/Write |
+| Category          | Tools                                                                                                                                          | Count |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                             | 2     |
+| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`                                                               | 5     |
+| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                         | 5     |
+| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards` | 8     |
+| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`              | 7     |
 
 ### Example — AI Agent Workflow
 
@@ -214,7 +214,7 @@ Add to your AI assistant's MCP config (Cursor, Claude, etc.):
 }
 ```
 
-For the complete tool registry and schemas, see [MCP.md](MCP.md).
+For the complete tool registry and schemas, see [MCP Documentation](MCP.md).
 
 ---
 
@@ -339,11 +339,36 @@ npx starkfi trade 10 STRK ETH               # Execute
 
 ---
 
+## Auth Server
+
+StarkFi includes a dedicated **authentication server** (`server/`) built for secure, non-custodial wallet management.
+
+### Route Groups
+
+| Route        | Purpose                                           |
+| ------------ | ------------------------------------------------- |
+| `/auth`      | Email OTP login and verification via Privy        |
+| `/wallet`    | Wallet creation and address retrieval             |
+| `/sign`      | Transaction signing via Privy TEE (non-custodial) |
+| `/paymaster` | Paymaster proxy for gas abstraction               |
+
+### Security
+
+- **CORS** with configurable allowlist (`ALLOWED_ORIGINS`)
+- **Secure headers** via `hono/secure-headers`
+- **Body size limit** (1MB)
+- **Request ID tracking** for observability
+- **Graceful shutdown** (SIGTERM/SIGINT with 5s force-kill)
+
+See [`server/README.md`](server/README.md) for setup instructions.
+
+---
+
 ## Tech Stack
 
 | Layer           | Technology                                                                       |
 | --------------- | -------------------------------------------------------------------------------- |
-| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/x) v1.0.0                    |
+| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/starkzap) v1.0.0             |
 | **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
 | **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
 | **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
@@ -354,39 +379,74 @@ npx starkfi trade 10 STRK ETH               # Execute
 
 ---
 
-## Project Structure
+## Error Handling
 
-```
-starkfi/
-├── src/
-│   ├── commands/         # 9 CLI command groups (25+ commands)
-│   ├── services/         # 11 core service modules
-│   │   ├── starkzap/     # SDK init, wallet, gas abstraction
-│   │   ├── fibrous/      # DEX routing, quotes, calldata
-│   │   ├── vesu/         # Vesu V2 lending, pools, positions
-│   │   ├── staking/      # Delegation, rewards, unstake
-│   │   ├── batch/        # Multicall transaction builder
-│   │   ├── simulate/     # Dry-run fee estimator
-│   │   ├── portfolio/    # Aggregated DeFi dashboard
-│   │   └── ...           # auth, config, tokens, api
-│   ├── mcp/              # MCP server, tools, handlers
-│   └── lib/              # Shared utilities, errors, types
-├── server/               # Auth Server (Hono + Privy)
-├── skills/               # 10 AI agent skill definitions
-└── MCP.md                # MCP tool documentation
-```
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **26 specific error codes** organized by domain:
+
+| Domain         | Error Codes                                                                       |
+| -------------- | --------------------------------------------------------------------------------- |
+| **Auth**       | `SESSION_EXPIRED`, `SESSION_NOT_FOUND`, `AUTH_FAILED`, `UNAUTHORIZED`             |
+| **Wallet**     | `WALLET_NOT_FOUND`, `WALLET_NOT_DEPLOYED`, `INSUFFICIENT_BALANCE`                 |
+| **Network**    | `NETWORK_ERROR`, `RPC_ERROR`, `API_ERROR`, `TX_FAILED`, `TX_REVERTED`             |
+| **Validation** | `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_TOKEN`, `INVALID_CONFIG`            |
+| **DeFi**       | `SWAP_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`               |
+| **System**     | `CONFIG_ERROR`, `SDK_ERROR`, `UNKNOWN_ERROR`, `SIMULATION_FAILED`, `BATCH_FAILED` |
+
+All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.
 
 ---
 
-## Error Handling
+## Development
 
-StarkFi implements **26 specific error codes** with a custom `StarkfiError` class, automatic retry with exponential backoff for network errors, and comprehensive validation for all user inputs.
+### Setup
+
+```bash
+git clone https://github.com/ahmetenesdur/starkfi.git
+cd starkfi
+pnpm install
+```
+
+### Build
+
+```bash
+pnpm build           # Compile TypeScript → dist/
+```
+
+### Dev Mode
+
+```bash
+pnpm dev -- --help   # Run with tsx (hot-reload)
+```
+
+### Lint & Format
+
+```bash
+pnpm lint            # ESLint
+pnpm format          # Prettier
+```
+
+### Auth Server
+
+```bash
+cd server
+pnpm install
+cp .env.example .env    # Configure environment
+pnpm dev
+```
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please open an issue or submit a pull request.
+Contributions are welcome! Here's how to get started:
+
+1. **Fork** the repository and create a feature branch
+2. **Install** dependencies: `pnpm install`
+3. **Make** your changes following the existing code style (TypeScript strict mode, ESLint + Prettier)
+4. **Build** and verify: `pnpm build && pnpm lint`
+5. **Submit** a pull request with a clear description
+
+For bug reports and feature requests, please [open an issue](https://github.com/ahmetenesdur/starkfi/issues).
 
 ## License
 

@@ -28,8 +28,9 @@ npx skills add ahmetenesdur/starkfi
 
 ## Getting Started
 
-1. Install Node.js (v18+) and npm.
-2. No manual installation needed — all skills use `npx starkfi@latest`.
+1. Install **Node.js** (v18+).
+2. Ensure the **StarkFi Auth Server** is running (required for authentication and signing).
+3. No manual CLI installation needed — all skills use `npx starkfi@latest`.
 
 ## Typical Workflow
 
