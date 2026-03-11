@@ -1,8 +1,18 @@
-# StarkFi
+<p align="center">
+  <a href="https://starkfi.app">
+    <img src="docs/favicon.svg" alt="StarkFi Logo" width="100" height="100"/>
+  </a>
+</p>
 
-**The first AI-native DeFi toolkit for Starknet.** A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the [Starkzap SDK](https://github.com/keep-starknet-strange/x).
+<h1 align="center">StarkFi</h1>
 
-```
+<p align="center">
+  <strong>The Gas-Abstracted DeFi CLI & Agent.</strong><br>
+  <em>The AI-native DeFi toolkit for Starknet.</em><br>
+  A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
+</p>
+
+```bash
 npx starkfi --help
 ```
 
