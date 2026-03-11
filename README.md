@@ -65,13 +65,13 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 
 StarkFi leverages **all core Starkzap modules**:
 
-| Module                               | Usage in StarkFi                                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **Wallets**                          | `PrivySigner` + `ArgentXV050Preset` for email-based wallet management via Privy TEE                          |
-| **Gasless Transactions (Paymaster)** | AVNU Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode |
-| **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step)   |
-| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send in one transaction                          |
-| **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                         |
+| Module                               | Usage in StarkFi                                                                                           |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Wallets**                          | `PrivySigner` + `ArgentXV050Preset` for email-based wallet management via Privy TEE                        |
+| **Gasless Transactions (Paymaster)** | Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode    |
+| **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step) |
+| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send in one transaction                        |
+| **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                       |
 
 ---
 
@@ -124,7 +124,7 @@ npx starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDC
 
 ### 💸 Gas Abstraction
 
-All transactions are gasless by default. Users pay gas fees in their preferred ERC-20 token via AVNU Paymaster.
+All transactions are gasless by default. Users pay gas fees in their preferred ERC-20 token via Paymaster.
 
 ```bash
 # Pay gas in USDC instead of STRK

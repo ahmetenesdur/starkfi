@@ -53,16 +53,16 @@ npx starkfi@latest tx-status <hash>
 
 StarkFi supports two gas abstraction modes:
 
-| Mode        | Who Pays      | Command                     | Description                                      |
-| ----------- | ------------- | --------------------------- | ------------------------------------------------ |
-| **Gasfree** | Developer     | `config set-gasfree on`     | Gas fees sponsored by StarkFi via AVNU Paymaster |
-| **Gasless** | User (ERC-20) | `config set-gas-token STRK` | User pays gas in an ERC-20 token (default mode)  |
+| Mode        | Who Pays      | Command                     | Description                                     |
+| ----------- | ------------- | --------------------------- | ----------------------------------------------- |
+| **Gasfree** | Developer     | `config set-gasfree on`     | Gas fees sponsored by StarkFi via Paymaster     |
+| **Gasless** | User (ERC-20) | `config set-gas-token STRK` | User pays gas in an ERC-20 token (default mode) |
 
 Supported gas tokens: **ETH**, **STRK**, **USDC**, **USDT**, **DAI**
 
 Gasfree and Gasless are mutually exclusive — enabling one disables the other.
 
-> **Default:** Gasless mode with STRK as gas token. Gas is paid through the AVNU Paymaster, so the user does not need native ETH for gas — any supported ERC-20 works.
+> **Default:** Gasless mode with STRK as gas token. Gas is paid through the Paymaster, so the user does not need native ETH for gas — any supported ERC-20 works.
 
 ## Parameters
 
