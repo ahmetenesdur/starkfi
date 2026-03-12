@@ -12,17 +12,6 @@ The server employs a strict security architecture designed around access minimiz
 - **Rate Limiting:** Authentication endpoints are limited to **5 requests/min** per IP. Signing endpoints are limited to **30 requests/min** per IP to prevent abuse.
 - **DDoS Mitigation:** All authentication endpoints are protected by strict rate-limiting policies to prevent brute-force attacks.
 
-## Tech Stack
-
-| Dependency                               | Version  | Purpose                            |
-| ---------------------------------------- | -------- | ---------------------------------- |
-| [Hono](https://hono.dev/)                | v4.12.2  | Web framework                      |
-| [@hono/node-server](https://hono.dev/)   | v1.19.9  | Node.js adapter                    |
-| [@privy-io/node](https://privy.io/)      | v0.8.0   | Privy TEE authentication           |
-| [jose](https://github.com/panva/jose)    | v6.1.3   | JWT signing and verification       |
-| [Zod](https://zod.dev/)                  | v3.25.76 | Request body validation            |
-| [@hono/zod-validator](https://hono.dev/) | v0.7.1   | Hono middleware for Zod validation |
-
 ## Local Development Setup
 
 To initialize and run the server locally:

@@ -36,31 +36,31 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 ┌──────────────────────────────────────────────────────────────────────┐
 │                           StarkFi                                    │
 │                                                                      │
-│  ┌─────────────┐     ┌─────────────────────────────────────────┐     │
-│  │   CLI (25+   │     │         MCP Server (27 tools)           │     │
-│  │   commands)  │     │  AI agents connect via stdio transport  │     │
-│  └──────┬───────┘     └──────────────┬──────────────────────────┘     │
+│  ┌-─────────────┐     ┌─────────────────────────────────────────┐    │
+│  │   CLI (30+   │     │         MCP Server (27 tools)           │    │
+│  │   commands)  │     │  AI agents connect via stdio transport  │    │
+│  └──────┬───────┘     └──────────────┬──────────────────────────┘    │
 │         │                            │                               │
 │         └────────────┬───────────────┘                               │
 │                      ▼                                               │
 │  ┌──────────────────────────────────────────────────────────────┐    │
-│  │                    Service Layer                              │    │
-│  │                                                               │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌─────────┐           │    │
-│  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │           │    │
-│  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│           │    │
-│  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘           │    │
+│  │                    Service Layer                             │    │
+│  │                                                              │    │
+│  │  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌─────────┐             │    │
+│  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │             │    │
+│  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│             │    │
+│  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘             │    │
 │  │       │            │          │            │                 │    │
-│  │  ┌────┴────────────┴──────────┴────────────┴────┐           │    │
+│  │  ┌────┴────────────┴──────────┴────────────┴────┐            │    │
 │  │  │          Starkzap SDK (starkzap v1.0.0)       │           │    │
 │  │  │  Wallet · TxBuilder · Tokens · Paymaster      │           │    │
 │  │  └───────────────────┬───────────────────────────┘           │    │
 │  └──────────────────────┼───────────────────────────────────────┘    │
 │                         ▼                                            │
-│  ┌─────────────────────────────────────┐  ┌─────────────────────┐   │
-│  │  Auth Server (Hono + Privy TEE)     │  │  AVNU Paymaster     │   │
-│  │  Email OTP · Wallet · Sign · Gas    │  │  Gas Abstraction    │   │
-│  └─────────────────────────────────────┘  └─────────────────────┘   │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────┐    │
+│  │  Auth Server (Hono + Privy TEE)     │  │  AVNU Paymaster     │    │
+│  │  Email OTP · Wallet · Sign · Gas    │  │  Gas Abstraction    │    │
+│  └─────────────────────────────────────┘  └─────────────────────┘    │
 └──────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -381,7 +381,7 @@ See [`server/README.md`](server/README.md) for setup instructions.
 
 ## Error Handling
 
-StarkFi implements a robust error handling system with a custom `StarkfiError` class and **26 specific error codes** organized by domain:
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **25 specific error codes** organized by domain:
 
 | Domain         | Error Codes                                                                       |
 | -------------- | --------------------------------------------------------------------------------- |
