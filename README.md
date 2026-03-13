@@ -214,7 +214,7 @@ Add to your AI assistant's MCP config (Cursor, Claude, etc.):
 }
 ```
 
-For the complete tool registry and schemas, see [MCP Documentation](MCP.md).
+For the complete tool registry and schemas, see [MCP Documentation](https://docs.starkfi.app/docs/mcp).
 
 ---
 
@@ -234,7 +234,7 @@ StarkFi ships with **10 agent skills** — structured instruction sets that teac
 npx skills add ahmetenesdur/starkfi
 ```
 
-See [Skills Documentation](skills/README.md) for details.
+See [Skills Documentation](https://docs.starkfi.app/docs/skills) for details.
 
 ---
 
@@ -372,7 +372,7 @@ See [`server/README.md`](server/README.md) for setup instructions.
 | **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
 | **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
 | **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
-| **Auth Server** | [Hono](https://hono.dev/) v4.12.2 + [Privy TEE](https://privy.io/)               |
+| **Auth Server** | [Hono](https://hono.dev/) v4.12.7 + [Privy TEE](https://privy.io/)               |
 | **DEX Routing** | [Fibrous](https://fibrous.finance/) Aggregator                                   |
 | **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                             |
 | **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                               |

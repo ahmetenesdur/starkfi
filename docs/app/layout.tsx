@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 	description:
 		"Documentation for StarkFi — Starknet DeFi CLI + MCP Server. Swaps, staking, lending, batch, gasless transactions.",
 	icons: "/favicon.svg",
-	metadataBase: new URL("https://starkfi.app"),
+	metadataBase: new URL("https://docs.starkfi.app"),
 	openGraph: {
 		siteName: "StarkFi Docs",
 		type: "website",

@@ -37,13 +37,13 @@ starkfi trade 0.5 ETH USDC --slippage 0.5
 Executes up to 3 swap pairs in a single multicall transaction.
 
 ```bash
-starkfi multi-swap --pairs "<amount1> <from1> <to1>, <amount2> <from2> <to2>"
+starkfi multi-swap "<amount1> <from1>><to1>, <amount2> <from2>><to2>"
 ```
 
 **Example:**
 
 ```bash
-starkfi multi-swap --pairs "0.1 ETH USDC, 100 STRK USDC, 50 DAI USDC"
+starkfi multi-swap "0.1 ETH>USDC, 100 STRK>USDC, 50 DAI>USDC"
 ```
 
 > **Note:** Maximum 3 swap pairs per transaction.
