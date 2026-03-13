@@ -1,6 +1,6 @@
 # Model Context Protocol (MCP) Integration
 
-StarkFi operates as a fully-featured Model Context Protocol (MCP) server. By executing `npx starkfi mcp-start` over the `stdio` transport layer, AI development environments such as Cursor, Claude Desktop, and Antigravity can interact with the Starknet blockchain and execute decentralized finance operations through natural language commands.
+StarkFi operates as a fully-featured Model Context Protocol (MCP) server. By executing `npx starkfi@latest mcp-start` over the `stdio` transport layer, AI development environments such as Cursor, Claude Desktop, and Antigravity can interact with the Starknet blockchain and execute decentralized finance operations through natural language commands.
 
 ## Client Configuration
 
@@ -17,7 +17,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 }
 ```
 
-**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi auth login`) before the MCP server can execute any state-mutating transactions on behalf of the user.
+**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi@latest auth login`) before the MCP server can execute any state-mutating transactions on behalf of the user.
 
 ## Tool Registry
 

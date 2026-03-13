@@ -13,7 +13,7 @@
 </p>
 
 ```bash
-npx starkfi --help
+npx starkfi@latest --help
 ```
 
 ---
@@ -33,35 +33,36 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                           StarkFi                                    │
-│                                                                      │
-│  ┌──────────────┐     ┌─────────────────────────────────────────┐    │
-│  │   CLI (30+   │     │         MCP Server (27 tools)           │    │
-│  │   commands)  │     │  AI agents connect via stdio transport  │    │
-│  └──────┬───────┘     └──────────────┬──────────────────────────┘    │
-│         │                            │                               │
-│         └────────────┬───────────────┘                               │
-│                      ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────┐    │
-│  │                    Service Layer                             │    │
-│  │                                                              │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌─────────┐             │    │
-│  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │             │    │
-│  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│             │    │
-│  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘             │    │
-│  │       │            │          │           │                  │    │
-│  │  ┌────┴────────────┴──────────┴───────────┴──────┐           │    │
-│  │  │          Starkzap SDK (starkzap v1.0.0)       │           │    │
-│  │  │  Wallet · TxBuilder · Tokens · Paymaster      │           │    │
-│  │  └───────────────────┬───────────────────────────┘           │    │
-│  └──────────────────────┼───────────────────────────────────────┘    │
-│                         ▼                                            │
-│  ┌─────────────────────────────────────┐  ┌─────────────────────┐    │
-│  │  Auth Server (Hono + Privy TEE)     │  │  AVNU Paymaster     │    │
-│  │  Email OTP · Wallet · Sign · Gas    │  │  Gas Abstraction    │    │
-│  └─────────────────────────────────────┘  └─────────────────────┘    │
-└──────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                              StarkFi                                     │
+│                                                                          │
+│  ┌──────────┐     ┌─────────────────────┐     ┌───────────────────────┐  │
+│  │   CLI    │     │    MCP Server       │     │    Agent Skills       │  │
+│  │  (30+    │     │    (27 tools)       │     │    (10 workflows)     │  │
+│  │ commands)│     │ stdio transport     │     │   npx starkfi@latest  │  │
+│  └────┬─────┘     └──────────┬──────────┘     └──────────┬────────────┘  │
+│       │                      │                           │               │
+│       └──────────────────────┼───────────────────────────┘               │
+│                              ▼                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐    │
+│  │                      Service Layer                               │    │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐            │    │
+│  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │            │    │
+│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│            │    │
+│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘            │    │
+│  │       └─────────────┴────────────┴────────────┘                  │    │
+│  │                       │                                          │    │
+│  │       ┌───────────────┴───────────────────────────┐              │    │
+│  │       │       Starkzap SDK (starkzap v1.0.0)      │              │    │
+│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │              │    │
+│  │       └───────────────┬───────────────────────────┘              │    │
+│  └───────────────────────┼──────────────────────────────────────────┘    │
+│                          ▼                                               │
+│  ┌──────────────────────────────────────┐  ┌──────────────────────┐      │
+│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │      │
+│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │      │
+│  └──────────────────────────────────────┘  └──────────────────────┘      │
+└──────────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
                     ┌──────────────────┐
@@ -92,8 +93,8 @@ StarkFi leverages **all core Starkzap modules**:
 DEX-aggregated swaps with optimal routing. Single swaps, multi-swap (up to 3 pairs), and batch routing.
 
 ```bash
-npx starkfi trade 100 USDC ETH --slippage 1
-npx starkfi multi-swap "100 USDC>ETH, 50 USDT>ETH"
+npx starkfi@latest trade 100 USDC ETH --slippage 1
+npx starkfi@latest multi-swap "100 USDC>ETH, 50 USDT>ETH"
 ```
 
 ### ⚛️ Atomic Transaction Batching
@@ -101,7 +102,7 @@ npx starkfi multi-swap "100 USDC>ETH, 50 USDT>ETH"
 Bundle multiple DeFi operations into a single Starknet multicall. Minimum 2 operations.
 
 ```bash
-npx starkfi batch \
+npx starkfi@latest batch \
   --swap "100 USDC ETH" \
   --stake "50 STRK karnot" \
   --supply "200 USDC Prime" \
@@ -113,10 +114,10 @@ npx starkfi batch \
 Full staking lifecycle across multiple validators with STRK, WBTC, tBTC, SolvBTC, and LBTC support.
 
 ```bash
-npx starkfi stake 100 -v karnot
-npx starkfi rewards -v karnot --compound
-npx starkfi unstake intent -v karnot -a 50
-npx starkfi unstake exit -v karnot
+npx starkfi@latest stake 100 -v karnot
+npx starkfi@latest rewards -v karnot --compound
+npx starkfi@latest unstake intent -v karnot -a 50
+npx starkfi@latest unstake exit -v karnot
 ```
 
 ### 🏦 Lending & Borrowing (Vesu V2)
@@ -124,12 +125,12 @@ npx starkfi unstake exit -v karnot
 Supply collateral, borrow assets, monitor health factors, and atomically close positions.
 
 ```bash
-npx starkfi lend-supply 100 -p Prime -t STRK
-npx starkfi lend-borrow -p Prime \
+npx starkfi@latest lend-supply 100 -p Prime -t STRK
+npx starkfi@latest lend-borrow -p Prime \
   --collateral-amount 200 --collateral-token STRK \
   --borrow-amount 50 --borrow-token USDC
-npx starkfi lend-status -p Prime --collateral-token STRK --borrow-token USDC
-npx starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDC
+npx starkfi@latest lend-status -p Prime --collateral-token STRK --borrow-token USDC
+npx starkfi@latest lend-close -p Prime --collateral-token STRK --borrow-token USDC
 ```
 
 ### 💸 Gas Abstraction
@@ -138,10 +139,10 @@ All transactions are gasless by default. Users pay gas fees in their preferred E
 
 ```bash
 # Pay gas in USDC instead of STRK
-npx starkfi config set-gas-token USDC
+npx starkfi@latest config set-gas-token USDC
 
 # Developer pays all gas (gasfree mode)
-npx starkfi config set-gasfree on
+npx starkfi@latest config set-gasfree on
 ```
 
 | Mode                  | Who Pays  | Gas Tokens                 | Description                       |
@@ -154,7 +155,7 @@ npx starkfi config set-gasfree on
 Estimate fees and validate any transaction before broadcasting.
 
 ```bash
-npx starkfi trade 100 USDC ETH --simulate
+npx starkfi@latest trade 100 USDC ETH --simulate
 # → mode: SIMULATION, estimatedFee: 0.000142 ETH ($0.52), callCount: 4
 ```
 
@@ -163,7 +164,7 @@ npx starkfi trade 100 USDC ETH --simulate
 Consolidated view of all DeFi positions in one call.
 
 ```bash
-npx starkfi portfolio
+npx starkfi@latest portfolio
 # → Token Balances (USD), Staking Positions, Lending Positions, Total Value
 ```
 
@@ -175,7 +176,7 @@ StarkFi exposes **27 MCP tools** via stdio transport, enabling AI assistants to 
 
 ```bash
 # Start the MCP server
-npx starkfi mcp-start
+npx starkfi@latest mcp-start
 ```
 
 ### Tool Categories
@@ -248,27 +249,27 @@ See [Skills Documentation](https://docs.starkfi.app/docs/skills) for details.
 ### 1. Authenticate
 
 ```bash
-npx starkfi auth login user@example.com
-npx starkfi auth verify user@example.com <OTP_CODE>
+npx starkfi@latest auth login user@example.com
+npx starkfi@latest auth verify user@example.com <OTP_CODE>
 ```
 
 ### 2. Deploy Account
 
 ```bash
-npx starkfi deploy
+npx starkfi@latest deploy
 ```
 
 ### 3. Check Balance
 
 ```bash
-npx starkfi balance
+npx starkfi@latest balance
 ```
 
 ### 4. Start Trading
 
 ```bash
-npx starkfi trade 10 STRK ETH --simulate    # Preview first
-npx starkfi trade 10 STRK ETH               # Execute
+npx starkfi@latest trade 10 STRK ETH --simulate    # Preview first
+npx starkfi@latest trade 10 STRK ETH               # Execute
 ```
 
 ---
