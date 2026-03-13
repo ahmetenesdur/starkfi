@@ -32,7 +32,7 @@ Before using any command, authenticate with your email:
 starkfi auth login user@example.com
 
 # Step 2: Verify OTP (check your email)
-starkfi auth verify 123456
+starkfi auth verify user@example.com 123456
 
 # Check session status
 starkfi status
@@ -72,7 +72,7 @@ Available on all commands:
 ```bash
 # 1. Authenticate
 starkfi auth login user@example.com
-starkfi auth verify 123456
+starkfi auth verify user@example.com 123456
 
 # 2. Check your wallet
 starkfi balance

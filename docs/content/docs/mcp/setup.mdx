@@ -10,7 +10,7 @@ Before the MCP server can execute any transactions, you must authenticate the CL
 ```bash
 npx starkfi@latest auth login user@example.com
 # Check your email for the OTP code
-npx starkfi@latest auth verify 123456
+npx starkfi@latest auth verify user@example.com 123456
 ```
 
 This creates a local session that the MCP server uses for all operations. The session persists across restarts.

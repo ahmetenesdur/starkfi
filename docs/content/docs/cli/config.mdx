@@ -85,10 +85,10 @@ Enables or disables **Gasfree mode** — the developer sponsors gas fees via Pay
 starkfi config set-gasfree <mode>
 ```
 
-| Value | Description                                                 |
-| ----- | ----------------------------------------------------------- |
-| `on`  | Developer sponsors gas — user pays nothing                  |
-| `off` | Disable gasfree, revert to gasless mode (user pays in STRK) |
+| Value | Description                                           |
+| ----- | ----------------------------------------------------- |
+| `on`  | Developer sponsors gas — user pays nothing            |
+| `off` | Disable gasfree, revert to default gas payment (STRK) |
 
 > **Note:** Gasfree and Gasless modes are mutually exclusive. Enabling gasfree clears any gas token setting.
 
