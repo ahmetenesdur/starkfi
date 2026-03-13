@@ -1,0 +1,47 @@
+---
+title: Agent Skills
+description: 10 pre-packaged multi-step workflows for AI agents
+---
+
+## What Are Skills?
+
+Skills are pre-packaged, multi-step workflows that AI agents can follow to accomplish complex DeFi tasks. Each skill contains a `SKILL.md` file with step-by-step instructions, prerequisites, and expected outcomes.
+
+Skills are located in the `skills/` directory of the StarkFi package.
+
+## Available Skills
+
+| Skill                   | Description                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| **authenticate-wallet** | Complete auth flow: login → verify → confirm address         |
+| **balance**             | Check all token balances and format results                  |
+| **batch**               | Compose and execute atomic multicall transactions            |
+| **config**              | View and modify network, RPC, and gas settings               |
+| **lending**             | Supply, borrow, repay, withdraw on Vesu V2 pools             |
+| **multi-swap**          | Execute multi-pair swaps in a single transaction             |
+| **portfolio**           | Aggregate full DeFi dashboard (balances + staking + lending) |
+| **send**                | Send tokens with address validation and simulation           |
+| **staking**             | Stake, unstake, claim/compound rewards                       |
+| **trade**               | Single token swap with quote → execute flow                  |
+
+## How Agents Use Skills
+
+When an MCP-compatible agent (like Claude or Cursor) connects to StarkFi:
+
+1. The agent discovers available skills via the `skills/` directory
+2. Each `SKILL.md` provides a structured recipe with:
+    - **Description** — What the skill does
+    - **Prerequisites** — Required auth state, minimum balances
+    - **Steps** — Sequential MCP tool calls
+    - **Error handling** — What to do when things fail
+3. The agent follows the recipe, calling MCP tools in the specified order
+
+## Example: Trade Skill Flow
+
+```
+1. Call get_auth_status → verify authenticated
+2. Call get_swap_quote → show quote to user
+3. User confirms → call swap_tokens
+4. Call get_tx_status → wait for confirmation
+5. Return result with explorer link
+```

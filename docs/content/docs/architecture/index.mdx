@@ -1,0 +1,81 @@
+---
+title: Architecture Overview
+description: System architecture and module design
+---
+
+## High-Level Architecture
+
+StarkFi follows a layered architecture with three entry points:
+
+```
+┌──────────────────────────────────────────┐
+│          Entry Points                     │
+│  ┌────────┐  ┌──────────┐  ┌──────────┐ │
+│  │  CLI   │  │MCP Server│  │  Skills  │  │
+│  │(index) │  │(server)  │  │ (SKILL)  │  │
+│  └───┬────┘  └────┬─────┘  └─────┬────┘ │
+│      │            │              │        │
+│      └─────────┬──┴──────────────┘        │
+│                ▼                          │
+│  ┌─────────────────────────────────────┐ │
+│  │         Service Layer               │ │
+│  │  starkzap │ fibrous │ vesu │ batch  │ │
+│  │  staking  │ tokens  │ simulate     │ │
+│  │  portfolio│ auth    │ config       │ │
+│  └─────────────────┬───────────────────┘ │
+│                    ▼                      │
+│  ┌─────────────────────────────────────┐ │
+│  │         Shared Library              │ │
+│  │  errors │ retry │ concurrency      │ │
+│  │  fetch  │ format│ validation       │ │
+│  └─────────────────────────────────────┘ │
+└──────────────────────────────────────────┘
+              │         │         │
+    ┌─────────┘         │         └──────────┐
+    ▼                   ▼                    ▼
+ StarkZap SDK     Fibrous API          Vesu API
+ AVNU Paymaster
+```
+
+## Directory Structure
+
+```
+src/
+├── index.ts          # CLI entry (Commander.js)
+├── commands/         # 9 command groups, 16 files
+├── services/         # 11 service modules, 19 files
+│   ├── starkzap/     # SDK client + config
+│   ├── fibrous/      # DEX routing
+│   ├── vesu/         # Lending pools
+│   ├── staking/      # Validators + pools
+│   ├── tokens/       # Token resolution + balances
+│   ├── batch/        # Multicall composition
+│   ├── simulate/     # Transaction simulation
+│   ├── portfolio/    # Aggregated DeFi overview
+│   ├── auth/         # Session management
+│   ├── api/          # Backend API client
+│   └── config/       # Configuration service
+├── mcp/              # MCP server layer
+│   ├── server.ts     # Server setup + transport
+│   ├── tools/        # 7 registration files
+│   └── handlers/     # 11 handler modules
+└── lib/              # 9 shared utilities
+```
+
+## Key Design Patterns
+
+### Service Layer Isolation
+
+Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. The `batch` and `portfolio` services compose across other services.
+
+### Tool → Handler → Service
+
+MCP tools use a three-layer pattern:
+
+1. **Tool registration** (`mcp/tools/`) — Zod schema + description
+2. **Handler** (`mcp/handlers/`) — Input validation + orchestration
+3. **Service** (`services/`) — Business logic + SDK calls
+
+### Concurrent Operations
+
+Token balance checks and portfolio aggregation use a sliding-window concurrency pattern with configurable limits (default: 10 concurrent tasks).

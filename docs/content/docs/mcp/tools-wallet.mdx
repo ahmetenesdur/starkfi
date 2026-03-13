@@ -1,0 +1,49 @@
+---
+title: Wallet Tools
+description: get_balance, send_tokens, deploy_account, get_portfolio, get_tx_status
+---
+
+## get_balance
+
+Get all token balances for the authenticated wallet.
+
+**Parameters:** None
+
+---
+
+## send_tokens
+
+Transfer tokens to a recipient.
+
+| Param       | Type    | Required |
+| ----------- | ------- | -------- |
+| `amount`    | string  | Yes      |
+| `token`     | string  | Yes      |
+| `recipient` | string  | Yes      |
+| `simulate`  | boolean | No       |
+
+---
+
+## deploy_account
+
+Deploy the smart contract wallet on-chain.
+
+**Parameters:** None
+
+---
+
+## get_portfolio
+
+Get a comprehensive DeFi overview: balances, staking, lending, and total USD value.
+
+**Parameters:** None
+
+---
+
+## get_tx_status
+
+Check the status of a transaction by hash.
+
+| Param    | Type   | Required |
+| -------- | ------ | -------- |
+| `txHash` | string | Yes      |

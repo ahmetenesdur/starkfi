@@ -1,0 +1,65 @@
+---
+title: Installation
+description: Install StarkFi CLI on your system
+---
+
+## Requirements
+
+- **Node.js** 18 or later
+- **npm**, **pnpm**, or **yarn**
+
+## Install Globally
+
+```bash
+npm i -g starkfi@latest
+```
+
+Then verify the installation:
+
+```bash
+starkfi --version
+```
+
+## Run Without Installing
+
+Use `npx` to run StarkFi without a global install:
+
+```bash
+npx starkfi@latest
+```
+
+## Package Managers
+
+```bash tab="npm"
+npm i -g starkfi@latest
+```
+
+```bash tab="pnpm"
+pnpm add -g starkfi@latest
+```
+
+```bash tab="yarn"
+yarn global add starkfi@latest
+```
+
+## What Gets Installed
+
+StarkFi ships as a single `starkfi` binary that includes:
+
+- **CLI** — 30+ commands for DeFi operations
+- **MCP Server** — 27 tools exposed via `starkfi mcp-start`
+- **Agent Skills** — 10 pre-packaged multi-step workflows in `skills/`
+
+## Verify Installation
+
+```bash
+# Show all available commands
+starkfi --help
+
+# Check auth status
+starkfi config list
+```
+
+## Next Steps
+
+After installation, [authenticate your wallet](/docs/authentication) to start using StarkFi.

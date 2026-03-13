@@ -1,0 +1,85 @@
+---
+title: StarkZap SDK
+description: Core SDK powering wallets, tokens, staking, and transactions
+---
+
+## Overview
+
+[StarkZap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet: wallet management, token operations, staking, and gas abstraction.
+
+## SDK Initialization
+
+```typescript
+import { StarkZap } from "starkzap";
+
+const sdk = new StarkZap({
+	network: "mainnet",
+	rpcUrl: "https://your-rpc.com", // optional
+	paymaster: {
+		nodeUrl: "https://starknet.paymaster.avnu.fi",
+	},
+});
+```
+
+## Wallet Connection
+
+StarkFi uses the **Privy** onboarding strategy with **ArgentX v0.5.0** preset:
+
+```typescript
+import { PrivySigner, ArgentXV050Preset } from "starkzap";
+
+const wallet = await sdk.connectWallet({
+	account: {
+		signer: new PrivySigner({
+			walletId: session.walletId,
+			publicKey: session.publicKey,
+			serverUrl: session.serverUrl,
+		}),
+		accountClass: ArgentXV050Preset,
+	},
+	feeMode: "sponsored", // gasfree mode
+});
+```
+
+## Key APIs Used
+
+### Token Operations
+
+- `wallet.balanceOf(token)` — Get token balance
+- `wallet.transfer(token, transfers)` — Send tokens
+- `Amount.parse("100", token)` — Parse human-readable amount
+- `Amount.fromRaw(wei, token)` — Create from raw bigint
+
+### Staking
+
+- `wallet.stake(poolAddress, amount)` — Stake tokens
+- `wallet.exitPoolIntent(pool, amount)` — Begin unstaking
+- `wallet.exitPool(pool)` — Finalize unstaking
+- `wallet.claimPoolRewards(pool)` — Claim rewards
+- `wallet.getPoolPosition(pool)` — Get position details
+
+### TxBuilder (Multicall)
+
+```typescript
+const tx = await wallet
+	.tx()
+	.approve(token, amount, spender)
+	.add(calls)
+	.stake(poolAddress, amount)
+	.send({ feeMode: "sponsored" });
+```
+
+### Token Presets
+
+```typescript
+import { getPresets, ChainId } from "starkzap";
+
+const presets = getPresets(ChainId.MAINNET);
+const tokens = presets.tokens; // All known tokens
+```
+
+### Validator Presets
+
+```typescript
+import { mainnetValidators, sepoliaValidators } from "starkzap";
+```

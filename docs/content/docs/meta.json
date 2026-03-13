@@ -1,0 +1,21 @@
+{
+	"title": "Documentation",
+	"pages": [
+		"index",
+		"---Getting Started---",
+		"installation",
+		"authentication",
+		"quick-start",
+		"configuration",
+		"---CLI Reference---",
+		"...cli",
+		"---MCP Server---",
+		"...mcp",
+		"---Integrations---",
+		"...integrations",
+		"---Architecture---",
+		"...architecture",
+		"---Skills---",
+		"...skills"
+	]
+}

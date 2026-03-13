@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+
+# fumadocs
+.source/
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts

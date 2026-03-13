@@ -1,0 +1,49 @@
+---
+title: CLI Overview
+description: All StarkFi CLI commands at a glance
+---
+
+## Command Groups
+
+StarkFi organizes its 30+ commands into logical groups:
+
+| Group         | Commands                                                                                               | Description                    |
+| ------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| **Auth**      | `auth login`, `auth verify`, `auth logout`                                                             | Privy OTP authentication       |
+| **Wallet**    | `address`, `balance`, `send`, `deploy`                                                                 | Wallet management              |
+| **Trading**   | `trade`, `multi-swap`, `status`                                                                        | Token swaps via Fibrous        |
+| **Staking**   | `stake`, `unstake`, `rewards`, `pools`, `validators`, `stake-status`                                   | Staking operations             |
+| **Lending**   | `lend-pools`, `lend-supply`, `lend-withdraw`, `lend-borrow`, `lend-repay`, `lend-close`, `lend-status` | Vesu V2 lending                |
+| **Portfolio** | `portfolio`                                                                                            | Full DeFi overview             |
+| **Batch**     | `batch`                                                                                                | Atomic multicall               |
+| **Config**    | `config`                                                                                               | Settings management            |
+| **System**    | `tx-status`, `mcp-start`                                                                               | Transaction status, MCP server |
+
+## Global Flags
+
+All commands support these flags:
+
+| Flag         | Description                               |
+| ------------ | ----------------------------------------- |
+| `--json`     | Output as JSON instead of formatted table |
+| `--simulate` | Dry-run — estimate fees without executing |
+| `--help`     | Show help for any command                 |
+
+## Usage Pattern
+
+```bash
+starkfi <command> [arguments] [flags]
+```
+
+## Examples
+
+```bash
+# Swap 1 ETH to USDC
+starkfi trade 1 ETH USDC
+
+# Stake 500 STRK with max slippage 0.5%
+starkfi stake 500 STRK -v karnot --slippage 0.5
+
+# Check transaction status
+starkfi tx-status 0x123abc...
+```

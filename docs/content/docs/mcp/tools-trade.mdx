@@ -1,0 +1,63 @@
+---
+title: Trade Tools
+description: get_swap_quote, swap_tokens, multi_swap, batch_execute
+---
+
+## get_swap_quote
+
+Get a price quote for a swap without executing.
+
+| Param       | Type   | Required        |
+| ----------- | ------ | --------------- |
+| `amount`    | string | Yes             |
+| `fromToken` | string | Yes             |
+| `toToken`   | string | Yes             |
+| `slippage`  | number | No (default: 1) |
+
+---
+
+## swap_tokens
+
+Execute a token swap.
+
+| Param       | Type    | Required        |
+| ----------- | ------- | --------------- |
+| `amount`    | string  | Yes             |
+| `fromToken` | string  | Yes             |
+| `toToken`   | string  | Yes             |
+| `slippage`  | number  | No (default: 1) |
+| `simulate`  | boolean | No              |
+
+---
+
+## get_multi_swap_quote
+
+Get quotes for up to 3 swap pairs.
+
+| Param      | Type   | Required |
+| ---------- | ------ | -------- |
+| `pairs`    | array  | Yes      |
+| `slippage` | number | No       |
+
+Each pair: `{ amount, fromToken, toToken }`
+
+---
+
+## multi_swap
+
+Execute multiple swaps in one transaction.
+
+Same parameters as `get_multi_swap_quote` plus `simulate`.
+
+---
+
+## batch_execute
+
+Execute a batch of mixed operations (swap + stake + supply + send) atomically.
+
+| Param        | Type    | Required |
+| ------------ | ------- | -------- |
+| `operations` | array   | Yes      |
+| `simulate`   | boolean | No       |
+
+Each operation has a `type` (`swap`, `stake`, `supply`, `send`) and type-specific fields.

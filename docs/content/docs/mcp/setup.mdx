@@ -1,0 +1,62 @@
+---
+title: MCP Setup
+description: Configure StarkFi MCP server in Claude, Cursor, and other AI clients
+---
+
+## Claude (claude_desktop_config.json)
+
+Add to your Claude Desktop configuration:
+
+```json
+{
+	"mcpServers": {
+		"starkfi": {
+			"command": "npx",
+			"args": ["-y", "starkfi@latest", "mcp-start"]
+		}
+	}
+}
+```
+
+## Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+	"mcpServers": {
+		"starkfi": {
+			"command": "npx",
+			"args": ["-y", "starkfi@latest", "mcp-start"]
+		}
+	}
+}
+```
+
+## Environment Variables
+
+Set these before starting the MCP server:
+
+| Variable          | Required | Description                                    |
+| ----------------- | -------- | ---------------------------------------------- |
+| `STARKFI_API_URL` | No       | Backend URL (default: `http://localhost:3001`) |
+| `STARKFI_NETWORK` | No       | `mainnet` or `sepolia` (default: `mainnet`)    |
+| `STARKFI_RPC_URL` | No       | Custom RPC endpoint                            |
+
+## Manual Start
+
+You can also start the server manually:
+
+```bash
+starkfi mcp-start
+```
+
+The server communicates over **stdio** — it reads JSON from stdin and writes JSON to stdout.
+
+## Verifying Connection
+
+Once connected, ask your AI agent:
+
+> "What StarkFi tools are available?"
+
+It should list all 27 tools across Auth, Wallet, Trade, Staking, and Lending categories.

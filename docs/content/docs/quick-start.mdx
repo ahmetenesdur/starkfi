@@ -1,0 +1,71 @@
+---
+title: Quick Start
+description: Your first swap, stake, and balance check in under 5 minutes
+---
+
+## Prerequisites
+
+1. [Install StarkFi](/docs/installation)
+2. [Authenticate](/docs/authentication)
+3. Have some ETH or STRK in your wallet for gas
+
+## Check Your Balances
+
+```bash
+starkfi balance
+```
+
+Shows all token balances in your wallet.
+
+## Your First Swap
+
+Swap 0.1 ETH to USDC with 1% max slippage:
+
+```bash
+starkfi trade 0.1 ETH USDC
+```
+
+StarkFi automatically:
+
+1. Fetches the best route via Fibrous DEX aggregator
+2. Generates optimized calldata
+3. Executes the swap through the Fibrous router
+4. Returns the transaction hash and explorer link
+
+## Stake STRK
+
+Stake 100 STRK with the Karnot validator:
+
+```bash
+starkfi stake 100 STRK -v karnot
+```
+
+## Check Portfolio
+
+View your complete DeFi overview — balances, staking positions, and lending positions:
+
+```bash
+starkfi portfolio
+```
+
+## Supply to Vesu Lending
+
+Supply 100 USDC to the Prime pool:
+
+```bash
+starkfi lend-supply 100 USDC -p Prime -t USDC
+```
+
+## Batch Operations
+
+Swap and stake in a single atomic transaction:
+
+```bash
+starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"
+```
+
+## What's Next?
+
+- Explore all [CLI commands](/docs/cli)
+- Set up the [MCP Server](/docs/mcp) for AI agents
+- Learn about [gas abstraction](/docs/configuration)

@@ -1,0 +1,89 @@
+---
+title: Lending Tools
+description: 7 tools for Vesu V2 lending operations
+---
+
+## list_lending_pools
+
+List all available Vesu V2 lending pools with APY data.
+
+**Parameters:** None
+
+---
+
+## get_lending_position
+
+Get your position in a lending pool.
+
+| Param             | Type   | Required |
+| ----------------- | ------ | -------- |
+| `pool`            | string | Yes      |
+| `collateralToken` | string | Yes      |
+| `debtToken`       | string | Yes      |
+
+Returns collateral value, debt value, health factor, and risk level.
+
+---
+
+## supply_assets
+
+Supply collateral to a lending pool.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `amount`   | string  | Yes      |
+| `token`    | string  | Yes      |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## withdraw_assets
+
+Withdraw supplied assets.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `amount`   | string  | Yes      |
+| `token`    | string  | Yes      |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## borrow_assets
+
+Borrow assets against collateral.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `amount`   | string  | Yes      |
+| `token`    | string  | Yes      |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## repay_debt
+
+Repay borrowed debt.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `amount`   | string  | Yes      |
+| `token`    | string  | Yes      |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## close_position
+
+Close an entire lending position.
+
+| Param             | Type    | Required |
+| ----------------- | ------- | -------- |
+| `pool`            | string  | Yes      |
+| `collateralToken` | string  | Yes      |
+| `debtToken`       | string  | Yes      |
+| `simulate`        | boolean | No       |

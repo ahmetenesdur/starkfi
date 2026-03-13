@@ -1,0 +1,34 @@
+---
+title: MCP Server
+description: 27 MCP tools for AI-native Starknet DeFi automation
+---
+
+## What is MCP?
+
+The **Model Context Protocol (MCP)** is an open standard that enables AI assistants (like Claude, Cursor, Windsurf) to interact with external tools. StarkFi runs as an MCP server, exposing every DeFi feature as a typed tool.
+
+## Tool Categories
+
+| Category          | Count | Tools                                                                                                                                          |
+| ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth & Config** | 2     | `get_auth_status`, `config_action`                                                                                                             |
+| **Wallet**        | 5     | `get_tx_status`, `get_balance`, `deploy_account`, `send_tokens`, `get_portfolio`                                                               |
+| **Trade**         | 5     | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                         |
+| **Staking**       | 8     | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards` |
+| **Lending**       | 7     | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`              |
+
+## How It Works
+
+1. StarkFi starts an MCP server via `starkfi mcp-start`
+2. The server uses `StdioServerTransport` for communication
+3. AI clients connect and discover all 27 tools with JSON schemas
+4. The AI sends tool calls, StarkFi executes them on Starknet
+5. Results are returned as structured JSON
+
+## Starting the Server
+
+```bash
+starkfi mcp-start
+```
+
+Or configure it as an MCP server in your AI client's config — see [Setup](/docs/mcp/setup).

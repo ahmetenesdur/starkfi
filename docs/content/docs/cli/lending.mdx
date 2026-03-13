@@ -1,0 +1,78 @@
+---
+title: Lending Commands
+description: Supply, borrow, repay, and manage Vesu V2 lending positions
+---
+
+## lend-pools
+
+List all available Vesu V2 lending pools.
+
+```bash
+starkfi lend-pools
+```
+
+Shows pool name, available assets, supply APY, and borrow APY.
+
+## lend-supply
+
+Supply collateral to a lending pool.
+
+```bash
+starkfi lend-supply <amount> <token> -p <pool> -t <collateral>
+```
+
+**Example:**
+
+```bash
+starkfi lend-supply 1000 USDC -p Prime -t USDC
+```
+
+> **Note:** Minimum supply is ~$10 equivalent (dust limit protection).
+
+## lend-withdraw
+
+Withdraw supplied assets.
+
+```bash
+starkfi lend-withdraw <amount> <token> -p <pool> -t <collateral>
+```
+
+## lend-borrow
+
+Borrow assets against your collateral.
+
+```bash
+starkfi lend-borrow <amount> <token> -p <pool> -t <debt>
+```
+
+**Example:**
+
+```bash
+starkfi lend-borrow 500 USDC -p Prime -t ETH
+```
+
+## lend-repay
+
+Repay borrowed debt.
+
+```bash
+starkfi lend-repay <amount> <token> -p <pool> -t <debt>
+```
+
+## lend-close
+
+Close an entire lending position (withdraw collateral + repay debt).
+
+```bash
+starkfi lend-close -p <pool> -t <collateral> --debt <debtToken>
+```
+
+## lend-status
+
+Check your lending position in a pool.
+
+```bash
+starkfi lend-status -p <pool> -t <collateral> --debt <debtToken>
+```
+
+Shows collateral value, debt value, health factor, and risk level (SAFE / WARNING / DANGER).

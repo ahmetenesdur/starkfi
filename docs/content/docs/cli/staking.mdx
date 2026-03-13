@@ -1,0 +1,76 @@
+---
+title: Staking Commands
+description: Stake, unstake, claim rewards, and browse validators
+---
+
+## validators
+
+List all available validators.
+
+```bash
+starkfi validators
+```
+
+## pools
+
+List staking pools for a specific validator.
+
+```bash
+starkfi pools <validator>
+```
+
+## stake
+
+Stake tokens with a validator.
+
+```bash
+starkfi stake <amount> <token> -v <validator>
+```
+
+**Example:**
+
+```bash
+starkfi stake 100 STRK -v karnot
+```
+
+## stake-status
+
+Check your staking position for a specific pool.
+
+```bash
+starkfi stake-status <pool>
+```
+
+Shows staked amount, pending rewards, unpooling status, and commission rate.
+
+## rewards
+
+Claim or compound staking rewards.
+
+```bash
+# Claim rewards (withdraw to wallet)
+starkfi rewards claim <pool>
+
+# Compound rewards (restake automatically)
+starkfi rewards compound <pool>
+```
+
+## unstake
+
+Begin the unstaking process (two-step):
+
+### Step 1 — Intent
+
+```bash
+starkfi unstake <amount> <pool>
+```
+
+Creates an exit intent. After the cooldown period, you can finalize:
+
+### Step 2 — Finalize
+
+```bash
+starkfi unstake-exit <pool>
+```
+
+> **Note:** There is a cooldown period between the intent and the exit. Check your position with `stake-status` to see the exit window.

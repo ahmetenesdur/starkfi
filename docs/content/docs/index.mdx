@@ -1,0 +1,49 @@
+---
+title: Introduction
+description: StarkFi — Starknet DeFi from your Terminal & AI
+---
+
+## What is StarkFi?
+
+**StarkFi** is a Starknet DeFi toolkit that lets you swap, stake, lend, batch, and manage your portfolio — all from the **CLI** or through **AI agents** via the MCP server.
+
+Built with [StarkZap SDK](https://starkzap.io), StarkFi provides:
+
+- **30+ CLI Commands** across trading, staking, lending, and wallet management
+- **27 MCP Tools** for AI-native DeFi automation
+- **10 Agent Skills** — pre-packaged multi-step workflows
+- **Gas Abstraction** via AVNU Paymaster (Gasfree + Gasless modes)
+- **Batch Transactions** — combine swap, stake, supply, send into a single multicall
+
+## Quick Install
+
+```bash
+npm i -g starkfi@latest
+```
+
+Or run without installing:
+
+```bash
+npx starkfi@latest
+```
+
+## Key Features
+
+| Feature     | Description                                            |
+| ----------- | ------------------------------------------------------ |
+| Token Swaps | Best-price routing via Fibrous DEX aggregator          |
+| Staking     | Delegate STRK, WBTC, tBTC, SolvBTC, LBTC to validators |
+| Lending     | Supply, borrow, repay on Vesu V2 pools                 |
+| Batch       | Atomic multicall combining any DeFi operations         |
+| Portfolio   | Full DeFi dashboard with USD valuations                |
+| Gasless     | Pay gas in USDC, USDT, DAI, ETH, or STRK               |
+| MCP Server  | 27 typed tools for Claude, Cursor, and any MCP client  |
+
+## How It Works
+
+StarkFi connects to Starknet through these integrations:
+
+- **[StarkZap](/docs/integrations/starkzap)** — Core SDK for wallets, tokens, staking, and transactions
+- **[Fibrous](/docs/integrations/fibrous)** — DEX aggregation for optimal swap routing
+- **[Vesu](/docs/integrations/vesu)** — V2 lending pools for supply, borrow, repay
+- **[AVNU Paymaster](/docs/integrations/paymaster)** — Gas abstraction for gasless/gasfree transactions

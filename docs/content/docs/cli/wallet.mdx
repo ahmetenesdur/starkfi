@@ -1,0 +1,54 @@
+---
+title: Wallet Commands
+description: Wallet management — address, balance, send, deploy
+---
+
+## address
+
+Display your authenticated wallet address.
+
+```bash
+starkfi address
+```
+
+## balance
+
+Show all token balances in your wallet.
+
+```bash
+starkfi balance
+```
+
+Fetches balances concurrently across all known tokens using a sliding-window concurrency pattern (10 concurrent requests max).
+
+## send
+
+Send tokens to another address.
+
+```bash
+starkfi send <amount> <token> <recipient>
+```
+
+**Arguments:**
+
+| Argument    | Description                                |
+| ----------- | ------------------------------------------ |
+| `amount`    | Amount to send (e.g., `100`, `0.5`)        |
+| `token`     | Token symbol (e.g., `ETH`, `STRK`, `USDC`) |
+| `recipient` | Destination Starknet address               |
+
+**Example:**
+
+```bash
+starkfi send 100 STRK 0x0123...abcd
+```
+
+## deploy
+
+Deploy your smart contract wallet to the network.
+
+```bash
+starkfi deploy
+```
+
+Deploys the ArgentX v0.5.0 account if it hasn't been deployed yet.

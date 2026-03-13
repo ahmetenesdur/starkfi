@@ -1,0 +1,40 @@
+---
+title: Auth & Config Tools
+description: get_auth_status, config_action
+---
+
+## get_auth_status
+
+Check the current authentication state.
+
+**Parameters:** None
+
+**Returns:**
+
+```json
+{
+	"authenticated": true,
+	"address": "0x0123...abcd",
+	"network": "mainnet"
+}
+```
+
+## config_action
+
+Read or update StarkFi configuration.
+
+**Parameters:**
+
+| Param    | Type   | Required | Description                                                                 |
+| -------- | ------ | -------- | --------------------------------------------------------------------------- |
+| `action` | string | Yes      | `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token` |
+| `value`  | string | No       | Value for the action (e.g., RPC URL, `on`/`off`, token symbol)              |
+
+**Examples:**
+
+```json
+{ "action": "list" }
+{ "action": "set-network", "value": "mainnet" }
+{ "action": "set-gasfree", "value": "on" }
+{ "action": "set-gas-token", "value": "USDC" }
+```

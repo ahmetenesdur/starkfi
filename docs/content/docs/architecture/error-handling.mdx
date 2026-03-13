@@ -1,0 +1,66 @@
+---
+title: Error Handling
+description: 17 typed error codes and error recovery patterns
+---
+
+## StarkfiError
+
+All errors use the custom `StarkfiError` class:
+
+```typescript
+class StarkfiError extends Error {
+	constructor(
+		public code: ErrorCode,
+		message: string,
+		public details?: Record<string, unknown>
+	) {
+		super(message);
+	}
+
+	toJSON() {
+		return { code: this.code, message: this.message, ...this.details };
+	}
+}
+```
+
+## Error Codes
+
+| Code                   | When                         |
+| ---------------------- | ---------------------------- |
+| `AUTH_REQUIRED`        | Not authenticated            |
+| `AUTH_FAILED`          | Login/verify failed          |
+| `SESSION_EXPIRED`      | JWT expired                  |
+| `WALLET_NOT_DEPLOYED`  | Account not deployed         |
+| `WALLET_NOT_FOUND`     | No wallet in session         |
+| `INSUFFICIENT_BALANCE` | Not enough tokens            |
+| `TX_FAILED`            | Transaction execution failed |
+| `TX_NOT_FOUND`         | Invalid transaction hash     |
+| `SIMULATION_FAILED`    | Preflight check failed       |
+| `SWAP_FAILED`          | Swap execution error         |
+| `NO_ROUTE_FOUND`       | No swap route available      |
+| `SLIPPAGE_EXCEEDED`    | Price moved too much         |
+| `STAKING_FAILED`       | Staking operation error      |
+| `LENDING_FAILED`       | Lending operation error      |
+| `POOL_NOT_FOUND`       | Invalid pool name/address    |
+| `EXIT_NOT_READY`       | Unstake cooldown not passed  |
+| `PAYMASTER_ERROR`      | Gas abstraction failed       |
+| `INVALID_CONFIG`       | Bad configuration value      |
+| `INVALID_ADDRESS`      | Malformed Starknet address   |
+| `INVALID_AMOUNT`       | Non-positive or NaN amount   |
+| `NETWORK_ERROR`        | RPC/API connectivity         |
+| `RATE_LIMITED`         | Too many requests            |
+| `VALIDATOR_NOT_FOUND`  | Unknown validator            |
+| `BATCH_LIMIT_EXCEEDED` | Too many batch operations    |
+| `UNKNOWN`              | Catch-all                    |
+
+## Retry Logic
+
+Network requests use exponential backoff:
+
+- **Max retries:** 2
+- **Base delay:** 500ms
+- **Backoff:** Base × 2^attempt
+
+## Fetch Timeout
+
+All HTTP requests use `fetchWithTimeout()` with a **15-second** default timeout via `AbortController`.

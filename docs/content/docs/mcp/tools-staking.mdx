@@ -1,0 +1,89 @@
+---
+title: Staking Tools
+description: 8 tools for staking operations
+---
+
+## list_validators
+
+List all available Starknet validators.
+
+**Parameters:** None
+
+---
+
+## list_pools
+
+List staking pools for a validator.
+
+| Param       | Type   | Required |
+| ----------- | ------ | -------- |
+| `validator` | string | Yes      |
+
+---
+
+## get_staking_info
+
+Get staking info for a specific token (available validators and pools).
+
+| Param   | Type   | Required |
+| ------- | ------ | -------- |
+| `token` | string | Yes      |
+
+---
+
+## get_stake_status
+
+Get your position in a staking pool.
+
+| Param  | Type   | Required |
+| ------ | ------ | -------- |
+| `pool` | string | Yes      |
+
+Returns staked amount, rewards, unpooling status, and commission rate.
+
+---
+
+## stake_tokens
+
+Stake tokens in a validator pool.
+
+| Param       | Type    | Required |
+| ----------- | ------- | -------- |
+| `amount`    | string  | Yes      |
+| `token`     | string  | Yes      |
+| `validator` | string  | Yes      |
+| `simulate`  | boolean | No       |
+
+---
+
+## unstake_tokens
+
+Begin the unstaking process (exit intent).
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `amount`   | string  | Yes      |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## claim_rewards
+
+Claim staking rewards from a pool.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |
+
+---
+
+## compound_rewards
+
+Compound (re-stake) rewards in a pool.
+
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `pool`     | string  | Yes      |
+| `simulate` | boolean | No       |

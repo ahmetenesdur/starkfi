@@ -1,0 +1,12 @@
+{
+	"title": "MCP Server",
+	"pages": [
+		"index",
+		"setup",
+		"tools-auth",
+		"tools-wallet",
+		"tools-trade",
+		"tools-staking",
+		"tools-lending"
+	]
+}

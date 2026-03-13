@@ -1,0 +1,70 @@
+---
+title: Authentication
+description: Sign in with Privy OTP to connect your Starknet wallet
+---
+
+## Overview
+
+StarkFi uses **Privy** for authentication. When you sign in, a Starknet smart contract wallet (ArgentX v0.5.0) is automatically created and managed for you.
+
+## Login Flow
+
+### Step 1 — Request OTP
+
+```bash
+starkfi auth login your@email.com
+```
+
+This sends a one-time password (OTP) to your email address.
+
+### Step 2 — Verify OTP
+
+```bash
+starkfi auth verify your@email.com 123456
+```
+
+On success, a session is saved locally and your wallet address is displayed.
+
+### Check Status
+
+```bash
+starkfi address
+```
+
+Shows your authenticated wallet address and network.
+
+## Session Management
+
+Sessions are stored at `~/.local/share/starkfi/session.json` (XDG-compliant).
+
+- Sessions are **JWT-based** with automatic expiry detection
+- A **5-minute buffer** is applied before actual JWT expiry to prevent mid-request failures
+- Expired sessions are automatically cleared — you'll need to re-authenticate
+
+### Logout
+
+```bash
+starkfi auth logout
+```
+
+Clears the stored session.
+
+## How It Works
+
+```
+User → CLI → starkfi-server (Hono) → Privy API
+                                        ↓
+                              Creates/retrieves wallet
+                              Returns JWT + wallet info
+                                        ↓
+               CLI saves session locally (session.json)
+```
+
+The session contains:
+
+- `userId` — Privy user ID
+- `walletId` — Embedded wallet ID
+- `address` — Starknet contract address
+- `publicKey` — Wallet public key
+- `token` — JWT for subsequent requests
+- `serverUrl` — Signing server URL

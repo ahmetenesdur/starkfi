@@ -1,0 +1,36 @@
+---
+title: Fibrous DEX Aggregator
+description: Optimal swap routing and calldata generation
+---
+
+## Overview
+
+[Fibrous](https://fibrous.finance) is a DEX aggregator on Starknet that finds optimal routes for token swaps. StarkFi uses Fibrous for all swap operations.
+
+## API Endpoints
+
+| Endpoint           | Function               | Purpose                          |
+| ------------------ | ---------------------- | -------------------------------- |
+| `GET /route`       | `getRoute()`           | Get swap route + expected output |
+| `GET /calldata`    | `getCalldata()`        | Get executable calldata          |
+| `GET /routeBatch`  | `getRouteBatch()`      | Batch routing (up to 3 pairs)    |
+| `GET /healthCheck` | `checkFibrousHealth()` | API health status                |
+
+**Base URL:** `https://api.fibrous.finance/starknet`
+
+## Configuration
+
+| Setting          | Value                                  |
+| ---------------- | -------------------------------------- |
+| Base URL         | `https://api.fibrous.finance/starknet` |
+| Router Contract  | `0x00f6f4CF62E...FDf5a`                |
+| Default Slippage | 1%                                     |
+| Max Batch Pairs  | 3                                      |
+
+## USD Pricing
+
+StarkFi uses Fibrous route data for USD price estimation:
+
+1. Route 1 unit of token → USDC
+2. Read the `inputToken.price` from the route response
+3. USDC/USDT short-circuit to $1.0

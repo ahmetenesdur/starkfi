@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+@source "../node_modules/fumadocs-ui/dist/**/*.js";
+@source "../node_modules/fumadocs-core/dist/**/*.js";
+
+/* StarkFi brand overrides — monochrome zinc/silver matching landing page */
+:root {
+	--color-fd-primary: oklch(63.9% 0.01 260); /* zinc-500 #71717a */
+	--fd-layout-width: 1400px;
+}
+
+.dark {
+	--color-fd-primary: oklch(87.1% 0.006 286); /* zinc-300 #d4d4d8 — bright silver */
+	--color-fd-background: oklch(14.5% 0.005 286); /* zinc-950 #09090b */
+}
