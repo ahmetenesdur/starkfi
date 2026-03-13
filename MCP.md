@@ -11,7 +11,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 	"mcpServers": {
 		"starkfi": {
 			"command": "npx",
-			"args": ["-y", "starkfi", "mcp-start"]
+			"args": ["-y", "starkfi@latest", "mcp-start"]
 		}
 	}
 }
@@ -276,10 +276,10 @@ Atomically closes an active Vesu V2 lending position. Repays all outstanding deb
 
 Views and modifies global CLI behavior: RPC routing, network selection, and Gas Abstraction.
 
-| Parameter | Type   | Required | Description                                                                                                                             |
-| --------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`  | enum   | **Yes**  | One of: `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`                                                     |
-| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `off`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia`. |
+| Parameter | Type   | Required | Description                                                                                                                               |
+| --------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `action`  | enum   | **Yes**  | One of: `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`                                                       |
+| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia`. |
 
 ---
 
