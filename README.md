@@ -50,8 +50,8 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │             │    │
 │  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│             │    │
 │  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘             │    │
-│  │       │            │          │            │                 │    │
-│  │  ┌────┴────────────┴──────────┴────────────┴────┐            │    │
+│  │       │            │          │           │                  │    │
+│  │  ┌────┴────────────┴──────────┴───────────┴─--───┐           │    │
 │  │  │          Starkzap SDK (starkzap v1.0.0)       │           │    │
 │  │  │  Wallet · TxBuilder · Tokens · Paymaster      │           │    │
 │  │  └───────────────────┬───────────────────────────┘           │    │
@@ -383,14 +383,14 @@ See [`server/README.md`](server/README.md) for setup instructions.
 
 StarkFi implements a robust error handling system with a custom `StarkfiError` class and **25 specific error codes** organized by domain:
 
-| Domain         | Error Codes                                                                       |
-| -------------- | --------------------------------------------------------------------------------- |
-| **Auth**       | `SESSION_EXPIRED`, `SESSION_NOT_FOUND`, `AUTH_FAILED`, `UNAUTHORIZED`             |
-| **Wallet**     | `WALLET_NOT_FOUND`, `WALLET_NOT_DEPLOYED`, `INSUFFICIENT_BALANCE`                 |
-| **Network**    | `NETWORK_ERROR`, `RPC_ERROR`, `API_ERROR`, `TX_FAILED`, `TX_REVERTED`             |
-| **Validation** | `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_TOKEN`, `INVALID_CONFIG`            |
-| **DeFi**       | `SWAP_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`               |
-| **System**     | `CONFIG_ERROR`, `SDK_ERROR`, `UNKNOWN_ERROR`, `SIMULATION_FAILED`, `BATCH_FAILED` |
+| Domain         | Error Codes                                                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**       | `AUTH_REQUIRED`, `AUTH_FAILED`, `SESSION_EXPIRED`                                                                                                   |
+| **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                   |
+| **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                     |
+| **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`                                                                                               |
+| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND` |
+| **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                              |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.
 
