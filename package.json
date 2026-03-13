@@ -1,6 +1,6 @@
 {
 	"name": "starkfi",
-	"version": "0.3.1",
+	"version": "0.3.2",
 	"description": "Starknet DeFi CLI + MCP Server — Swaps, multi-swap, batch (multicall), staking, lending, simulation, portfolio, gasless transactions",
 	"type": "module",
 	"bin": {
@@ -78,7 +78,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^25.4.0",
+		"@types/node": "^25.5.0",
 		"eslint": "^10.0.3",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.4.0",

@@ -1,6 +1,5 @@
 import { mainnetValidators, sepoliaValidators, type Validator } from "starkzap";
-
-type Network = "mainnet" | "sepolia";
+import type { Network } from "../../lib/types.js";
 
 // Returns all validator presets for the given network.
 export function getValidators(network: Network): Validator[] {

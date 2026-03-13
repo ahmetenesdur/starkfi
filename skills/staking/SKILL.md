@@ -115,18 +115,18 @@ npx starkfi@latest rewards --compound --validator <name> [--token <symbol>]
 npx starkfi@latest validators
 ```
 
-**User:** "Show me pools for Juno"
+**User:** "Show me pools for Karnot"
 
 ```bash
-npx starkfi@latest pools Juno
+npx starkfi@latest pools Karnot
 ```
 
-**User:** "Stake 1000 STRK with Juno"
+**User:** "Stake 1000 STRK with Karnot"
 
 ```bash
 npx starkfi@latest status
 npx starkfi@latest balance --token STRK
-npx starkfi@latest stake 1000 --validator Juno
+npx starkfi@latest stake 1000 --validator Karnot
 npx starkfi@latest tx-status <hash>
 ```
 
@@ -138,10 +138,10 @@ npx starkfi@latest stake 0.5 --validator Karnot --token WBTC
 npx starkfi@latest tx-status <hash>
 ```
 
-**User:** "Compound my STRK rewards from Juno"
+**User:** "Compound my STRK rewards from Karnot"
 
 ```bash
-npx starkfi@latest rewards --compound --validator Juno
+npx starkfi@latest rewards --compound --validator Karnot
 npx starkfi@latest tx-status <hash>
 ```
 
@@ -152,15 +152,15 @@ npx starkfi@latest rewards --claim --validator Karnot
 npx starkfi@latest tx-status <hash>
 ```
 
-**User:** "I want to unstake my STRK from Juno"
+**User:** "I want to unstake my STRK from Karnot"
 
 ```bash
 # Step 1: Start unstake cooldown
-npx starkfi@latest unstake intent --validator Juno --amount 1000
+npx starkfi@latest unstake intent --validator Karnot --amount 1000
 npx starkfi@latest tx-status <hash>
 # Inform user about cooldown period
 # Step 2: After cooldown, finalize
-npx starkfi@latest unstake exit --validator Juno
+npx starkfi@latest unstake exit --validator Karnot
 npx starkfi@latest tx-status <hash>
 ```
 

@@ -49,11 +49,11 @@ npx starkfi@latest batch [--simulate] [--json] \
 | Flag       | Format                                     | Example                         |
 | ---------- | ------------------------------------------ | ------------------------------- |
 | `--swap`   | `"<amount> <from> <to>"`                   | `--swap "100 USDC ETH"`         |
-| `--stake`  | `"<amount> <token> <validator_or_0xPool>"` | `--stake "500 STRK Juno"`       |
+| `--stake`  | `"<amount> <token> <validator_or_0xPool>"` | `--stake "500 STRK Karnot"`     |
 | `--supply` | `"<amount> <token> <0xPool>"`              | `--supply "100 USDC 0x04a3..."` |
 | `--send`   | `"<amount> <token> <0xRecipient>"`         | `--send "10 STRK 0x07b2..."`    |
 
-> **Note:** `--stake` accepts either a validator name (e.g. `Juno`) or a pool contract address (starting with `0x`). The CLI auto-detects the format.
+> **Note:** `--stake` accepts either a validator name (e.g. `Karnot`) or a pool contract address (starting with `0x`). The CLI auto-detects the format.
 
 ## Parameters
 
@@ -70,12 +70,12 @@ npx starkfi@latest batch [--simulate] [--json] \
 
 ## Examples
 
-**User:** "Swap 100 USDC to ETH and stake 500 STRK with Juno in one transaction"
+**User:** "Swap 100 USDC to ETH and stake 500 STRK with Karnot in one transaction"
 
 ```bash
 npx starkfi@latest status
 npx starkfi@latest balance
-npx starkfi@latest batch --swap "100 USDC ETH" --stake "500 STRK Juno"
+npx starkfi@latest batch --swap "100 USDC ETH" --stake "500 STRK Karnot"
 npx starkfi@latest tx-status <hash>
 ```
 
@@ -97,7 +97,7 @@ npx starkfi@latest tx-status <hash>
 npx starkfi@latest batch --simulate \
   --swap "100 USDC ETH" \
   --swap "200 USDT STRK" \
-  --stake "500 STRK Juno"
+  --stake "500 STRK Karnot"
 ```
 
 ## Error Handling
