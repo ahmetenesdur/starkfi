@@ -33,8 +33,8 @@ The `--simulate` flag estimates fees without executing — useful for previewing
 Execute up to 3 swap pairs in a single Starknet transaction:
 
 ```bash
-npx starkfi@latest multi-swap "100 USDC ETH" "50 DAI STRK"
-npx starkfi@latest multi-swap "0.1 ETH USDC" "200 USDT DAI" --simulate
+npx starkfi@latest multi-swap "100 USDC>ETH, 50 DAI>STRK"
+npx starkfi@latest multi-swap "0.1 ETH>USDC, 200 USDT>DAI" --simulate
 ```
 
 ### Batch (Multicall)
@@ -55,12 +55,13 @@ Requires at least 2 operations. Each flag (`--swap`, `--stake`, `--supply`, `--s
 Stake STRK, WBTC, tBTC, SolvBTC, or LBTC with a validator:
 
 ```bash
-npx starkfi@latest validators                # List validators
-npx starkfi@latest pools                      # List staking pools
-npx starkfi@latest stake 100 STRK -v karnot   # Stake
-npx starkfi@latest rewards                    # Check rewards
-npx starkfi@latest unstake 50 STRK -v karnot  # Unstake
-npx starkfi@latest stake-status               # View staking overview
+npx starkfi@latest validators                       # List validators
+npx starkfi@latest pools karnot                      # List pools for a validator
+npx starkfi@latest stake 100 -v karnot               # Stake (default token: STRK)
+npx starkfi@latest rewards --claim -v karnot          # Claim rewards
+npx starkfi@latest unstake intent -v karnot -a 50     # Start unstaking
+npx starkfi@latest unstake exit -v karnot             # Complete unstaking
+npx starkfi@latest stake-status                       # View staking overview
 ```
 
 ### Lending (Vesu V2)
@@ -68,12 +69,16 @@ npx starkfi@latest stake-status               # View staking overview
 Supply, borrow, repay, and manage lending positions:
 
 ```bash
-npx starkfi@latest lend-pools                                          # List pools
-npx starkfi@latest lend-supply 100 USDC -p "Genesis: Re7 Labs" -t USDC  # Supply
-npx starkfi@latest lend-borrow 50 USDC -p "Genesis: Re7 Labs" -t USDC   # Borrow
-npx starkfi@latest lend-repay 50 USDC -p "Genesis: Re7 Labs" -t USDC    # Repay
-npx starkfi@latest lend-withdraw 100 USDC -p "Genesis: Re7 Labs" -t USDC # Withdraw
-npx starkfi@latest lend-status                                         # View positions
+npx starkfi@latest lend-pools                           # List pools
+npx starkfi@latest lend-supply 100 -p Prime -t USDC     # Supply
+npx starkfi@latest lend-borrow -p Prime \                # Borrow
+  --collateral-amount 0.5 --collateral-token ETH \
+  --borrow-amount 500 --borrow-token USDC
+npx starkfi@latest lend-repay 500 -p Prime -t USDC \     # Repay
+  --collateral-token ETH
+npx starkfi@latest lend-withdraw 100 -p Prime -t USDC   # Withdraw
+npx starkfi@latest lend-status -p Prime \                # View position
+  --collateral-token ETH
 ```
 
 ### Send
