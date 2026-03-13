@@ -1,11 +1,11 @@
 ---
 title: Error Handling
-description: 25 typed error codes and error recovery patterns
+description: 25 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
 
-All errors use the custom `StarkfiError` class:
+All errors in StarkFi use the custom `StarkfiError` class. Every error carries a typed `ErrorCode`, a human-readable message, and optional structured details:
 
 ```typescript
 class StarkfiError extends Error {
@@ -30,44 +30,128 @@ class StarkfiError extends Error {
 }
 ```
 
+The `toJSON()` method ensures errors are consistently serialized in MCP responses and `--json` CLI output.
+
 ## Error Codes
 
-| Code                   | When                         |
-| ---------------------- | ---------------------------- |
-| `AUTH_REQUIRED`        | Not authenticated            |
-| `AUTH_FAILED`          | Login/verify failed          |
-| `SESSION_EXPIRED`      | JWT expired                  |
-| `WALLET_NOT_DEPLOYED`  | Account not deployed         |
-| `WALLET_NOT_FOUND`     | No wallet in session         |
-| `INSUFFICIENT_BALANCE` | Not enough tokens            |
-| `TX_FAILED`            | Transaction execution failed |
-| `TX_NOT_FOUND`         | Invalid transaction hash     |
-| `SIMULATION_FAILED`    | Preflight check failed       |
-| `SWAP_FAILED`          | Swap execution error         |
-| `NO_ROUTE_FOUND`       | No swap route available      |
-| `SLIPPAGE_EXCEEDED`    | Price moved too much         |
-| `STAKING_FAILED`       | Staking operation error      |
-| `LENDING_FAILED`       | Lending operation error      |
-| `POOL_NOT_FOUND`       | Invalid pool name/address    |
-| `EXIT_NOT_READY`       | Unstake cooldown not passed  |
-| `PAYMASTER_ERROR`      | Gas abstraction failed       |
-| `INVALID_CONFIG`       | Bad configuration value      |
-| `INVALID_ADDRESS`      | Malformed Starknet address   |
-| `INVALID_AMOUNT`       | Non-positive or NaN amount   |
-| `NETWORK_ERROR`        | RPC/API connectivity         |
-| `RATE_LIMITED`         | Too many requests            |
-| `VALIDATOR_NOT_FOUND`  | Unknown validator            |
-| `BATCH_LIMIT_EXCEEDED` | Too many batch operations    |
-| `UNKNOWN`              | Catch-all                    |
+StarkFi defines 25 typed error codes organized by domain:
+
+### Authentication & Session
+
+| Code              | When                   | Resolution                        |
+| ----------------- | ---------------------- | --------------------------------- |
+| `AUTH_REQUIRED`   | No active session      | Run `starkfi auth login`          |
+| `AUTH_FAILED`     | Login or verify failed | Check email/OTP and retry         |
+| `SESSION_EXPIRED` | JWT token expired      | Re-authenticate with `auth login` |
+
+### Wallet
+
+| Code                   | When                              | Resolution                      |
+| ---------------------- | --------------------------------- | ------------------------------- |
+| `WALLET_NOT_DEPLOYED`  | Account contract not deployed     | Run `starkfi deploy`            |
+| `WALLET_NOT_FOUND`     | No wallet associated with session | Re-authenticate                 |
+| `INSUFFICIENT_BALANCE` | Not enough tokens for operation   | Check balance and reduce amount |
+
+### Transactions
+
+| Code                | When                                | Resolution                     |
+| ------------------- | ----------------------------------- | ------------------------------ |
+| `TX_FAILED`         | Transaction execution reverted      | Check parameters and try again |
+| `TX_NOT_FOUND`      | Invalid or unknown transaction hash | Verify the hash is correct     |
+| `SIMULATION_FAILED` | Dry-run preflight check failed      | Review transaction parameters  |
+
+### Trading
+
+| Code                | When                                | Resolution                             |
+| ------------------- | ----------------------------------- | -------------------------------------- |
+| `SWAP_FAILED`       | Swap execution error                | Check token pair and liquidity         |
+| `NO_ROUTE_FOUND`    | No swap route available via Fibrous | Try a different pair or smaller amount |
+| `SLIPPAGE_EXCEEDED` | Price moved beyond tolerance        | Increase `--slippage` or retry         |
+
+### Staking
+
+| Code                  | When                        | Resolution                                        |
+| --------------------- | --------------------------- | ------------------------------------------------- |
+| `STAKING_FAILED`      | Staking operation error     | Check amount and pool availability                |
+| `VALIDATOR_NOT_FOUND` | Unknown validator name      | Run `starkfi validators` to see available options |
+| `EXIT_NOT_READY`      | Unstake cooldown not passed | Wait for cooldown, check with `stake-status`      |
+
+### Lending
+
+| Code             | When                         | Resolution                                      |
+| ---------------- | ---------------------------- | ----------------------------------------------- |
+| `LENDING_FAILED` | Lending operation error      | Check balance, allowance, and health factor     |
+| `POOL_NOT_FOUND` | Invalid pool name or address | Run `starkfi lend-pools` to see available pools |
+
+### Infrastructure
+
+| Code                   | When                                 | Resolution                                   |
+| ---------------------- | ------------------------------------ | -------------------------------------------- |
+| `PAYMASTER_ERROR`      | Gas abstraction failed               | Check Paymaster credits or gas token balance |
+| `NETWORK_ERROR`        | RPC or API connectivity issue        | Check connection, retry automatically        |
+| `RATE_LIMITED`         | Too many requests to RPC/API         | Wait and retry, or configure a custom RPC    |
+| `BATCH_LIMIT_EXCEEDED` | More than 3 operations in multi-swap | Split into multiple transactions             |
+
+### Validation
+
+| Code              | When                               | Resolution                                   |
+| ----------------- | ---------------------------------- | -------------------------------------------- |
+| `INVALID_CONFIG`  | Bad configuration value            | Check `starkfi config list`                  |
+| `INVALID_ADDRESS` | Malformed Starknet address         | Ensure address starts with `0x` and is valid |
+| `INVALID_AMOUNT`  | Non-positive or non-numeric amount | Use a positive number (e.g., `0.1`, `100`)   |
+
+### General
+
+| Code      | When                         | Resolution                          |
+| --------- | ---------------------------- | ----------------------------------- |
+| `UNKNOWN` | Unexpected error (catch-all) | Check the error message for details |
 
 ## Retry Logic
 
-Network requests use exponential backoff:
+Network requests use automatic retry with exponential backoff via `withRetry()`:
 
-- **Max retries:** 2
-- **Base delay:** 500ms
-- **Backoff:** Base × 2^attempt
+| Setting         | Value                   |
+| --------------- | ----------------------- |
+| Max retries     | 2 (3 total attempts)    |
+| Base delay      | 500ms                   |
+| Backoff formula | `baseDelay × 2^attempt` |
+| Retry sequence  | 500ms → 1000ms          |
+
+Only retryable error codes (specified per call via `retryOnCodes`) trigger retries. Domain errors like `INSUFFICIENT_BALANCE` or `NO_ROUTE_FOUND` fail immediately — there's no point retrying when the input is invalid.
 
 ## Fetch Timeout
 
-All HTTP requests use `fetchWithTimeout()` with a **15-second** default timeout via `AbortController`.
+All HTTP requests use `fetchWithTimeout()` which wraps the native `fetch()` with an `AbortController` that auto-cancels after **15 seconds** by default. This prevents hanging requests from blocking the CLI or MCP server.
+
+## Error Handling Patterns
+
+### CLI Commands
+
+CLI commands catch errors at the top level, stop the spinner, and print a formatted error message:
+
+```typescript
+try {
+	// ... operation
+	spinner.succeed("Done");
+} catch (error) {
+	spinner.fail("Operation failed");
+	console.error(formatError(error));
+	process.exit(1);
+}
+```
+
+### MCP Handlers
+
+MCP handlers return errors as structured JSON, allowing AI clients to parse and understand the failure:
+
+```json
+{
+	"error": true,
+	"code": "INSUFFICIENT_BALANCE",
+	"message": "Not enough ETH — have 0.01, need 0.1"
+}
+```
+
+### Simulation Before Execution
+
+Transaction commands support `--simulate` (CLI) or simulation parameters (MCP) to catch errors before they cost gas. Always simulate first when the outcome is uncertain.

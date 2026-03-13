@@ -1,33 +1,34 @@
 ---
 title: Architecture Overview
-description: System architecture and module design
+description: System architecture, module design, and key patterns
 ---
 
 ## High-Level Architecture
 
-StarkFi follows a layered architecture with three entry points:
+StarkFi follows a layered architecture with three entry points that share a common service layer:
 
 ```
 ┌──────────────────────────────────────────┐
 │          Entry Points                    │
-│  ┌───────┐  ┌──────────┐  ┌─────────┐    │
-│  │  CLI  │  │MCP Server│  │  Skills │    │
-│  │(index)│  │ (server) │  │ (SKILL) │    │
-│  └───┬───┘  └────┬─────┘  └─────┬───┘    │
+│  ┌───────┐  ┌──────────┐  ┌─────────┐   │
+│  │  CLI  │  │MCP Server│  │  Skills  │   │
+│  │(index)│  │ (server) │  │  (SKILL) │   │
+│  └───┬───┘  └────┬─────┘  └─────┬───┘   │
 │      │           │              │        │
 │      └────────┬──┴──────────────┘        │
 │               ▼                          │
 │  ┌─────────────────────────────────────┐ │
 │  │         Service Layer               │ │
 │  │  starkzap │ fibrous  │ vesu │ batch │ │
-│  │  staking  │ tokens  │ simulate      │ │
-│  │  portfolio│ auth    │ config        │ │
+│  │  staking  │ tokens   │ simulate     │ │
+│  │  portfolio│ auth     │ config       │ │
 │  └─────────────────┬───────────────────┘ │
 │                    ▼                     │
 │  ┌─────────────────────────────────────┐ │
 │  │         Shared Library              │ │
-│  │  errors │ retry │ concurrency       │ │
-│  │  fetch  │ format│ validation        │ │
+│  │  errors  │ retry  │ concurrency     │ │
+│  │  fetch   │ format │ validation      │ │
+│  │  brand   │ types  │ config │ command│ │
 │  └─────────────────────────────────────┘ │
 └──────────────────────────────────────────┘
               │         │         │
@@ -41,41 +42,85 @@ StarkFi follows a layered architecture with three entry points:
 
 ```
 src/
-├── index.ts          # CLI entry (Commander.js)
-├── commands/         # 9 command groups, 16 files
-├── services/         # 11 service modules, 19 files
-│   ├── starkzap/     # SDK client + config
-│   ├── fibrous/      # DEX routing
-│   ├── vesu/         # Lending pools
-│   ├── staking/      # Validators + pools
-│   ├── tokens/       # Token resolution + balances
-│   ├── batch/        # Multicall composition
-│   ├── simulate/     # Transaction simulation
+├── index.ts          # CLI entry point (Commander.js)
+├── commands/         # 9 command groups
+│   ├── auth/         # login, verify, logout
+│   ├── wallet/       # address, balance, send, deploy
+│   ├── trade/        # trade, multi-swap, status
+│   ├── staking/      # stake, unstake, rewards, pools, validators, stake-status
+│   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status
+│   ├── batch/        # batch multicall
+│   ├── portfolio/    # portfolio dashboard
+│   ├── config/       # config subcommands
+│   └── chain/        # tx-status, mcp-start
+├── services/         # 11 service modules
+│   ├── starkzap/     # SDK client initialization + config
+│   ├── fibrous/      # DEX routing, calldata, pricing
+│   ├── vesu/         # Lending pool API + on-chain operations
+│   ├── staking/      # Validator resolution + pool operations
+│   ├── tokens/       # Token resolution + balance queries
+│   ├── batch/        # Multicall composition via TxBuilder
+│   ├── simulate/     # Transaction simulation (fee estimation)
 │   ├── portfolio/    # Aggregated DeFi overview
-│   ├── auth/         # Session management
+│   ├── auth/         # Session management (JWT persistence)
 │   ├── api/          # Backend API client
-│   └── config/       # Configuration service
+│   └── config/       # Configuration persistence
 ├── mcp/              # MCP server layer
-│   ├── server.ts     # Server setup + transport
-│   ├── tools/        # 7 registration files
+│   ├── server.ts     # Server setup + stdio transport
+│   ├── tools/        # 7 tool registration files (Zod schemas)
 │   └── handlers/     # 11 handler modules
-└── lib/              # 9 shared utilities
+└── lib/              # 10 shared utilities
+    ├── errors.ts     # ErrorCode enum + StarkfiError class
+    ├── retry.ts      # Exponential backoff retry
+    ├── concurrency.ts # Sliding-window concurrent execution
+    ├── fetch.ts      # Fetch with AbortController timeout
+    ├── format.ts     # Table, result, and error formatting
+    ├── validation.ts # Address and input validation
+    ├── types.ts      # Shared TypeScript types
+    ├── config.ts     # Config file paths
+    ├── brand.ts      # CLI branding and colors
+    └── command.ts    # Commander.js helpers
 ```
 
 ## Key Design Patterns
 
 ### Service Layer Isolation
 
-Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. The `batch` and `portfolio` services compose across other services.
+Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. Cross-service composition happens only in dedicated orchestrators:
 
-### Tool → Handler → Service
+- **`batch`** service composes swap + stake + supply + send operations
+- **`portfolio`** service aggregates data from tokens, staking, and lending services
 
-MCP tools use a three-layer pattern:
+### Tool → Handler → Service (MCP)
 
-1. **Tool registration** (`mcp/tools/`) — Zod schema + description
-2. **Handler** (`mcp/handlers/`) — Input validation + orchestration
-3. **Service** (`services/`) — Business logic + SDK calls
+MCP tools use a three-layer pattern that separates concerns:
 
-### Concurrent Operations
+```
+Tool Registration (mcp/tools/)     → Zod schema + description
+       ↓
+Handler          (mcp/handlers/)   → Input validation + orchestration
+       ↓
+Service          (services/)       → Business logic + SDK calls
+```
 
-Token balance checks and portfolio aggregation use a sliding-window concurrency pattern with configurable limits (default: 10 concurrent tasks).
+This pattern keeps each layer testable and ensures MCP-specific concerns (schema validation, error formatting) don't leak into shared business logic.
+
+### Concurrent Sliding Window
+
+Token balance queries and portfolio aggregation use a sliding-window concurrency pattern. Instead of issuing all RPC calls at once (which risks rate limiting) or processing sequentially (which is slow), a pool of workers pulls tasks from a shared queue:
+
+```typescript
+// Example: Query 50 token balances with max 10 concurrent RPC calls
+const balances = await runConcurrent(tokens, 10, async (token) => {
+	const balance = await wallet.balanceOf(token);
+	return balance.isZero() ? undefined : { token, balance };
+});
+```
+
+### Error Recovery
+
+All network operations use `withRetry()` for automatic retry with exponential backoff. Only retryable error codes (e.g., `NETWORK_ERROR`) trigger retries — domain errors (e.g., `INSUFFICIENT_BALANCE`) fail immediately. See the [Error Handling](/docs/architecture/error-handling) page for details.
+
+### Transaction Simulation
+
+Every transactional command supports `--simulate` (CLI) or simulation parameters (MCP). Simulation executes the transaction in a dry-run against the Starknet RPC, returning estimated fees and call count without spending gas.
