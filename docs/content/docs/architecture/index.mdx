@@ -8,34 +8,40 @@ description: System architecture, module design, and key patterns
 StarkFi follows a layered architecture with three entry points that share a common service layer:
 
 ```
-┌──────────────────────────────────────────┐
-│          Entry Points                    │
-│  ┌───────┐  ┌──────────┐  ┌─────────┐   │
-│  │  CLI  │  │MCP Server│  │  Skills  │   │
-│  │(index)│  │ (server) │  │  (SKILL) │   │
-│  └───┬───┘  └────┬─────┘  └─────┬───┘   │
-│      │           │              │        │
-│      └────────┬──┴──────────────┘        │
-│               ▼                          │
-│  ┌─────────────────────────────────────┐ │
-│  │         Service Layer               │ │
-│  │  starkzap │ fibrous  │ vesu │ batch │ │
-│  │  staking  │ tokens   │ simulate     │ │
-│  │  portfolio│ auth     │ config       │ │
-│  └─────────────────┬───────────────────┘ │
-│                    ▼                     │
-│  ┌─────────────────────────────────────┐ │
-│  │         Shared Library              │ │
-│  │  errors  │ retry  │ concurrency     │ │
-│  │  fetch   │ format │ validation      │ │
-│  │  brand   │ types  │ config │ command│ │
-│  └─────────────────────────────────────┘ │
-└──────────────────────────────────────────┘
-              │         │         │
-    ┌─────────┘         │         └──────────┐
-    ▼                   ▼                    ▼
- Starkzap SDK     Fibrous API          Vesu API
- AVNU Paymaster
+┌──────────────────────────────────────────────────────────────────────┐
+│                           StarkFi                                    │
+│                                                                      │
+│  ┌──────────────┐     ┌─────────────────────────────────────────┐    │
+│  │   CLI (30+   │     │         MCP Server (27 tools)           │    │
+│  │   commands)  │     │  AI agents connect via stdio transport  │    │
+│  └──────┬───────┘     └──────────────┬──────────────────────────┘    │
+│         │                            │                               │
+│         └────────────┬───────────────┘                               │
+│                      ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │                    Service Layer                             │    │
+│  │  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌─────────┐           │    │
+│  │  │ Fibrous │  │ Staking │  │ Vesu │  │  Batch  │           │    │
+│  │  │  Swap   │  │Lifecycle│  │  V2  │  │Multicall│           │    │
+│  │  └────┬────┘  └────┬────┘  └──┬───┘  └────┬────┘           │    │
+│  │       └─────────────┴──────────┴───────────┘                │    │
+│  │                      │                                      │    │
+│  │       ┌──────────────┴────────────────────────────┐         │    │
+│  │       │       Starkzap SDK (starkzap v1.0.0)      │         │    │
+│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │         │    │
+│  │       └───────────────┬───────────────────────────┘         │    │
+│  └───────────────────────┼─────────────────────────────────────┘    │
+│                          ▼                                          │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────┐   │
+│  │  Auth Server (Hono + Privy TEE)     │  │  AVNU Paymaster     │   │
+│  │  Email OTP · Wallet · Sign · Gas    │  │  Gas Abstraction    │   │
+│  └─────────────────────────────────────┘  └─────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │  Starknet (L2)   │
+                    └──────────────────┘
 ```
 
 ## Directory Structure
@@ -124,3 +130,18 @@ All network operations use `withRetry()` for automatic retry with exponential ba
 ### Transaction Simulation
 
 Every transactional command supports `--simulate` (CLI) or simulation parameters (MCP). Simulation executes the transaction in a dry-run against the Starknet RPC, returning estimated fees and call count without spending gas.
+
+## Tech Stack
+
+| Layer                 | Technology                                                                           | Version         |
+| --------------------- | ------------------------------------------------------------------------------------ | --------------- |
+| **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                        | v1.0.0          |
+| **CLI Framework**     | [Commander.js](https://github.com/tj/commander.js)                                   | v14.0.3         |
+| **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)             | v1.27.1         |
+| **Schema Validation** | [Zod](https://zod.dev/)                                                              | v4.3.6          |
+| **Auth Server**       | [Hono](https://hono.dev/) + [Privy TEE](https://privy.io/)                           | v4.12.7         |
+| **DEX Routing**       | [Fibrous](https://fibrous.finance/) Aggregator                                       | —               |
+| **Lending Protocol**  | [Vesu](https://vesu.io/) V2                                                          | —               |
+| **Gas Abstraction**   | [AVNU](https://avnu.fi/) Paymaster                                                   | —               |
+| **Terminal UI**       | [Chalk](https://github.com/chalk/chalk) + [Ora](https://github.com/sindresorhus/ora) | v5.6.2 / v9.3.0 |
+| **TypeScript**        | [TypeScript](https://www.typescriptlang.org/) (strict mode)                          | v5.9.3          |

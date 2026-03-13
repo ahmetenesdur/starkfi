@@ -1,0 +1,112 @@
+---
+title: Development & Contributing
+description: Set up your local environment, build, lint, and contribute to StarkFi
+---
+
+## Prerequisites
+
+- **Node.js** v18 or later
+- **pnpm** (recommended) — install via `npm install -g pnpm`
+- **Git**
+
+## Local Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ahmetenesdur/starkfi.git
+cd starkfi
+
+# Install dependencies
+pnpm install
+```
+
+## Build
+
+Compile TypeScript to the `dist/` directory:
+
+```bash
+pnpm build
+```
+
+This produces production-ready JavaScript in `dist/`. The `prepublishOnly` script runs `pnpm build` automatically before `npm publish`.
+
+## Dev Mode
+
+Run the CLI directly from TypeScript source via [tsx](https://github.com/privatenumber/tsx):
+
+```bash
+pnpm dev balance
+pnpm dev trade 100 USDC ETH --simulate
+pnpm dev config list
+```
+
+## Lint & Format
+
+StarkFi uses **ESLint** for linting and **Prettier** for code formatting, both configured for TypeScript strict mode:
+
+```bash
+pnpm lint          # Check for lint issues
+pnpm lint:fix      # Auto-fix lint issues
+pnpm format        # Format all source files
+pnpm format:check  # Check formatting without writing
+pnpm typecheck     # TypeScript type checking (no emit)
+```
+
+## Auth Server
+
+The auth server (`server/`) must be running for authentication, signing, and gas abstraction. See the [Auth Server](/docs/architecture/auth-server) page for full setup instructions.
+
+Quick start:
+
+```bash
+cd server
+pnpm install
+cp .env.example .env   # Add your Privy credentials
+pnpm dev
+```
+
+## Project Scripts
+
+| Script              | Description                  |
+| ------------------- | ---------------------------- |
+| `pnpm build`        | Compile TypeScript → `dist/` |
+| `pnpm dev`          | Run from source with tsx     |
+| `pnpm start`        | Run compiled build           |
+| `pnpm lint`         | ESLint check                 |
+| `pnpm lint:fix`     | ESLint auto-fix              |
+| `pnpm format`       | Prettier format              |
+| `pnpm format:check` | Prettier check               |
+| `pnpm typecheck`    | TypeScript type check        |
+| `pnpm mcp-start`    | Start MCP server (compiled)  |
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+1. **Fork** the repository and create a feature branch
+2. **Install** dependencies: `pnpm install`
+3. **Make** your changes following the existing code style:
+    - TypeScript strict mode
+    - ESLint + Prettier formatting
+    - Service layer isolation (see [Architecture](/docs/architecture))
+4. **Build** and verify:
+    ```bash
+    pnpm build && pnpm lint
+    ```
+5. **Submit** a pull request with a clear description of your changes
+
+### Code Style Guidelines
+
+- Use the existing patterns — service layer isolation, Zod schemas, error handling via `StarkfiError`
+- All network operations should use `withRetry()` for automatic retry
+- New CLI commands go in `src/commands/<group>/`
+- New MCP tools need a registration file in `src/mcp/tools/` and a handler in `src/mcp/handlers/`
+- New services go in `src/services/<name>/`
+
+### Bug Reports & Feature Requests
+
+For bugs and feature requests, please [open an issue](https://github.com/ahmetenesdur/starkfi/issues) with:
+
+- A clear description of the problem or feature
+- Steps to reproduce (for bugs)
+- Expected vs actual behavior
