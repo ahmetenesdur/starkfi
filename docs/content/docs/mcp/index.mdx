@@ -5,7 +5,7 @@ description: 27 MCP tools for AI-native Starknet DeFi automation
 
 ## What is MCP?
 
-The **Model Context Protocol (MCP)** is an open standard that enables AI assistants (like Claude, Cursor, Windsurf) to interact with external tools. StarkFi runs as an MCP server, exposing every DeFi feature as a typed tool.
+The **Model Context Protocol (MCP)** is an open standard that enables AI assistants (like Claude, Cursor, Windsurf) to interact with external tools. StarkFi runs as an MCP server, exposing every DeFi feature as a typed tool with Zod-validated schemas.
 
 ## Tool Categories
 
@@ -24,6 +24,8 @@ The **Model Context Protocol (MCP)** is an open standard that enables AI assista
 3. AI clients connect and discover all 27 tools with JSON schemas
 4. The AI sends tool calls, StarkFi executes them on Starknet
 5. Results are returned as structured JSON
+
+All tools return consistent error responses with typed `StarkfiError` codes — see [Error Handling](/docs/architecture/error-handling).
 
 ## Starting the Server
 

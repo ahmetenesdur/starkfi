@@ -5,7 +5,7 @@ description: Gas abstraction — Gasfree and Gasless transaction modes
 
 ## Overview
 
-StarkFi integrates with the AVNU Paymaster to enable gas abstraction on Starknet. Users can transact without holding native STRK for gas.
+StarkFi integrates with the [AVNU Paymaster](https://www.avnu.fi) to enable gas abstraction on Starknet. Users can transact without holding native STRK for gas.
 
 ## Two Modes
 
@@ -17,7 +17,7 @@ The developer pre-funds the paymaster. Users execute transactions with zero gas 
 starkfi config set-gasfree on
 ```
 
-Technically, the SDK sends transactions with `feeMode: "sponsored"` to the AVNU paymaster.
+Technically, the SDK sends transactions with `feeMode: "sponsored"` to the AVNU Paymaster endpoint.
 
 ### Gasless (User Pays in ERC-20)
 
@@ -38,10 +38,10 @@ The SDK patches the wallet's `executePaymasterTransaction` to inject `{ mode: "d
 
 ## Supported Gas Tokens
 
-| Token | Address        |
-| ----- | -------------- |
-| ETH   | `0x049d36...`  |
-| STRK  | `0x04718f...`  |
-| USDC  | `0x03306...`   |
-| USDT  | `0x068f5c...`  |
-| DAI   | `0x05574eb...` |
+| Token    | Description    |
+| -------- | -------------- |
+| **ETH**  | Ether          |
+| **STRK** | Default gas    |
+| **USDC** | USD Coin       |
+| **USDT** | Tether         |
+| **DAI**  | Dai Stablecoin |

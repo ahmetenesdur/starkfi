@@ -19,7 +19,7 @@ Shows all token balances in your wallet.
 
 ## Your First Swap
 
-Swap 0.1 ETH to USDC with 1% max slippage:
+Swap 0.1 ETH to USDC:
 
 ```bash
 starkfi trade 0.1 ETH USDC
@@ -37,7 +37,7 @@ StarkFi automatically:
 Stake 100 STRK with the Karnot validator:
 
 ```bash
-starkfi stake 100 STRK -v karnot
+starkfi stake 100 -v karnot
 ```
 
 ## Check Portfolio
@@ -53,7 +53,7 @@ starkfi portfolio
 Supply 100 USDC to the Prime pool:
 
 ```bash
-starkfi lend-supply 100 USDC -p Prime -t USDC
+starkfi lend-supply 100 -p Prime -t USDC
 ```
 
 ## Batch Operations
@@ -61,7 +61,7 @@ starkfi lend-supply 100 USDC -p Prime -t USDC
 Swap and stake in a single atomic transaction:
 
 ```bash
-starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"
+starkfi batch --swap "0.1 ETH USDC" --stake "100 STRK karnot"
 ```
 
 ## What's Next?

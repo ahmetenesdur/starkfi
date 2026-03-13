@@ -7,17 +7,17 @@ description: All StarkFi CLI commands at a glance
 
 StarkFi organizes its 30+ commands into logical groups:
 
-| Group         | Commands                                                                                               | Description                    |
-| ------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| **Auth**      | `auth login`, `auth verify`, `auth logout`                                                             | Privy OTP authentication       |
-| **Wallet**    | `address`, `balance`, `send`, `deploy`                                                                 | Wallet management              |
-| **Trading**   | `trade`, `multi-swap`, `status`                                                                        | Token swaps via Fibrous        |
-| **Staking**   | `stake`, `unstake`, `rewards`, `pools`, `validators`, `stake-status`                                   | Staking operations             |
-| **Lending**   | `lend-pools`, `lend-supply`, `lend-withdraw`, `lend-borrow`, `lend-repay`, `lend-close`, `lend-status` | Vesu V2 lending                |
-| **Portfolio** | `portfolio`                                                                                            | Full DeFi overview             |
-| **Batch**     | `batch`                                                                                                | Atomic multicall               |
-| **Config**    | `config`                                                                                               | Settings management            |
-| **System**    | `tx-status`, `mcp-start`                                                                               | Transaction status, MCP server |
+| Group              | Commands                                                                                               | Description                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| **Authentication** | `auth login`, `auth verify`, `auth logout`                                                             | Privy OTP authentication       |
+| **Wallet**         | `address`, `balance`, `send`, `deploy`                                                                 | Wallet management              |
+| **Trading**        | `trade`, `multi-swap`, `status`                                                                        | Token swaps via Fibrous        |
+| **Staking**        | `stake`, `unstake`, `rewards`, `pools`, `validators`, `stake-status`                                   | Staking operations             |
+| **Lending**        | `lend-pools`, `lend-supply`, `lend-withdraw`, `lend-borrow`, `lend-repay`, `lend-close`, `lend-status` | Vesu V2 lending                |
+| **Portfolio**      | `portfolio`                                                                                            | Full DeFi overview             |
+| **Operations**     | `batch`                                                                                                | Atomic multicall               |
+| **Configuration**  | `config`                                                                                               | Settings management            |
+| **System**         | `tx-status`, `mcp-start`                                                                               | Transaction status, MCP server |
 
 ## Global Flags
 
@@ -38,11 +38,17 @@ starkfi <command> [arguments] [flags]
 ## Examples
 
 ```bash
+# Check auth status and Fibrous health
+starkfi status
+
 # Swap 1 ETH to USDC
 starkfi trade 1 ETH USDC
 
-# Stake 500 STRK with max slippage 0.5%
-starkfi stake 500 STRK -v karnot --slippage 0.5
+# Stake 500 STRK with Karnot validator
+starkfi stake 500 -v karnot
+
+# Consolidated staking dashboard
+starkfi stake-status
 
 # Check transaction status
 starkfi tx-status 0x123abc...

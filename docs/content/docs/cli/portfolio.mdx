@@ -11,7 +11,7 @@ starkfi portfolio
 
 ## What It Shows
 
-The portfolio command aggregates your complete DeFi state:
+The portfolio command aggregates your complete DeFi state into a single view.
 
 ### Token Balances
 
@@ -21,9 +21,9 @@ All tokens with non-zero balances, each with USD value calculated via Fibrous pr
 
 For each validator pool:
 
-- Staked amount
+- Staked amount and USD value
 - Pending rewards
-- Unpooling status (if exit intent exists)
+- Unpooling status (if an exit intent exists)
 
 ### Lending Positions
 
@@ -31,13 +31,15 @@ For each Vesu V2 pool:
 
 - Collateral value
 - Debt value
-- Health factor + risk level
+- Health factor and risk level
 
 ### Total Portfolio Value
 
 Sum of all token balances, staked amounts, and collateral in USD.
 
 ## JSON Output
+
+For programmatic use or piping to other tools:
 
 ```bash
 starkfi portfolio --json

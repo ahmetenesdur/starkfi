@@ -1,53 +1,59 @@
 ---
 title: Trade Tools
-description: get_swap_quote, swap_tokens, multi_swap, batch_execute
+description: get_swap_quote, swap_tokens, get_multi_swap_quote, multi_swap, batch_execute
 ---
 
 ## get_swap_quote
 
-Get a price quote for a swap without executing.
+Get a price quote for a swap without executing. Always call this before `swap_tokens` so the user can review the expected output.
 
-| Param       | Type   | Required        |
-| ----------- | ------ | --------------- |
-| `amount`    | string | Yes             |
-| `fromToken` | string | Yes             |
-| `toToken`   | string | Yes             |
-| `slippage`  | number | No (default: 1) |
+| Param        | Type   | Required |
+| ------------ | ------ | -------- |
+| `amount`     | string | Yes      |
+| `from_token` | string | Yes      |
+| `to_token`   | string | Yes      |
 
 ---
 
 ## swap_tokens
 
-Execute a token swap.
+Execute a token swap on Starknet using Fibrous DEX aggregation. Call `get_swap_quote` first to show the user a preview.
 
-| Param       | Type    | Required        |
-| ----------- | ------- | --------------- |
-| `amount`    | string  | Yes             |
-| `fromToken` | string  | Yes             |
-| `toToken`   | string  | Yes             |
-| `slippage`  | number  | No (default: 1) |
-| `simulate`  | boolean | No              |
+| Param        | Type    | Required        |
+| ------------ | ------- | --------------- |
+| `amount`     | string  | Yes             |
+| `from_token` | string  | Yes             |
+| `to_token`   | string  | Yes             |
+| `slippage`   | number  | No (default: 1) |
+| `simulate`   | boolean | No              |
 
 ---
 
 ## get_multi_swap_quote
 
-Get quotes for up to 3 swap pairs.
+Get quotes for 2–3 swap pairs at once using Fibrous batch routing.
 
-| Param      | Type   | Required |
-| ---------- | ------ | -------- |
-| `pairs`    | array  | Yes      |
-| `slippage` | number | No       |
+| Param   | Type  | Required |
+| ------- | ----- | -------- |
+| `swaps` | array | Yes      |
 
-Each pair: `{ amount, fromToken, toToken }`
+Each swap item: `{ amount, from_token, to_token }`
 
 ---
 
 ## multi_swap
 
-Execute multiple swaps in one transaction.
+Execute 2–3 swaps in a single multicall transaction.
 
-Same parameters as `get_multi_swap_quote` plus `simulate`.
+| Param      | Type    | Required |
+| ---------- | ------- | -------- |
+| `swaps`    | array   | Yes      |
+| `slippage` | number  | No       |
+| `simulate` | boolean | No       |
+
+Each swap item: `{ amount, from_token, to_token }`
+
+> **Note:** Minimum 2, maximum 3 swap pairs per transaction.
 
 ---
 
@@ -60,4 +66,13 @@ Execute a batch of mixed operations (swap + stake + supply + send) atomically.
 | `operations` | array   | Yes      |
 | `simulate`   | boolean | No       |
 
-Each operation has a `type` (`swap`, `stake`, `supply`, `send`) and type-specific fields.
+Each operation has a `type` and `params`:
+
+| Type     | Params                                   |
+| -------- | ---------------------------------------- |
+| `swap`   | `amount`, `from_token`, `to_token`       |
+| `stake`  | `amount`, `token`, `pool` or `validator` |
+| `supply` | `amount`, `token`, `pool`                |
+| `send`   | `amount`, `token`, `to`                  |
+
+> **Note:** Minimum 2 operations required per batch.

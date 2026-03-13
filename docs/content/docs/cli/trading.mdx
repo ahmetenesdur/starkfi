@@ -1,11 +1,11 @@
 ---
 title: Trading Commands
-description: Token swaps and multi-swap via Fibrous DEX aggregator
+description: Token swaps, multi-swap, and status checks
 ---
 
 ## trade
 
-Swap one token for another using the best available route.
+Swaps one token for another using the best available route via Fibrous.
 
 ```bash
 starkfi trade <amount> <fromToken> <toToken> [flags]
@@ -34,7 +34,7 @@ starkfi trade 0.5 ETH USDC --slippage 0.5
 
 ## multi-swap
 
-Execute up to 3 swap pairs in a single multicall transaction.
+Executes up to 3 swap pairs in a single multicall transaction.
 
 ```bash
 starkfi multi-swap --pairs "<amount1> <from1> <to1>, <amount2> <from2> <to2>"
@@ -50,8 +50,10 @@ starkfi multi-swap --pairs "0.1 ETH USDC, 100 STRK USDC, 50 DAI USDC"
 
 ## status
 
-Check the status of a submitted transaction.
+Checks authentication status and Fibrous API health.
 
 ```bash
-starkfi tx-status <txHash>
+starkfi status
 ```
+
+Shows whether you're authenticated (wallet address, network) and whether the Fibrous Starknet API is online.

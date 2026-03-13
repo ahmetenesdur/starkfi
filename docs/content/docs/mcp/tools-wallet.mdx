@@ -5,15 +5,19 @@ description: get_balance, send_tokens, deploy_account, get_portfolio, get_tx_sta
 
 ## get_balance
 
-Get all token balances for the authenticated wallet.
+Get token balances for the authenticated wallet.
 
-**Parameters:** None
+| Param   | Type   | Required |
+| ------- | ------ | -------- |
+| `token` | string | No       |
+
+Omit `token` to fetch all non-zero balances. Specify a symbol (e.g., `STRK`, `ETH`) to check a single token.
 
 ---
 
 ## send_tokens
 
-Transfer tokens to a recipient.
+Transfer tokens to a recipient address.
 
 | Param       | Type    | Required |
 | ----------- | ------- | -------- |
@@ -21,6 +25,8 @@ Transfer tokens to a recipient.
 | `token`     | string  | Yes      |
 | `recipient` | string  | Yes      |
 | `simulate`  | boolean | No       |
+
+Set `simulate: true` to estimate fees without sending a transaction.
 
 ---
 
@@ -30,11 +36,13 @@ Deploy the smart contract wallet on-chain.
 
 **Parameters:** None
 
+Required once before sending any transaction. Safe to call multiple times — returns the current status if already deployed.
+
 ---
 
 ## get_portfolio
 
-Get a comprehensive DeFi overview: balances, staking, lending, and total USD value.
+Get a full DeFi overview: all token balances with USD values, staking positions, and lending positions.
 
 **Parameters:** None
 
@@ -44,6 +52,8 @@ Get a comprehensive DeFi overview: balances, staking, lending, and total USD val
 
 Check the status of a transaction by hash.
 
-| Param    | Type   | Required |
-| -------- | ------ | -------- |
-| `txHash` | string | Yes      |
+| Param  | Type   | Required |
+| ------ | ------ | -------- |
+| `hash` | string | Yes      |
+
+Returns the current status, actual fee, block number, and explorer link.

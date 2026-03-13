@@ -1,18 +1,18 @@
 ---
-title: StarkZap SDK
+title: Starkzap SDK
 description: Core SDK powering wallets, tokens, staking, and transactions
 ---
 
 ## Overview
 
-[StarkZap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet: wallet management, token operations, staking, and gas abstraction.
+[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet: wallet management, token operations, staking, and gas abstraction.
 
 ## SDK Initialization
 
 ```typescript
-import { StarkZap } from "starkzap";
+import { Starkzap } from "starkzap";
 
-const sdk = new StarkZap({
+const sdk = new Starkzap({
 	network: "mainnet",
 	rpcUrl: "https://your-rpc.com", // optional
 	paymaster: {

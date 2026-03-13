@@ -5,85 +5,95 @@ description: 7 tools for Vesu V2 lending operations
 
 ## list_lending_pools
 
-List all available Vesu V2 lending pools with APY data.
+List available Vesu V2 lending pools with supported collateral/debt pairs.
 
-**Parameters:** None
+| Param  | Type   | Required |
+| ------ | ------ | -------- |
+| `name` | string | No       |
+
+Filter pools by name (partial match). Omit to list all pools.
 
 ---
 
 ## get_lending_position
 
-Get your position in a lending pool.
+Get the user's position in a lending pool.
 
-| Param             | Type   | Required |
-| ----------------- | ------ | -------- |
-| `pool`            | string | Yes      |
-| `collateralToken` | string | Yes      |
-| `debtToken`       | string | Yes      |
+| Param              | Type   | Required |
+| ------------------ | ------ | -------- |
+| `pool`             | string | Yes      |
+| `collateral_token` | string | Yes      |
+| `borrow_token`     | string | No       |
 
-Returns collateral value, debt value, health factor, and risk level.
+- `pool`: Pool name (e.g., `Prime`, `Re7`) or contract address
+- Returns collateral value, debt value, health factor, and risk level
 
 ---
 
 ## supply_assets
 
-Supply collateral to a lending pool.
+Supply tokens into a Vesu V2 pool to earn interest. Tokens are deposited into the pool's ERC-4626 vToken vault.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `amount`   | string  | Yes      |
-| `token`    | string  | Yes      |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param    | Type   | Required |
+| -------- | ------ | -------- |
+| `pool`   | string | Yes      |
+| `amount` | string | Yes      |
+| `token`  | string | Yes      |
+
+> **Note:** Minimum supply is approximately $10 equivalent (dust limit protection).
 
 ---
 
 ## withdraw_assets
 
-Withdraw supplied assets.
+Withdraw previously supplied tokens from a pool.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `amount`   | string  | Yes      |
-| `token`    | string  | Yes      |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param    | Type   | Required |
+| -------- | ------ | -------- |
+| `pool`   | string | Yes      |
+| `amount` | string | Yes      |
+| `token`  | string | Yes      |
 
 ---
 
 ## borrow_assets
 
-Borrow assets against collateral.
+Borrow tokens by supplying collateral. Atomically deposits collateral and borrows the debt asset in a single transaction.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `amount`   | string  | Yes      |
-| `token`    | string  | Yes      |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param               | Type    | Required |
+| ------------------- | ------- | -------- |
+| `pool`              | string  | Yes      |
+| `collateral_amount` | string  | Yes      |
+| `collateral_token`  | string  | Yes      |
+| `borrow_amount`     | string  | Yes      |
+| `borrow_token`      | string  | Yes      |
+| `use_supplied`      | boolean | No       |
+
+Set `use_supplied: true` to use previously supplied yield tokens as collateral instead of transferring fresh tokens from wallet.
 
 ---
 
 ## repay_debt
 
-Repay borrowed debt.
+Repay borrowed tokens on an existing lending position.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `amount`   | string  | Yes      |
-| `token`    | string  | Yes      |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param              | Type   | Required |
+| ------------------ | ------ | -------- |
+| `pool`             | string | Yes      |
+| `amount`           | string | Yes      |
+| `token`            | string | Yes      |
+| `collateral_token` | string | Yes      |
+
+The `collateral_token` is needed to identify the specific position to repay.
 
 ---
 
 ## close_position
 
-Close an entire lending position.
+Atomically close an active lending position. Repays all outstanding debt and withdraws all collateral in a single transaction.
 
-| Param             | Type    | Required |
-| ----------------- | ------- | -------- |
-| `pool`            | string  | Yes      |
-| `collateralToken` | string  | Yes      |
-| `debtToken`       | string  | Yes      |
-| `simulate`        | boolean | No       |
+| Param              | Type   | Required |
+| ------------------ | ------ | -------- |
+| `pool`             | string | Yes      |
+| `collateral_token` | string | Yes      |
+| `debt_token`       | string | Yes      |

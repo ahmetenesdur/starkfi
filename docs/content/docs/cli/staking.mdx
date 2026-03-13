@@ -5,72 +5,112 @@ description: Stake, unstake, claim rewards, and browse validators
 
 ## validators
 
-List all available validators.
+Lists all available validators.
 
 ```bash
 starkfi validators
 ```
 
+Shows validator name and staker address for the current network. Use `--json` for raw output.
+
 ## pools
 
-List staking pools for a specific validator.
+Lists staking pools for a specific validator.
 
 ```bash
 starkfi pools <validator>
 ```
 
+Accepts a validator name (e.g., `karnot`) or staker address. Shows pool address, token, amount, and commission.
+
 ## stake
 
-Stake tokens with a validator.
+Stakes tokens with a validator.
 
 ```bash
-starkfi stake <amount> <token> -v <validator>
+starkfi stake <amount> -v <validator> [flags]
 ```
 
-**Example:**
+**Flags:**
+
+| Flag              | Default | Description                      |
+| ----------------- | ------- | -------------------------------- |
+| `-v, --validator` | —       | Validator name (auto-finds pool) |
+| `-p, --pool`      | —       | Pool contract address (direct)   |
+| `-t, --token`     | `STRK`  | Token to stake                   |
+| `--simulate`      | `false` | Estimate fees without executing  |
+
+You must provide either `--validator` or `--pool`.
+
+**Supported tokens:** STRK, WBTC, tBTC, SolvBTC, LBTC
+
+**Examples:**
 
 ```bash
-starkfi stake 100 STRK -v karnot
+starkfi stake 100 -v karnot
+starkfi stake 50 -v fibrous --simulate
+starkfi stake 10 -p 0x04a3... -t STRK
 ```
 
 ## stake-status
 
-Check your staking position for a specific pool.
+Shows a consolidated staking dashboard across all validators and pools.
 
 ```bash
-starkfi stake-status <pool>
+starkfi stake-status [validator]
 ```
 
-Shows staked amount, pending rewards, unpooling status, and commission rate.
+Optionally filter by validator name. Shows staked amount, pending rewards, total value, and commission for each pool. Use `--json` for raw output.
 
 ## rewards
 
-Claim or compound staking rewards.
+Claims or compounds staking rewards.
 
 ```bash
 # Claim rewards (withdraw to wallet)
-starkfi rewards claim <pool>
+starkfi rewards --claim -v <validator>
 
 # Compound rewards (restake automatically)
-starkfi rewards compound <pool>
+starkfi rewards --compound -v <validator>
 ```
+
+**Flags:**
+
+| Flag          | Description                      |
+| ------------- | -------------------------------- |
+| `--claim`     | Withdraw rewards to wallet       |
+| `--compound`  | Claim and immediately restake    |
+| `--validator` | Validator name (auto-finds pool) |
+| `--pool`      | Pool address (direct)            |
+| `-t, --token` | Token symbol (default: `STRK`)   |
+
+You must provide either `--validator` or `--pool`, and either `--claim` or `--compound`.
 
 ## unstake
 
-Begin the unstaking process (two-step):
-
-### Step 1 — Intent
+Begins or finalizes the unstaking process (two-step with cooldown).
 
 ```bash
-starkfi unstake <amount> <pool>
+# Step 1 — Create exit intent
+starkfi unstake intent -v <validator> -a <amount>
+
+# Step 2 — Finalize exit (after cooldown)
+starkfi unstake exit -v <validator>
 ```
 
-Creates an exit intent. After the cooldown period, you can finalize:
+**Arguments:**
 
-### Step 2 — Finalize
+| Argument | Description                                               |
+| -------- | --------------------------------------------------------- |
+| `action` | `intent` to start exit, `exit` to complete after cooldown |
 
-```bash
-starkfi unstake-exit <pool>
-```
+**Flags:**
+
+| Flag              | Description                      |
+| ----------------- | -------------------------------- |
+| `-v, --validator` | Validator name (auto-finds pool) |
+| `-p, --pool`      | Pool contract address (direct)   |
+| `-a, --amount`    | Amount to unstake (for `intent`) |
+| `-t, --token`     | Token symbol (default: `STRK`)   |
 
 > **Note:** There is a cooldown period between the intent and the exit. Check your position with `stake-status` to see the exit window.

@@ -54,9 +54,9 @@ starkfi batch \
 ## How It Works
 
 1. Each operation is translated into on-chain calls (approve + execute)
-2. All calls are composed using StarkZap's `TxBuilder`
+2. All calls are composed using Starkzap's `TxBuilder`
 3. Everything executes atomically — if any operation fails, the entire batch reverts
-4. Supports up to 3 swap pairs per batch
+4. Each flag can be repeated — up to 3 swap pairs per batch
 
 ## Simulation
 

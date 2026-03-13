@@ -5,85 +5,96 @@ description: 8 tools for staking operations
 
 ## list_validators
 
-List all available Starknet validators.
+List all known Starknet staking validators.
 
 **Parameters:** None
+
+Returns validator names and staker addresses for the current network.
 
 ---
 
 ## list_pools
 
-List staking pools for a validator.
+List delegation pools for a specific validator.
 
 | Param       | Type   | Required |
 | ----------- | ------ | -------- |
 | `validator` | string | Yes      |
 
+Accepts a validator name (e.g., `Karnot`) or staker address. Supports partial matches.
+
 ---
 
 ## get_staking_info
 
-Get staking info for a specific token (available validators and pools).
-
-| Param   | Type   | Required |
-| ------- | ------ | -------- |
-| `token` | string | Yes      |
-
----
-
-## get_stake_status
-
-Get your position in a staking pool.
+Get staking position info for a specific pool: staked balance, unclaimed rewards, total balance, commission, and unpooling cooldown.
 
 | Param  | Type   | Required |
 | ------ | ------ | -------- |
 | `pool` | string | Yes      |
 
-Returns staked amount, rewards, unpooling status, and commission rate.
+Pool contract address (`0x...`).
+
+---
+
+## get_stake_status
+
+Scan all known validators and pools to return a consolidated staking dashboard with total staked, total rewards, and per-pool breakdown.
+
+| Param       | Type   | Required |
+| ----------- | ------ | -------- |
+| `validator` | string | No       |
+
+Optional validator name or staker address to filter results.
 
 ---
 
 ## stake_tokens
 
-Stake tokens in a validator pool.
+Stake tokens in a delegation pool. Automatically detects whether to enter the pool or add to an existing delegation.
 
-| Param       | Type    | Required |
-| ----------- | ------- | -------- |
-| `amount`    | string  | Yes      |
-| `token`     | string  | Yes      |
-| `validator` | string  | Yes      |
-| `simulate`  | boolean | No       |
+| Param    | Type   | Required |
+| -------- | ------ | -------- |
+| `amount` | string | Yes      |
+| `pool`   | string | Yes      |
+| `token`  | string | No       |
+
+- `pool`: Pool contract address (`0x...`)
+- `token`: Token symbol (default: `STRK`). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC
 
 ---
 
 ## unstake_tokens
 
-Begin the unstaking process (exit intent).
+Unstake tokens from a pool. Unstaking is a **two-step process**:
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `amount`   | string  | Yes      |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+1. Call with `action: "intent"` to start the exit
+2. Wait for the cooldown period
+3. Call with `action: "exit"` to complete withdrawal
+
+| Param    | Type   | Required                     |
+| -------- | ------ | ---------------------------- |
+| `action` | enum   | Yes (`"intent"` or `"exit"`) |
+| `pool`   | string | Yes                          |
+| `amount` | string | Only for `intent`            |
+| `token`  | string | No (default: STRK)           |
 
 ---
 
 ## claim_rewards
 
-Claim staking rewards from a pool.
+Withdraw staking rewards from a pool to the user's wallet.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param  | Type   | Required |
+| ------ | ------ | -------- |
+| `pool` | string | Yes      |
 
 ---
 
 ## compound_rewards
 
-Compound (re-stake) rewards in a pool.
+Atomically claim and re-stake rewards in a single transaction (compound interest).
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `pool`     | string  | Yes      |
-| `simulate` | boolean | No       |
+| Param  | Type   | Required |
+| ------ | ------ | -------- |
+| `pool` | string | Yes      |

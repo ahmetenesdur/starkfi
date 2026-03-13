@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 17 typed error codes and error recovery patterns
+description: 25 typed error codes and error recovery patterns
 ---
 
 ## StarkfiError
@@ -10,15 +10,22 @@ All errors use the custom `StarkfiError` class:
 ```typescript
 class StarkfiError extends Error {
 	constructor(
-		public code: ErrorCode,
+		public readonly code: ErrorCode,
 		message: string,
-		public details?: Record<string, unknown>
+		public readonly details?: unknown,
+		options?: { cause?: unknown }
 	) {
-		super(message);
+		super(message, options);
+		this.name = "StarkfiError";
 	}
 
 	toJSON() {
-		return { code: this.code, message: this.message, ...this.details };
+		return {
+			error: true,
+			code: this.code,
+			message: this.message,
+			...(this.details ? { details: this.details } : {}),
+		};
 	}
 }
 ```
