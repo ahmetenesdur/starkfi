@@ -5,6 +5,7 @@ import { Command, type Help } from "commander";
 import chalk from "chalk";
 import { formatError } from "./lib/format.js";
 import { startMcpServer } from "./mcp/server.js";
+import { BLUE, MINT, LOGO_ROW_COLORS } from "./lib/brand.js";
 import { registerLoginCommand } from "./commands/auth/login.js";
 import { registerVerifyCommand } from "./commands/auth/verify.js";
 import { registerLogoutCommand } from "./commands/auth/logout.js";
@@ -42,13 +43,6 @@ process.on("SIGTERM", () => process.exit(0));
 
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
-
-// Brand palette (matches docs/index.html)
-const BLUE = "#a5b4fc";
-const MINT = "#99f6e4";
-
-// Blue → mint gradient, one shade per logo row
-const LOGO_ROW_COLORS = ["#a5b4fc", "#adbcfc", "#b5c4fb", "#bdccfb", "#c6d4fa", "#99f6e4"] as const;
 
 const LOGO_LINES = [
 	"███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗",

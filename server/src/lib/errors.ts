@@ -9,7 +9,10 @@ export class ApiError extends Error {
 	}
 }
 
-export function errorResponse(error: unknown) {
+export function errorResponse(error: unknown): {
+	status: number;
+	body: { error: { code: string; message: string } };
+} {
 	if (error instanceof ApiError) {
 		return {
 			status: error.statusCode,

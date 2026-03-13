@@ -1,10 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
-
-// Brand palette (matches docs/index.html)
-const BLUE = "#a5b4fc"; // pastel-blue
-const MINT = "#99f6e4"; // pastel-mint
-const SLATE = "#cbd5e1"; // slate-300 — table even rows
+import { BLUE, MINT, SLATE } from "./brand.js";
 
 function hyperlink(text: string, url: string): string {
 	return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;

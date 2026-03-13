@@ -31,5 +31,5 @@ export const signHashSchema = z.object({
 
 export const signMessageSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
-	message: z.union([z.string().min(1), z.record(z.unknown())]),
+	message: z.union([z.string().min(1), z.record(z.string(), z.unknown())]),
 });
