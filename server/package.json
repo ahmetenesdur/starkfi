@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "node --env-file=.env --import tsx/esm --watch src/index.ts",
 		"build": "tsc",
-		"start": "node dist/src/index.js",
+		"start": "node --env-file=.env dist/src/index.js",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint src/",
 		"lint:fix": "eslint src/ --fix",
