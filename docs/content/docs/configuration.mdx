@@ -1,58 +1,72 @@
 ---
 title: Configuration
-description: Configure network, RPC, and gas payment settings
+description: Customize network, RPC endpoint, and gas payment settings
 ---
 
-## Config Command
+## View Current Settings
 
 ```bash
 starkfi config list
 ```
 
-Shows all current configuration values.
+Shows your current network, RPC endpoint, gas mode, and gas token. If nothing has been configured, you'll see default values.
+
+---
 
 ## Network
 
-Switch between mainnet and Sepolia testnet:
+Switch between Starknet mainnet and Sepolia testnet:
 
 ```bash
-starkfi config set-network mainnet
-starkfi config set-network sepolia
+starkfi config set-network mainnet    # Production (default)
+starkfi config set-network sepolia    # Testnet
 ```
+
+> **Note:** Switching networks does not affect your session — you stay authenticated. However, your wallet address and balances will differ per network.
+
+---
 
 ## Custom RPC
 
 Set a custom Starknet RPC endpoint:
 
 ```bash
-starkfi config set-rpc https://your-rpc-endpoint.com
+starkfi config set-rpc https://starknet-mainnet.g.alchemy.com/v2/YOUR_KEY
 ```
+
+Check the current RPC:
+
+```bash
+starkfi config get-rpc
+```
+
+> **Tip:** Use a custom RPC if you're hitting rate limits on the default Starkzap endpoint, or if you need higher throughput for batch operations.
+
+---
 
 ## Gas Abstraction
 
-StarkFi supports two gas payment modes via the AVNU Paymaster:
+By default, you pay gas in **STRK**. StarkFi supports two alternative gas modes via the AVNU Paymaster — both let you transact without holding STRK.
 
-### Gasfree Mode (Developer Pays)
+### Gasfree Mode — Developer Pays Everything
 
-The developer sponsors gas using paymaster credits. Users pay nothing.
+The developer sponsors all gas fees. Users transact for free.
 
 ```bash
-starkfi config set-gasfree on
+starkfi config set-gasfree on     # Enable
+starkfi config set-gasfree off    # Disable
 ```
 
-### Gasless Mode (User Pays in ERC-20)
+Best for onboarding new users, demos, and testing environments.
 
-Users pay gas in an ERC-20 token instead of STRK:
+### Gasless Mode — User Pays in Any Token
+
+Users pay gas in an ERC-20 token they already hold — no STRK needed:
 
 ```bash
-# Pay gas in USDC
-starkfi config set-gas-token USDC
-
-# Pay gas in ETH
-starkfi config set-gas-token ETH
-
-# Disable (revert to default STRK)
-starkfi config set-gas-token reset
+starkfi config set-gas-token USDC     # Pay gas in USDC
+starkfi config set-gas-token ETH      # Pay gas in ETH
+starkfi config set-gas-token reset    # Revert to default (STRK)
 ```
 
 ### Supported Gas Tokens
@@ -65,15 +79,31 @@ starkfi config set-gas-token reset
 | **USDT** | Tether            |
 | **DAI**  | Dai Stablecoin    |
 
-## MCP Config Action
+> **Important:** Gasfree and Gasless modes are mutually exclusive. Enabling one clears the other. Use `starkfi config list` to verify your current mode.
 
-When using the MCP server, you can configure settings via the `config_action` tool:
+---
+
+## MCP Server Configuration
+
+When using the MCP server, the same settings are available through the `config_action` tool:
 
 ```json
-{
-	"action": "set-gasfree",
-	"value": "on"
-}
+{ "action": "set-gasfree", "value": "on" }
+{ "action": "set-gas-token", "value": "USDC" }
+{ "action": "set-network", "value": "mainnet" }
+{ "action": "list" }
 ```
 
-Available actions: `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`.
+All 6 subcommands work identically in both CLI and MCP: `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`.
+
+---
+
+## Environment Variables
+
+These environment variables override configuration for advanced use cases:
+
+| Variable          | Purpose                     | Default          |
+| ----------------- | --------------------------- | ---------------- |
+| `STARKFI_API_URL` | StarkFi auth server URL     | Built-in default |
+| `STARKFI_NETWORK` | Override configured network | From config      |
+| `STARKFI_RPC_URL` | Override configured RPC     | From config      |

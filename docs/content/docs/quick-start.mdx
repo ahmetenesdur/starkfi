@@ -1,38 +1,45 @@
 ---
 title: Quick Start
-description: Your first swap, stake, and balance check in under 5 minutes
+description: Your first swap, stake, and portfolio check in under 2 minutes
 ---
 
-## Prerequisites
+## Before You Begin
 
-1. [Install StarkFi](/docs/installation)
-2. [Authenticate](/docs/authentication)
-3. Have some ETH or STRK in your wallet for gas
+Make sure you've completed these steps:
 
-## Check Your Balances
+1. ✅ [Installed StarkFi](/docs/installation)
+2. ✅ [Authenticated](/docs/authentication)
+3. ✅ Have some ETH or STRK in your wallet (or [enable gasfree mode](/docs/configuration))
+
+## 1. Check Your Balances
 
 ```bash
 starkfi balance
 ```
 
-Shows all token balances in your wallet.
+See all tokens in your wallet with USD values. Filter by token:
 
-## Your First Swap
+```bash
+starkfi balance --token ETH
+```
+
+## 2. Your First Swap
 
 Swap 0.1 ETH to USDC:
 
 ```bash
+# Preview first (no gas spent)
+starkfi trade 0.1 ETH USDC --simulate
+
+# Execute for real
 starkfi trade 0.1 ETH USDC
 ```
 
-StarkFi automatically:
+StarkFi automatically finds the best route via Fibrous DEX aggregator, generates the calldata, and executes the swap. You'll receive a transaction hash and explorer link.
 
-1. Fetches the best route via Fibrous DEX aggregator
-2. Generates optimized calldata
-3. Executes the swap through the Fibrous router
-4. Returns the transaction hash and explorer link
+> **Tip:** Always use `--simulate` first to preview estimated fees before executing.
 
-## Stake STRK
+## 3. Stake STRK
 
 Stake 100 STRK with the Karnot validator:
 
@@ -40,32 +47,44 @@ Stake 100 STRK with the Karnot validator:
 starkfi stake 100 -v karnot
 ```
 
-## Check Portfolio
-
-View your complete DeFi overview — balances, staking positions, and lending positions:
+Check your staking positions:
 
 ```bash
-starkfi portfolio
+starkfi stake-status
 ```
 
-## Supply to Vesu Lending
+## 4. Supply to a Lending Pool
 
-Supply 100 USDC to the Prime pool:
+Supply 100 USDC to the Prime lending pool on Vesu:
 
 ```bash
 starkfi lend-supply 100 -p Prime -t USDC
 ```
 
-## Batch Operations
+## 5. Batch Multiple Operations
 
-Swap and stake in a single atomic transaction:
+Swap and stake in a single atomic transaction — all operations succeed together or revert together:
 
 ```bash
 starkfi batch --swap "0.1 ETH USDC" --stake "100 STRK karnot"
 ```
 
+## 6. View Your Full Portfolio
+
+See everything in one dashboard — token balances, staking positions, lending positions, and total USD value:
+
+```bash
+starkfi portfolio
+```
+
 ## What's Next?
 
-- Explore all [CLI commands](/docs/cli)
-- Set up the [MCP Server](/docs/mcp) for AI agents
-- Learn about [gas abstraction](/docs/configuration)
+You've covered the basics. Here's where to go from here:
+
+| If you want to...                       | Go to                                |
+| --------------------------------------- | ------------------------------------ |
+| See all CLI commands and flags          | [CLI Reference](/docs/cli)           |
+| Connect AI agents to StarkFi            | [MCP Server](/docs/mcp)              |
+| Customize network, RPC, or gas settings | [Configuration](/docs/configuration) |
+| Use pre-built AI workflows              | [Agent Skills](/docs/skills)         |
+| Understand the system design            | [Architecture](/docs/architecture)   |

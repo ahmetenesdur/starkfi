@@ -1,70 +1,97 @@
 ---
 title: Authentication
-description: Sign in with Privy OTP to connect your Starknet wallet
+description: Sign in with your email to connect your Starknet wallet
 ---
 
-## Overview
+## How It Works
 
-StarkFi uses **Privy** for authentication. When you sign in, a Starknet smart contract wallet (ArgentX v0.5.0) is automatically created and managed for you.
+StarkFi uses **Privy** for authentication. When you sign in with your email, a Starknet smart contract wallet (ArgentX v0.5.0) is automatically created and managed for you — no browser extension or seed phrase required.
 
-## Login Flow
+## Sign In (2 Steps)
 
 ### Step 1 — Request OTP
 
 ```bash
-starkfi auth login your@email.com
+starkfi auth login you@email.com
 ```
 
-This sends a one-time password (OTP) to your email address.
+A one-time password (OTP) is sent to your email address.
 
 ### Step 2 — Verify OTP
 
 ```bash
-starkfi auth verify your@email.com 123456
+starkfi auth verify you@email.com 123456
 ```
 
-On success, a session is saved locally and your wallet address is displayed.
+Replace `123456` with the code from your email. On success, your wallet is connected and your session is saved locally.
 
-### Check Status
+```
+✓ Wallet connected
+  network:  mainnet
+  address:  0x04a3...abcd
+  walletId: wallet_abc123
+  message:  New wallet created and session saved.
+```
+
+> **First time?** If this is a new wallet, fund it with some ETH or STRK — or enable [gasfree mode](/docs/configuration) to transact without holding any gas tokens.
+
+## Check Your Status
 
 ```bash
+# Show wallet address and network
 starkfi address
+
+# Full status check (auth + Fibrous API health)
+starkfi status
 ```
 
-Shows your authenticated wallet address and network.
-
-## Session Management
-
-Sessions are stored at `~/.local/share/starkfi/session.json` (XDG-compliant).
-
-- Sessions are **JWT-based** with automatic expiry detection
-- A **5-minute buffer** is applied before actual JWT expiry to prevent mid-request failures
-- Expired sessions are automatically cleared — you'll need to re-authenticate
-
-### Logout
+## Sign Out
 
 ```bash
 starkfi auth logout
 ```
 
-Clears the stored session.
+Clears your stored session. You'll need to re-authenticate to use any commands.
 
-## How It Works
+## Session Details
+
+Sessions are stored at `~/.local/share/starkfi/session.json` (XDG-compliant).
+
+| Property      | Description                                                        |
+| ------------- | ------------------------------------------------------------------ |
+| Persistence   | Survives terminal restarts — no need to re-login each time         |
+| Format        | JWT-based with automatic expiry detection                          |
+| Expiry Buffer | 5-minute buffer before JWT expires to prevent mid-request failures |
+| Auto-Cleanup  | Expired sessions are automatically cleared                         |
+
+### What the Session Contains
+
+| Field       | Purpose                             |
+| ----------- | ----------------------------------- |
+| `userId`    | Privy user identifier               |
+| `walletId`  | Embedded wallet identifier          |
+| `address`   | Your Starknet contract address      |
+| `publicKey` | Wallet public key for signing       |
+| `token`     | JWT for authenticating API requests |
+| `serverUrl` | Signing server endpoint             |
+| `network`   | `mainnet` or `sepolia`              |
+
+## Authentication Flow
 
 ```
-User → CLI → starkfi-server (Hono) → Privy API
-                                        ↓
-                              Creates/retrieves wallet
-                              Returns JWT + wallet info
-                                        ↓
-               CLI saves session locally (session.json)
+You (CLI)
+  │
+  ├─ auth login you@email.com
+  │     └→ StarkFi Server (Hono) → Privy API → sends OTP email
+  │
+  └─ auth verify you@email.com 123456
+        └→ StarkFi Server → Privy API → creates/retrieves wallet
+                                          │
+                                    Returns JWT + wallet info
+                                          │
+                              CLI saves session.json locally
 ```
 
-The session contains:
+## Next Step
 
-- `userId` — Privy user ID
-- `walletId` — Embedded wallet ID
-- `address` — Starknet contract address
-- `publicKey` — Wallet public key
-- `token` — JWT for subsequent requests
-- `serverUrl` — Signing server URL
+After authenticating, head to the **[Quick Start](/docs/quick-start)** to make your first trade.
