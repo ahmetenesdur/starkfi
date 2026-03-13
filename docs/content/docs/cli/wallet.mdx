@@ -3,29 +3,42 @@ title: Wallet Commands
 description: Wallet management — address, balance, send, deploy
 ---
 
+> **Prerequisite:** All wallet commands require an active authenticated session. Run `starkfi auth login` first.
+
 ## address
 
-Shows your authenticated wallet address.
+Shows your authenticated wallet address and network.
 
 ```bash
 starkfi address
 ```
 
-Shows your Starknet contract address and current network.
+---
 
 ## balance
 
-Shows all token balances in your wallet.
+Shows token balances in your wallet.
 
 ```bash
 starkfi balance
+starkfi balance --token STRK
+starkfi balance --json
 ```
 
-Displays each token with its current balance. Use `--json` for machine-readable output.
+**Flags:**
+
+| Flag                   | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `-t, --token <symbol>` | Check a specific token (e.g., `STRK`, `ETH`, `USDC`) |
+| `--json`               | Output raw JSON                                      |
+
+Omit `--token` to fetch all non-zero balances.
+
+---
 
 ## send
 
-Sends tokens to another address.
+Sends tokens to another Starknet address. Automatically validates the recipient address and checks your balance before executing.
 
 ```bash
 starkfi send <amount> <token> <recipient>
@@ -37,20 +50,33 @@ starkfi send <amount> <token> <recipient>
 | ----------- | ------------------------------------------ |
 | `amount`    | Amount to send (e.g., `100`, `0.5`)        |
 | `token`     | Token symbol (e.g., `ETH`, `STRK`, `USDC`) |
-| `recipient` | Destination Starknet address               |
+| `recipient` | Destination Starknet address (`0x...`)     |
 
-**Example:**
+**Flags:**
+
+| Flag         | Description                   |
+| ------------ | ----------------------------- |
+| `--simulate` | Estimate fees without sending |
+| `--json`     | Output raw JSON               |
+
+**Examples:**
 
 ```bash
-starkfi send 100 STRK 0x0123...abcd
+starkfi send 100 STRK 0x04a3...abcd
+starkfi send 0.5 ETH 0x07b1...def --simulate
+starkfi send 50 USDC 0x04a3...abcd --json
 ```
+
+> **Tip:** Always use `--simulate` first to preview the estimated fee before sending.
+
+---
 
 ## deploy
 
-Deploys your smart contract wallet to the network.
+Deploys your smart contract wallet to the network. Required once before sending any transaction from a new wallet.
 
 ```bash
 starkfi deploy
 ```
 
-Deploys the ArgentX v0.5.0 account contract if it hasn't been deployed yet. This is required before executing any transaction.
+Safe to call multiple times — returns the current status if already deployed. The wallet is also auto-deployed on first transaction if needed.

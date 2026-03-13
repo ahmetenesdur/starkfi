@@ -1,17 +1,34 @@
 ---
 title: Staking Commands
-description: Stake, unstake, claim rewards, and browse validators
+description: Stake, unstake, claim rewards, and browse validators — STRK, WBTC, tBTC, SolvBTC, LBTC
+---
+
+> **Prerequisite:** All staking commands require an active authenticated session. Run `starkfi auth login` first.
+
+## Typical Flow
+
+```
+1. starkfi validators        →  Browse available validators
+2. starkfi pools karnot      →  View pools for a validator
+3. starkfi stake 100 -v karnot  →  Stake tokens
+4. starkfi stake-status      →  View staking dashboard
+5. starkfi rewards --compound -v karnot  →  Compound rewards
+```
+
 ---
 
 ## validators
 
-Lists all available validators.
+Lists all available Starknet staking validators.
 
 ```bash
 starkfi validators
+starkfi validators --json
 ```
 
-Shows validator name and staker address for the current network. Use `--json` for raw output.
+Shows validator name and staker address for the current network.
+
+---
 
 ## pools
 
@@ -21,7 +38,16 @@ Lists staking pools for a specific validator.
 starkfi pools <validator>
 ```
 
-Accepts a validator name (e.g., `karnot`) or staker address. Shows pool address, token, amount, and commission.
+Accepts a validator name (e.g., `karnot`) or staker address. Supports partial matches. Shows pool address, token, amount, and commission.
+
+**Examples:**
+
+```bash
+starkfi pools karnot
+starkfi pools fibrous --json
+```
+
+---
 
 ## stake
 
@@ -33,12 +59,13 @@ starkfi stake <amount> -v <validator> [flags]
 
 **Flags:**
 
-| Flag              | Default | Description                      |
-| ----------------- | ------- | -------------------------------- |
-| `-v, --validator` | —       | Validator name (auto-finds pool) |
-| `-p, --pool`      | —       | Pool contract address (direct)   |
-| `-t, --token`     | `STRK`  | Token to stake                   |
-| `--simulate`      | `false` | Estimate fees without executing  |
+| Flag                     | Default | Description                      |
+| ------------------------ | ------- | -------------------------------- |
+| `-v, --validator <name>` | —       | Validator name (auto-finds pool) |
+| `-p, --pool <address>`   | —       | Pool contract address (direct)   |
+| `-t, --token <symbol>`   | `STRK`  | Token to stake                   |
+| `--simulate`             | `false` | Estimate fees without executing  |
+| `--json`                 | `false` | Output raw JSON                  |
 
 You must provide either `--validator` or `--pool`.
 
@@ -52,15 +79,20 @@ starkfi stake 50 -v fibrous --simulate
 starkfi stake 10 -p 0x04a3... -t STRK
 ```
 
+---
+
 ## stake-status
 
 Shows a consolidated staking dashboard across all validators and pools.
 
 ```bash
 starkfi stake-status [validator]
+starkfi stake-status --json
 ```
 
-Optionally filter by validator name. Shows staked amount, pending rewards, total value, and commission for each pool. Use `--json` for raw output.
+Optionally filter by validator name. Shows staked amount, pending rewards, total value, and commission for each pool.
+
+---
 
 ## rewards
 
@@ -76,19 +108,24 @@ starkfi rewards --compound -v <validator>
 
 **Flags:**
 
-| Flag          | Description                      |
-| ------------- | -------------------------------- |
-| `--claim`     | Withdraw rewards to wallet       |
-| `--compound`  | Claim and immediately restake    |
-| `--validator` | Validator name (auto-finds pool) |
-| `--pool`      | Pool address (direct)            |
-| `-t, --token` | Token symbol (default: `STRK`)   |
+| Flag                     | Description                      |
+| ------------------------ | -------------------------------- |
+| `--claim`                | Withdraw rewards to wallet       |
+| `--compound`             | Claim and immediately restake    |
+| `-v, --validator <name>` | Validator name (auto-finds pool) |
+| `-p, --pool <address>`   | Pool address (direct)            |
+| `-t, --token <symbol>`   | Token symbol (default: `STRK`)   |
+| `--simulate`             | Estimate fees without executing  |
 
 You must provide either `--validator` or `--pool`, and either `--claim` or `--compound`.
 
+> **Tip:** `--compound` is more gas-efficient than claiming and re-staking separately.
+
+---
+
 ## unstake
 
-Begins or finalizes the unstaking process (two-step with cooldown).
+Begins or finalizes the unstaking process. Unstaking is a **two-step process** with a cooldown period:
 
 ```bash
 # Step 1 — Create exit intent
@@ -106,11 +143,12 @@ starkfi unstake exit -v <validator>
 
 **Flags:**
 
-| Flag              | Description                      |
-| ----------------- | -------------------------------- |
-| `-v, --validator` | Validator name (auto-finds pool) |
-| `-p, --pool`      | Pool contract address (direct)   |
-| `-a, --amount`    | Amount to unstake (for `intent`) |
-| `-t, --token`     | Token symbol (default: `STRK`)   |
+| Flag                     | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `-v, --validator <name>` | Validator name (auto-finds pool)          |
+| `-p, --pool <address>`   | Pool contract address (direct)            |
+| `-a, --amount <value>`   | Amount to unstake (required for `intent`) |
+| `-t, --token <symbol>`   | Token symbol (default: `STRK`)            |
+| `--simulate`             | Estimate fees without executing           |
 
-> **Note:** There is a cooldown period between the intent and the exit. Check your position with `stake-status` to see the exit window.
+> **Note:** There is a cooldown period between `intent` and `exit`. Check your position with `stake-status` to see the exit window.

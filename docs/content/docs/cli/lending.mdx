@@ -3,27 +3,54 @@ title: Lending Commands
 description: Supply, borrow, repay, and manage Vesu V2 lending positions
 ---
 
+> **Prerequisite:** All lending commands require an active authenticated session. Run `starkfi auth login` first.
+
+## Typical Flows
+
+### Earn Yield (Supply)
+
+```
+1. starkfi lend-pools prime   →  Check pools and APY rates
+2. starkfi lend-supply 100 -p Prime -t USDC  →  Supply tokens
+3. starkfi lend-status -p Prime --collateral-token USDC  →  Verify position
+```
+
+### Leverage (Borrow)
+
+```
+1. starkfi lend-pools  →  Find pools and supported pairs
+2. starkfi lend-borrow -p Prime ...  →  Deposit collateral + borrow
+3. starkfi lend-status -p Prime ...  →  Monitor Health Factor
+4. starkfi lend-repay 500 -p Prime -t USDC ...  →  Repay when ready
+5. starkfi lend-close -p Prime ...  →  Or close everything atomically
+```
+
+---
+
 ## lend-pools
 
 Lists all available Vesu V2 lending pools.
 
 ```bash
 starkfi lend-pools [name]
+starkfi lend-pools --json
 ```
 
-Shows pool name, protocol version, available assets, and pair count. Optionally filter by name (partial match — shows detailed asset info).
+Shows pool name, protocol version, available assets (with APY/APR), and pair count. Optionally filter by name (partial match — shows detailed asset info).
 
 **Examples:**
 
 ```bash
 starkfi lend-pools
 starkfi lend-pools prime
-starkfi lend-pools --json
+starkfi lend-pools re7 --json
 ```
+
+---
 
 ## lend-supply
 
-Supplies assets into a lending pool.
+Supplies assets into a lending pool to earn yield.
 
 ```bash
 starkfi lend-supply <amount> -p <pool> -t <token>
@@ -31,18 +58,23 @@ starkfi lend-supply <amount> -p <pool> -t <token>
 
 **Flags:**
 
-| Flag          | Description                                   |
-| ------------- | --------------------------------------------- |
-| `-p, --pool`  | Pool name (e.g., `Prime`) or contract address |
-| `-t, --token` | Token symbol to supply (e.g., `USDC`, `ETH`)  |
+| Flag                   | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `-p, --pool <name>`    | Pool name (e.g., `Prime`) or contract address |
+| `-t, --token <symbol>` | Token symbol to supply (e.g., `USDC`, `ETH`)  |
+| `--simulate`           | Estimate fees without executing               |
+| `--json`               | Output raw JSON                               |
 
-**Example:**
+**Examples:**
 
 ```bash
 starkfi lend-supply 100 -p Prime -t USDC
+starkfi lend-supply 0.5 -p "Genesis: Re7 Labs" -t ETH --simulate
 ```
 
 > **Note:** Minimum supply is approximately $10 equivalent (dust limit protection).
+
+---
 
 ## lend-withdraw
 
@@ -52,15 +84,26 @@ Withdraws supplied assets from a pool.
 starkfi lend-withdraw <amount> -p <pool> -t <token>
 ```
 
+**Flags:**
+
+| Flag                   | Description                     |
+| ---------------------- | ------------------------------- |
+| `-p, --pool <name>`    | Pool name or contract address   |
+| `-t, --token <symbol>` | Token symbol to withdraw        |
+| `--simulate`           | Estimate fees without executing |
+| `--json`               | Output raw JSON                 |
+
 **Example:**
 
 ```bash
 starkfi lend-withdraw 50 -p Prime -t USDC
 ```
 
+---
+
 ## lend-borrow
 
-Borrows assets against your collateral. Atomically deposits collateral and borrows the debt asset.
+Borrows assets against your collateral. Atomically deposits collateral and borrows the debt asset in a single transaction.
 
 ```bash
 starkfi lend-borrow -p <pool> --collateral-amount <n> --collateral-token <symbol> --borrow-amount <n> --borrow-token <symbol>
@@ -68,20 +111,26 @@ starkfi lend-borrow -p <pool> --collateral-amount <n> --collateral-token <symbol
 
 **Flags:**
 
-| Flag                  | Description                                        |
-| --------------------- | -------------------------------------------------- |
-| `-p, --pool`          | Pool name or contract address                      |
-| `--collateral-amount` | Amount of collateral to deposit                    |
-| `--collateral-token`  | Collateral token symbol (e.g., `ETH`, `STRK`)      |
-| `--borrow-amount`     | Amount to borrow                                   |
-| `--borrow-token`      | Token to borrow (e.g., `USDC`, `USDT`)             |
-| `--use-supplied`      | Use previously supplied yield tokens as collateral |
+| Flag                          | Description                                        |
+| ----------------------------- | -------------------------------------------------- |
+| `-p, --pool <name>`           | Pool name or contract address                      |
+| `--collateral-amount <n>`     | Amount of collateral to deposit                    |
+| `--collateral-token <symbol>` | Collateral token symbol (e.g., `ETH`, `STRK`)      |
+| `--borrow-amount <n>`         | Amount to borrow                                   |
+| `--borrow-token <symbol>`     | Token to borrow (e.g., `USDC`, `USDT`)             |
+| `--use-supplied`              | Use previously supplied yield tokens as collateral |
+| `--simulate`                  | Estimate fees without executing                    |
+| `--json`                      | Output raw JSON                                    |
 
 **Example:**
 
 ```bash
 starkfi lend-borrow -p Prime --collateral-amount 0.5 --collateral-token ETH --borrow-amount 500 --borrow-token USDC
 ```
+
+> **Important:** Monitor your Health Factor after borrowing with `lend-status`.
+
+---
 
 ## lend-repay
 
@@ -93,11 +142,13 @@ starkfi lend-repay <amount> -p <pool> -t <token> --collateral-token <symbol>
 
 **Flags:**
 
-| Flag                 | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| `-p, --pool`         | Pool name or contract address                  |
-| `-t, --token`        | Token to repay (e.g., `USDC`)                  |
-| `--collateral-token` | Collateral token of the position (e.g., `ETH`) |
+| Flag                          | Description                                    |
+| ----------------------------- | ---------------------------------------------- |
+| `-p, --pool <name>`           | Pool name or contract address                  |
+| `-t, --token <symbol>`        | Token to repay (e.g., `USDC`)                  |
+| `--collateral-token <symbol>` | Collateral token of the position (e.g., `ETH`) |
+| `--simulate`                  | Estimate fees without executing                |
+| `--json`                      | Output raw JSON                                |
 
 **Example:**
 
@@ -105,9 +156,11 @@ starkfi lend-repay <amount> -p <pool> -t <token> --collateral-token <symbol>
 starkfi lend-repay 500 -p Prime -t USDC --collateral-token ETH
 ```
 
+---
+
 ## lend-close
 
-Closes an entire lending position (repay all debt + withdraw all collateral).
+Closes an entire lending position atomically — repays all debt and withdraws all collateral in one transaction.
 
 ```bash
 starkfi lend-close -p <pool> --collateral-token <symbol> --borrow-token <symbol>
@@ -115,17 +168,21 @@ starkfi lend-close -p <pool> --collateral-token <symbol> --borrow-token <symbol>
 
 **Flags:**
 
-| Flag                 | Description                           |
-| -------------------- | ------------------------------------- |
-| `-p, --pool`         | Pool name or contract address         |
-| `--collateral-token` | Collateral token symbol (e.g., `ETH`) |
-| `--borrow-token`     | Borrowed token symbol (e.g., `USDC`)  |
+| Flag                          | Description                           |
+| ----------------------------- | ------------------------------------- |
+| `-p, --pool <name>`           | Pool name or contract address         |
+| `--collateral-token <symbol>` | Collateral token symbol (e.g., `ETH`) |
+| `--borrow-token <symbol>`     | Borrowed token symbol (e.g., `USDC`)  |
+| `--simulate`                  | Estimate fees without executing       |
+| `--json`                      | Output raw JSON                       |
 
 **Example:**
 
 ```bash
 starkfi lend-close -p Prime --collateral-token ETH --borrow-token USDC
 ```
+
+---
 
 ## lend-status
 
@@ -137,11 +194,12 @@ starkfi lend-status -p <pool> --collateral-token <symbol> [--borrow-token <symbo
 
 **Flags:**
 
-| Flag                 | Description                                             |
-| -------------------- | ------------------------------------------------------- |
-| `-p, --pool`         | Pool name or contract address                           |
-| `--collateral-token` | Token supplied to the pool (e.g., `ETH`)                |
-| `--borrow-token`     | Borrow token (optional — required to see debt position) |
+| Flag                          | Description                                             |
+| ----------------------------- | ------------------------------------------------------- |
+| `-p, --pool <name>`           | Pool name or contract address                           |
+| `--collateral-token <symbol>` | Token supplied to the pool (e.g., `ETH`)                |
+| `--borrow-token <symbol>`     | Borrow token (optional — required to see debt position) |
+| `--json`                      | Output raw JSON                                         |
 
 Shows supplied yield balance, collateral value, debt value, health factor, and risk level:
 

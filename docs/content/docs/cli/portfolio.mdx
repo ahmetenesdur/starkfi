@@ -3,15 +3,18 @@ title: Portfolio
 description: Full DeFi dashboard with USD valuations
 ---
 
+> **Prerequisite:** Requires an active authenticated session. Run `starkfi auth login` first.
+
 ## Usage
 
 ```bash
 starkfi portfolio
+starkfi portfolio --json
 ```
 
 ## What It Shows
 
-The portfolio command aggregates your complete DeFi state into a single view.
+The portfolio command aggregates your complete DeFi state into a single dashboard view.
 
 ### Token Balances
 
@@ -39,8 +42,10 @@ Sum of all token balances, staked amounts, and collateral in USD.
 
 ## JSON Output
 
-For programmatic use or piping to other tools:
+For programmatic use, piping to other tools, or AI agent parsing:
 
 ```bash
 starkfi portfolio --json
 ```
+
+Returns structured data with all balances, positions, and USD valuations.

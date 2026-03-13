@@ -3,9 +3,11 @@ title: Trading Commands
 description: Token swaps, multi-swap, and status checks
 ---
 
+> **Prerequisite:** All trading commands require an active authenticated session. Run `starkfi auth login` first.
+
 ## trade
 
-Swaps one token for another using the best available route via Fibrous.
+Swaps one token for another using the best available route via Fibrous DEX aggregation.
 
 ```bash
 starkfi trade <amount> <fromToken> <toToken> [flags]
@@ -13,40 +15,62 @@ starkfi trade <amount> <fromToken> <toToken> [flags]
 
 **Arguments:**
 
-| Argument    | Description              |
-| ----------- | ------------------------ |
-| `amount`    | Amount to swap           |
-| `fromToken` | Source token symbol      |
-| `toToken`   | Destination token symbol |
+| Argument    | Description                                    |
+| ----------- | ---------------------------------------------- |
+| `amount`    | Amount to swap (e.g., `0.1`, `100`)            |
+| `fromToken` | Source token symbol (e.g., `ETH`, `USDC`)      |
+| `toToken`   | Destination token symbol (e.g., `STRK`, `DAI`) |
 
 **Flags:**
 
-| Flag         | Default | Description                 |
-| ------------ | ------- | --------------------------- |
-| `--slippage` | `1`     | Maximum slippage percentage |
-| `--simulate` | `false` | Dry-run mode                |
+| Flag                       | Default | Description                     |
+| -------------------------- | ------- | ------------------------------- |
+| `-s, --slippage <percent>` | `1`     | Maximum slippage tolerance (%)  |
+| `--simulate`               | `false` | Estimate fees without executing |
+| `--json`                   | `false` | Output raw JSON                 |
 
-**Example:**
+**Examples:**
 
 ```bash
-starkfi trade 0.5 ETH USDC --slippage 0.5
+starkfi trade 0.5 ETH USDC
+starkfi trade 100 USDC STRK --slippage 0.5
+starkfi trade 0.1 ETH DAI --simulate
+starkfi trade 50 STRK USDC --json
 ```
+
+> **Tip:** Use `--simulate` first to preview the route and estimated fees before committing.
+
+---
 
 ## multi-swap
 
-Executes up to 3 swap pairs in a single multicall transaction.
+Executes up to 3 swap pairs in a single multicall transaction. More gas-efficient than separate trades.
 
 ```bash
-starkfi multi-swap "<amount1> <from1>><to1>, <amount2> <from2>><to2>"
+starkfi multi-swap "<amount> <from>><to>, <amount> <from>><to>"
 ```
 
-**Example:**
+**Pair format:** `<amount> <from>><to>` — separate pairs with commas.
+
+**Flags:**
+
+| Flag                       | Default | Description                     |
+| -------------------------- | ------- | ------------------------------- |
+| `-s, --slippage <percent>` | `1`     | Maximum slippage tolerance (%)  |
+| `--simulate`               | `false` | Estimate fees without executing |
+| `--json`                   | `false` | Output raw JSON                 |
+
+**Examples:**
 
 ```bash
-starkfi multi-swap "0.1 ETH>USDC, 100 STRK>USDC, 50 DAI>USDC"
+starkfi multi-swap "100 USDC>ETH, 50 USDC>STRK"
+starkfi multi-swap "0.1 ETH>USDC, 0.05 ETH>STRK" --slippage 0.5
+starkfi multi-swap "100 USDC>ETH, 50 STRK>ETH" --simulate
 ```
 
-> **Note:** Maximum 3 swap pairs per transaction.
+> **Note:** Minimum 2, maximum 3 swap pairs per transaction.
+
+---
 
 ## status
 
@@ -56,4 +80,4 @@ Checks authentication status and Fibrous API health.
 starkfi status
 ```
 
-Shows whether you're authenticated (wallet address, network) and whether the Fibrous Starknet API is online.
+Shows whether you're authenticated (wallet address, network) and whether the Fibrous Starknet API is online. Use this to diagnose connection issues before executing trades.

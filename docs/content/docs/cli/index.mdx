@@ -1,55 +1,101 @@
 ---
 title: CLI Overview
-description: All StarkFi CLI commands at a glance
+description: All StarkFi CLI commands at a glance — installation, authentication, and usage
 ---
+
+## Installation
+
+No global install required — run everything via `npx`:
+
+```bash
+npx starkfi@latest <command> [arguments] [flags]
+```
+
+Or install globally:
+
+```bash
+npm install -g starkfi@latest
+starkfi <command> [arguments] [flags]
+```
+
+### Requirements
+
+- **Node.js** v18 or later
+- **StarkFi Auth Server** running (required for authentication and transaction signing)
+
+## Authentication (Required First)
+
+Before using any command, authenticate with your email:
+
+```bash
+# Step 1: Request OTP
+starkfi auth login user@example.com
+
+# Step 2: Verify OTP (check your email)
+starkfi auth verify 123456
+
+# Check session status
+starkfi status
+
+# Logout
+starkfi auth logout
+```
+
+> **Important:** Authentication is required before executing any wallet, trading, staking, or lending commands. The session persists across restarts.
 
 ## Command Groups
 
-StarkFi organizes its 30+ commands into logical groups:
-
 | Group              | Commands                                                                                               | Description                    |
 | ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| **Authentication** | `auth login`, `auth verify`, `auth logout`                                                             | Privy OTP authentication       |
+| **Authentication** | `auth login`, `auth verify`, `auth logout`                                                             | Email OTP authentication       |
 | **Wallet**         | `address`, `balance`, `send`, `deploy`                                                                 | Wallet management              |
 | **Trading**        | `trade`, `multi-swap`, `status`                                                                        | Token swaps via Fibrous        |
 | **Staking**        | `stake`, `unstake`, `rewards`, `pools`, `validators`, `stake-status`                                   | Staking operations             |
 | **Lending**        | `lend-pools`, `lend-supply`, `lend-withdraw`, `lend-borrow`, `lend-repay`, `lend-close`, `lend-status` | Vesu V2 lending                |
-| **Portfolio**      | `portfolio`                                                                                            | Full DeFi overview             |
+| **Portfolio**      | `portfolio`                                                                                            | Full DeFi dashboard            |
 | **Operations**     | `batch`                                                                                                | Atomic multicall               |
-| **Configuration**  | `config`                                                                                               | Settings management            |
+| **Configuration**  | `config`                                                                                               | RPC, network, gas settings     |
 | **System**         | `tx-status`, `mcp-start`                                                                               | Transaction status, MCP server |
 
 ## Global Flags
 
-All commands support these flags:
+Available on all commands:
 
-| Flag         | Description                               |
-| ------------ | ----------------------------------------- |
-| `--json`     | Output as JSON instead of formatted table |
-| `--simulate` | Dry-run — estimate fees without executing |
-| `--help`     | Show help for any command                 |
+| Flag         | Description                                                           |
+| ------------ | --------------------------------------------------------------------- |
+| `--json`     | Output as JSON instead of formatted table                             |
+| `--simulate` | Dry-run — estimate fees without executing (transaction commands only) |
+| `--help`     | Show help for any command                                             |
 
-## Usage Pattern
-
-```bash
-starkfi <command> [arguments] [flags]
-```
-
-## Examples
+## Quick Start
 
 ```bash
-# Check auth status and Fibrous health
-starkfi status
+# 1. Authenticate
+starkfi auth login user@example.com
+starkfi auth verify 123456
 
-# Swap 1 ETH to USDC
-starkfi trade 1 ETH USDC
+# 2. Check your wallet
+starkfi balance
+starkfi address
 
-# Stake 500 STRK with Karnot validator
-starkfi stake 500 -v karnot
+# 3. Swap tokens
+starkfi trade 0.1 ETH USDC
 
-# Consolidated staking dashboard
-starkfi stake-status
-
-# Check transaction status
+# 4. Check transaction
 starkfi tx-status 0x123abc...
+
+# 5. View full portfolio
+starkfi portfolio
 ```
+
+## Simulation
+
+Every transaction command supports `--simulate` for dry-run execution:
+
+```bash
+starkfi trade 100 USDC ETH --simulate
+starkfi send 10 STRK 0x04a3... --simulate
+starkfi batch --swap "0.1 ETH USDC" --stake "100 STRK karnot" --simulate
+```
+
+Simulation returns estimated fees, call count, and validates the transaction without spending gas.

@@ -1,0 +1,131 @@
+---
+title: Config Commands
+description: Manage RPC, network, gas mode, and gas token settings
+---
+
+## Overview
+
+The `config` command manages StarkFi CLI settings — RPC endpoint, network selection, and gas abstraction mode.
+
+```bash
+starkfi config <subcommand> [value]
+```
+
+## Subcommands
+
+### config list
+
+Shows all current configuration settings.
+
+```bash
+starkfi config list
+```
+
+Displays RPC URL, network, gas mode, and any custom settings. Shows "No custom settings. Using defaults." if nothing has been configured.
+
+---
+
+### config set-rpc
+
+Sets a custom RPC endpoint for Starknet operations.
+
+```bash
+starkfi config set-rpc <url>
+```
+
+**Example:**
+
+```bash
+starkfi config set-rpc https://starknet-mainnet.g.alchemy.com/v2/<key>
+```
+
+> **Tip:** Use a custom RPC if you're hitting rate limits on the default Starkzap endpoint.
+
+---
+
+### config get-rpc
+
+Shows the current RPC URL.
+
+```bash
+starkfi config get-rpc
+```
+
+Returns the custom URL if set, otherwise `default (Starkzap preset)`.
+
+---
+
+### config set-network
+
+Switches between mainnet and sepolia testnet.
+
+```bash
+starkfi config set-network <network>
+```
+
+| Value     | Description                |
+| --------- | -------------------------- |
+| `mainnet` | Starknet mainnet (default) |
+| `sepolia` | Starknet testnet           |
+
+**Example:**
+
+```bash
+starkfi config set-network mainnet
+starkfi config set-network sepolia
+```
+
+---
+
+### config set-gasfree
+
+Enables or disables **Gasfree mode** — the developer sponsors gas fees via Paymaster.
+
+```bash
+starkfi config set-gasfree <mode>
+```
+
+| Value | Description                                                 |
+| ----- | ----------------------------------------------------------- |
+| `on`  | Developer sponsors gas — user pays nothing                  |
+| `off` | Disable gasfree, revert to gasless mode (user pays in STRK) |
+
+> **Note:** Gasfree and Gasless modes are mutually exclusive. Enabling gasfree clears any gas token setting.
+
+---
+
+### config set-gas-token
+
+Sets the token used for gas payment via Paymaster (Gasless mode).
+
+```bash
+starkfi config set-gas-token <token>
+```
+
+| Value   | Description              |
+| ------- | ------------------------ |
+| `ETH`   | Pay gas in ETH           |
+| `USDC`  | Pay gas in USDC          |
+| `USDT`  | Pay gas in USDT          |
+| `DAI`   | Pay gas in DAI           |
+| `reset` | Revert to default (STRK) |
+
+**Examples:**
+
+```bash
+starkfi config set-gas-token USDC
+starkfi config set-gas-token reset
+```
+
+> **Note:** Setting a gas token clears gasfree mode. The two modes are mutually exclusive.
+
+## Gas Abstraction Modes
+
+StarkFi supports two gas abstraction modes:
+
+| Mode        | How it works                                                  | Config command                 |
+| ----------- | ------------------------------------------------------------- | ------------------------------ |
+| **Gasfree** | Developer pays all gas fees via Paymaster                     | `config set-gasfree on`        |
+| **Gasless** | User pays gas in a chosen token (default: STRK) via Paymaster | `config set-gas-token <token>` |
+
+Only one mode can be active at a time.

@@ -1,19 +1,32 @@
 ---
 title: Batch Command
-description: Combine multiple DeFi operations into a single transaction
+description: Combine multiple DeFi operations into a single atomic transaction
 ---
+
+> **Prerequisite:** Requires an active authenticated session. Run `starkfi auth login` first.
 
 ## Overview
 
-The `batch` command lets you combine multiple operations into a single atomic Starknet transaction using multicall.
+The `batch` command lets you combine multiple operations — swaps, staking, lending, and sends — into a single atomic Starknet transaction using multicall. All operations succeed together or revert together.
 
 ## Usage
 
 ```bash
-starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."]
+starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [flags]
 ```
 
-At least 2 operations are required per batch.
+At least **2 operations** are required per batch. Each flag can be repeated.
+
+**Flags:**
+
+| Flag                                     | Description                     |
+| ---------------------------------------- | ------------------------------- |
+| `--swap "<amount> <from> <to>"`          | Swap tokens                     |
+| `--stake "<amount> <token> <validator>"` | Stake tokens                    |
+| `--supply "<amount> <token> <pool>"`     | Supply to lending pool          |
+| `--send "<amount> <token> <recipient>"`  | Send tokens                     |
+| `--simulate`                             | Estimate fees without executing |
+| `--json`                                 | Output raw JSON                 |
 
 ## Operations
 
@@ -41,7 +54,7 @@ At least 2 operations are required per batch.
 --send "<amount> <token> <recipient>"
 ```
 
-## Example
+## Examples
 
 Swap ETH to USDC, then stake STRK — all in one transaction:
 
@@ -49,6 +62,15 @@ Swap ETH to USDC, then stake STRK — all in one transaction:
 starkfi batch \
   --swap "0.1 ETH USDC" \
   --stake "100 STRK karnot"
+```
+
+Three operations combined:
+
+```bash
+starkfi batch \
+  --swap "50 USDC ETH" \
+  --stake "200 STRK karnot" \
+  --send "10 STRK 0x04a3...abcd"
 ```
 
 ## How It Works
@@ -65,3 +87,5 @@ Test your batch without executing:
 ```bash
 starkfi batch --swap "0.1 ETH USDC" --stake "100 STRK karnot" --simulate
 ```
+
+Returns estimated gas fee, call count, and validates all operations without spending gas.
