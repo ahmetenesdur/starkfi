@@ -3,57 +3,63 @@ title: Wallet Tools
 description: get_balance, send_tokens, deploy_account, get_portfolio, get_tx_status
 ---
 
+> **Prerequisite:** All wallet tools require an active authenticated session. Call `get_auth_status` first to verify.
+
 ## get_balance
 
 Get token balances for the authenticated wallet.
 
-| Param   | Type   | Required |
-| ------- | ------ | -------- |
-| `token` | string | No       |
+| Param   | Type   | Required | Description                                         |
+| ------- | ------ | -------- | --------------------------------------------------- |
+| `token` | string | No       | Specific token symbol (e.g., `STRK`, `ETH`, `USDC`) |
 
-Omit `token` to fetch all non-zero balances. Specify a symbol (e.g., `STRK`, `ETH`) to check a single token.
+Omit `token` to fetch all non-zero balances. Specify a symbol to check a single token.
+
+This is a **read-only** tool — safe to call without user confirmation.
 
 ---
 
 ## send_tokens
 
-Transfer tokens to a recipient address.
+Transfer tokens to a recipient address. Pre-checks balance before executing.
 
-| Param       | Type    | Required |
-| ----------- | ------- | -------- |
-| `amount`    | string  | Yes      |
-| `token`     | string  | Yes      |
-| `recipient` | string  | Yes      |
-| `simulate`  | boolean | No       |
+| Param       | Type    | Required | Description                                 |
+| ----------- | ------- | -------- | ------------------------------------------- |
+| `amount`    | string  | Yes      | Amount to send (e.g., `10`, `0.5`)          |
+| `token`     | string  | Yes      | Token symbol (e.g., `STRK`, `ETH`, `USDC`)  |
+| `recipient` | string  | Yes      | Recipient Starknet address (`0x...`)        |
+| `simulate`  | boolean | No       | Set `true` to estimate fees without sending |
 
-Set `simulate: true` to estimate fees without sending a transaction.
+> **Important:** This is a **transactional** tool. Always confirm with the user before executing. Set `simulate: true` first to preview the estimated fee.
 
 ---
 
 ## deploy_account
 
-Deploy the smart contract wallet on-chain.
+Deploy the smart contract wallet on-chain. Required once before sending any transaction from a new wallet.
 
 **Parameters:** None
 
-Required once before sending any transaction. Safe to call multiple times — returns the current status if already deployed.
+Safe to call multiple times — returns the current status if already deployed. The wallet is automatically deployed when needed by other transaction tools, but calling this explicitly gives the user visibility.
 
 ---
 
 ## get_portfolio
 
-Get a full DeFi overview: all token balances with USD values, staking positions, and lending positions.
+Get a comprehensive DeFi dashboard: all token balances with USD values, staking positions, and lending positions in one call.
 
 **Parameters:** None
+
+This is a **read-only** tool — safe to call without user confirmation.
 
 ---
 
 ## get_tx_status
 
-Check the status of a transaction by hash.
+Check the on-chain status of a transaction by its hash.
 
-| Param  | Type   | Required |
-| ------ | ------ | -------- |
-| `hash` | string | Yes      |
+| Param  | Type   | Required | Description                |
+| ------ | ------ | -------- | -------------------------- |
+| `hash` | string | Yes      | Transaction hash (`0x...`) |
 
-Returns the current status, actual fee, block number, and explorer link.
+Returns the current status (pending, accepted, rejected), actual fee, block number, and explorer link. Useful for verifying transactions after execution.

@@ -5,7 +5,26 @@ description: 27 MCP tools for AI-native Starknet DeFi automation
 
 ## What is MCP?
 
-The **Model Context Protocol (MCP)** is an open standard that enables AI assistants (like Claude, Cursor, Windsurf) to interact with external tools. StarkFi runs as an MCP server, exposing every DeFi feature as a typed tool with Zod-validated schemas.
+The **Model Context Protocol (MCP)** is an open standard that enables AI assistants (like Claude, Cursor, Windsurf, Antigravity) to interact with external tools. StarkFi runs as an MCP server, exposing every DeFi feature as a typed tool with Zod-validated schemas.
+
+## Prerequisites
+
+Before using StarkFi MCP tools:
+
+1. **Node.js** v18 or later
+2. **StarkFi Auth Server** running (required for authentication and signing)
+3. **Authentication** — run `npx starkfi@latest auth login <email>` and verify with the OTP before the MCP server can execute transactions
+
+> **Important:** The MCP server requires an active authenticated session. Always call `get_auth_status` first to verify the session is active before attempting any wallet operations.
+
+## Getting Started
+
+```
+1. Configure your AI client  →  See Setup
+2. get_auth_status            →  Verify session is active
+3. Read-only tools            →  Query balances, quotes, positions (safe, no confirmation needed)
+4. Transactional tools        →  Execute swaps, sends, staking (requires user confirmation)
+```
 
 ## Tool Categories
 
@@ -26,6 +45,23 @@ The **Model Context Protocol (MCP)** is an open standard that enables AI assista
 5. Results are returned as structured JSON
 
 All tools return consistent error responses with typed `StarkfiError` codes — see [Error Handling](/docs/architecture/error-handling).
+
+## Read-Only vs Transactional
+
+|                       | Read-Only                                          | Transactional                                          |
+| --------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| **Examples**          | `get_balance`, `get_swap_quote`, `list_validators` | `swap_tokens`, `send_tokens`, `stake_tokens`           |
+| **Side effects**      | None — safe to call freely                         | Mutates blockchain state                               |
+| **User confirmation** | Not needed                                         | **Always required** before execution                   |
+| **Simulation**        | N/A                                                | Set `simulate: true` to preview fees without executing |
+
+## Agent Best Practices
+
+1. **Always authenticate first** — call `get_auth_status` before any operation
+2. **Quote before executing** — call `get_swap_quote` before `swap_tokens`, and `get_multi_swap_quote` before `multi_swap`
+3. **Use simulation** — set `simulate: true` on any transactional tool to preview fees
+4. **Confirm with the user** — never execute a transactional tool without explicit user confirmation
+5. **Check existing positions** — use `get_stake_status` and `get_lending_position` before staking/lending to avoid duplicates
 
 ## Starting the Server
 

@@ -1,6 +1,20 @@
 ---
 title: Staking Tools
-description: 8 tools for staking operations
+description: 8 tools for staking operations — STRK, WBTC, tBTC, SolvBTC, LBTC
+---
+
+> **Prerequisite:** All staking tools require an active authenticated session. Call `get_auth_status` first to verify.
+
+## Recommended Flow
+
+```
+1. list_validators     →  Find validators on the network
+2. list_pools          →  Find pools for a validator
+3. get_staking_info    →  Check existing position (if any)
+4. stake_tokens        →  Stake tokens into a pool
+5. get_stake_status    →  View staking dashboard
+```
+
 ---
 
 ## list_validators
@@ -9,7 +23,7 @@ List all known Starknet staking validators.
 
 **Parameters:** None
 
-Returns validator names and staker addresses for the current network.
+Returns validator names and staker addresses for the current network. This is a **read-only** tool.
 
 ---
 
@@ -17,11 +31,11 @@ Returns validator names and staker addresses for the current network.
 
 List delegation pools for a specific validator.
 
-| Param       | Type   | Required |
-| ----------- | ------ | -------- |
-| `validator` | string | Yes      |
+| Param       | Type   | Required | Description                                                                  |
+| ----------- | ------ | -------- | ---------------------------------------------------------------------------- |
+| `validator` | string | Yes      | Validator name (e.g., `Karnot`) or staker address. Supports partial matches. |
 
-Accepts a validator name (e.g., `Karnot`) or staker address. Supports partial matches.
+This is a **read-only** tool.
 
 ---
 
@@ -29,11 +43,11 @@ Accepts a validator name (e.g., `Karnot`) or staker address. Supports partial ma
 
 Get staking position info for a specific pool: staked balance, unclaimed rewards, total balance, commission, and unpooling cooldown.
 
-| Param  | Type   | Required |
-| ------ | ------ | -------- |
-| `pool` | string | Yes      |
+| Param  | Type   | Required | Description                     |
+| ------ | ------ | -------- | ------------------------------- |
+| `pool` | string | Yes      | Pool contract address (`0x...`) |
 
-Pool contract address (`0x...`).
+This is a **read-only** tool.
 
 ---
 
@@ -41,11 +55,11 @@ Pool contract address (`0x...`).
 
 Scan all known validators and pools to return a consolidated staking dashboard with total staked, total rewards, and per-pool breakdown.
 
-| Param       | Type   | Required |
-| ----------- | ------ | -------- |
-| `validator` | string | No       |
+| Param       | Type   | Required | Description                                                 |
+| ----------- | ------ | -------- | ----------------------------------------------------------- |
+| `validator` | string | No       | Optional validator name or staker address to filter results |
 
-Optional validator name or staker address to filter results.
+This is a **read-only** tool.
 
 ---
 
@@ -53,31 +67,32 @@ Optional validator name or staker address to filter results.
 
 Stake tokens in a delegation pool. Automatically detects whether to enter the pool or add to an existing delegation.
 
-| Param    | Type   | Required |
-| -------- | ------ | -------- |
-| `amount` | string | Yes      |
-| `pool`   | string | Yes      |
-| `token`  | string | No       |
+| Param    | Type   | Required | Description                                                                |
+| -------- | ------ | -------- | -------------------------------------------------------------------------- |
+| `amount` | string | Yes      | Amount to stake (e.g., `100`, `0.01`)                                      |
+| `pool`   | string | Yes      | Pool contract address (`0x...`)                                            |
+| `token`  | string | No       | Token symbol (default: `STRK`). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC |
 
-- `pool`: Pool contract address (`0x...`)
-- `token`: Token symbol (default: `STRK`). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC
+> **Important:** This is a **transactional** tool. Confirm with the user before executing.
 
 ---
 
 ## unstake_tokens
 
-Unstake tokens from a pool. Unstaking is a **two-step process**:
+Unstaking is a **two-step process** with a cooldown period:
 
 1. Call with `action: "intent"` to start the exit
-2. Wait for the cooldown period
+2. Wait for the cooldown period to complete
 3. Call with `action: "exit"` to complete withdrawal
 
-| Param    | Type   | Required                     |
-| -------- | ------ | ---------------------------- |
-| `action` | enum   | Yes (`"intent"` or `"exit"`) |
-| `pool`   | string | Yes                          |
-| `amount` | string | Only for `intent`            |
-| `token`  | string | No (default: STRK)           |
+| Param    | Type   | Required          | Description                               |
+| -------- | ------ | ----------------- | ----------------------------------------- |
+| `action` | enum   | Yes               | `"intent"` to start, `"exit"` to complete |
+| `pool`   | string | Yes               | Pool contract address (`0x...`)           |
+| `amount` | string | Only for `intent` | Amount to unstake                         |
+| `token`  | string | No                | Token symbol (default: `STRK`)            |
+
+> **Important:** This is a **transactional** tool. The `exit` action can only be called after the cooldown period has elapsed.
 
 ---
 
@@ -85,16 +100,18 @@ Unstake tokens from a pool. Unstaking is a **two-step process**:
 
 Withdraw staking rewards from a pool to the user's wallet.
 
-| Param  | Type   | Required |
-| ------ | ------ | -------- |
-| `pool` | string | Yes      |
+| Param  | Type   | Required | Description                     |
+| ------ | ------ | -------- | ------------------------------- |
+| `pool` | string | Yes      | Pool contract address (`0x...`) |
+
+> **Tip:** Use `get_staking_info` first to check the unclaimed rewards amount.
 
 ---
 
 ## compound_rewards
 
-Atomically claim and re-stake rewards in a single transaction (compound interest).
+Atomically claim and re-stake rewards in a single transaction (compound interest). More gas-efficient than calling `claim_rewards` followed by `stake_tokens` separately.
 
-| Param  | Type   | Required |
-| ------ | ------ | -------- |
-| `pool` | string | Yes      |
+| Param  | Type   | Required | Description                     |
+| ------ | ------ | -------- | ------------------------------- |
+| `pool` | string | Yes      | Pool contract address (`0x...`) |

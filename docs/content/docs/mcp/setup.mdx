@@ -1,11 +1,25 @@
 ---
 title: MCP Setup
-description: Configure StarkFi MCP server in Claude, Cursor, and other AI clients
+description: Configure StarkFi MCP server in Claude, Cursor, Antigravity, and other AI clients
 ---
 
-## Claude (claude_desktop_config.json)
+## Step 1: Authenticate
 
-Add to your Claude Desktop configuration:
+Before the MCP server can execute any transactions, you must authenticate the CLI locally:
+
+```bash
+npx starkfi@latest auth login user@example.com
+# Check your email for the OTP code
+npx starkfi@latest auth verify 123456
+```
+
+This creates a local session that the MCP server uses for all operations. The session persists across restarts.
+
+## Step 2: Configure Your AI Client
+
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -18,7 +32,7 @@ Add to your Claude Desktop configuration:
 }
 ```
 
-## Cursor
+### Cursor
 
 Add to `.cursor/mcp.json`:
 
@@ -33,30 +47,56 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
-## Environment Variables
+### Antigravity
 
-Set these before starting the MCP server:
+Add to `~/.gemini/antigravity/mcp_config.json`:
 
-| Variable          | Required | Description                                    |
-| ----------------- | -------- | ---------------------------------------------- |
-| `STARKFI_API_URL` | No       | Backend URL (default: `http://localhost:3001`) |
-| `STARKFI_NETWORK` | No       | `mainnet` or `sepolia` (default: `mainnet`)    |
-| `STARKFI_RPC_URL` | No       | Custom RPC endpoint                            |
-
-## Manual Start
-
-You can also start the server manually:
-
-```bash
-starkfi mcp-start
+```json
+{
+	"mcpServers": {
+		"starkfi": {
+			"command": "npx",
+			"args": ["-y", "starkfi@latest", "mcp-start"]
+		}
+	}
+}
 ```
 
-The server communicates over **stdio**, which is the standard transport for MCP integrations.
+### Other MCP Clients
 
-## Verifying Connection
+Any MCP-compatible client can connect. The server uses **stdio transport** (standard MCP protocol). Use the same command configuration:
+
+- **Command:** `npx`
+- **Args:** `["-y", "starkfi@latest", "mcp-start"]`
+
+## Environment Variables
+
+| Variable          | Required | Default                 | Description                     |
+| ----------------- | -------- | ----------------------- | ------------------------------- |
+| `STARKFI_API_URL` | No       | `http://localhost:3001` | Backend auth server URL         |
+| `STARKFI_NETWORK` | No       | `mainnet`               | Network: `mainnet` or `sepolia` |
+| `STARKFI_RPC_URL` | No       | Starkzap preset         | Custom RPC endpoint             |
+
+## Step 3: Verify Connection
 
 Once connected, ask your AI agent:
 
 > "What StarkFi tools are available?"
 
 It should list all 27 tools across Auth, Wallet, Trade, Staking, and Lending categories.
+
+You can also verify the session is active:
+
+> "Check my StarkFi auth status"
+
+This calls `get_auth_status` and confirms the session, wallet address, and network.
+
+## Manual Start
+
+You can also start the server manually for debugging:
+
+```bash
+starkfi mcp-start
+```
+
+The server communicates over **stdio** — it reads from `stdin` and writes to `stdout` following the MCP protocol.

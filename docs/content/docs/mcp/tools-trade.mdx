@@ -3,29 +3,48 @@ title: Trade Tools
 description: get_swap_quote, swap_tokens, get_multi_swap_quote, multi_swap, batch_execute
 ---
 
+> **Prerequisite:** All trade tools require an active authenticated session. Call `get_auth_status` first to verify.
+
+## Recommended Flow
+
+Always follow the **quote → confirm → execute** pattern:
+
+```
+1. get_swap_quote       →  Show quote to user
+2. User confirms        →  Proceed to execute
+3. swap_tokens          →  Execute the swap
+4. get_tx_status        →  Verify confirmation
+```
+
+---
+
 ## get_swap_quote
 
-Get a price quote for a swap without executing. Always call this before `swap_tokens` so the user can review the expected output.
+Get a price quote for a swap without executing. **Always call this before `swap_tokens`** so the user can review the expected output.
 
-| Param        | Type   | Required |
-| ------------ | ------ | -------- |
-| `amount`     | string | Yes      |
-| `from_token` | string | Yes      |
-| `to_token`   | string | Yes      |
+| Param        | Type   | Required | Description                                    |
+| ------------ | ------ | -------- | ---------------------------------------------- |
+| `amount`     | string | Yes      | Amount to swap (e.g., `0.1`, `100`)            |
+| `from_token` | string | Yes      | Source token symbol (e.g., `ETH`, `USDC`)      |
+| `to_token`   | string | Yes      | Destination token symbol (e.g., `STRK`, `DAI`) |
+
+This is a **read-only** tool — safe to call without user confirmation. Returns expected output amount, estimated gas cost, and route details.
 
 ---
 
 ## swap_tokens
 
-Execute a token swap on Starknet using Fibrous DEX aggregation. Call `get_swap_quote` first to show the user a preview.
+Execute a token swap on Starknet using Fibrous DEX aggregation.
 
-| Param        | Type    | Required        |
-| ------------ | ------- | --------------- |
-| `amount`     | string  | Yes             |
-| `from_token` | string  | Yes             |
-| `to_token`   | string  | Yes             |
-| `slippage`   | number  | No (default: 1) |
-| `simulate`   | boolean | No              |
+| Param        | Type    | Required | Description                                    |
+| ------------ | ------- | -------- | ---------------------------------------------- |
+| `amount`     | string  | Yes      | Amount to swap (e.g., `0.1`, `100`)            |
+| `from_token` | string  | Yes      | Source token to sell (e.g., `ETH`, `STRK`)     |
+| `to_token`   | string  | Yes      | Destination token to buy (e.g., `USDC`, `DAI`) |
+| `slippage`   | number  | No       | Slippage tolerance in % (default: `1`)         |
+| `simulate`   | boolean | No       | Set `true` to estimate fees without executing  |
+
+> **Important:** Always call `get_swap_quote` first and confirm with the user before executing.
 
 ---
 
@@ -33,25 +52,27 @@ Execute a token swap on Starknet using Fibrous DEX aggregation. Call `get_swap_q
 
 Get quotes for 2–3 swap pairs at once using Fibrous batch routing.
 
-| Param   | Type  | Required |
-| ------- | ----- | -------- |
-| `swaps` | array | Yes      |
+| Param   | Type  | Required | Description               |
+| ------- | ----- | -------- | ------------------------- |
+| `swaps` | array | Yes      | Array of 2–3 swap objects |
 
-Each swap item: `{ amount, from_token, to_token }`
+Each swap object: `{ amount, from_token, to_token }`
+
+This is a **read-only** tool — safe to call without user confirmation.
 
 ---
 
 ## multi_swap
 
-Execute 2–3 swaps in a single multicall transaction.
+Execute 2–3 swaps in a single multicall transaction. **Call `get_multi_swap_quote` first** to preview.
 
-| Param      | Type    | Required |
-| ---------- | ------- | -------- |
-| `swaps`    | array   | Yes      |
-| `slippage` | number  | No       |
-| `simulate` | boolean | No       |
+| Param      | Type    | Required | Description                                   |
+| ---------- | ------- | -------- | --------------------------------------------- |
+| `swaps`    | array   | Yes      | Array of 2–3 swap objects                     |
+| `slippage` | number  | No       | Slippage tolerance in % (default: `1`)        |
+| `simulate` | boolean | No       | Set `true` to estimate fees without executing |
 
-Each swap item: `{ amount, from_token, to_token }`
+Each swap object: `{ amount, from_token, to_token }`
 
 > **Note:** Minimum 2, maximum 3 swap pairs per transaction.
 
@@ -59,20 +80,20 @@ Each swap item: `{ amount, from_token, to_token }`
 
 ## batch_execute
 
-Execute a batch of mixed operations (swap + stake + supply + send) atomically.
+Execute a batch of mixed operations (swap + stake + supply + send) atomically in a single Starknet multicall.
 
-| Param        | Type    | Required |
-| ------------ | ------- | -------- |
-| `operations` | array   | Yes      |
-| `simulate`   | boolean | No       |
+| Param        | Type    | Required | Description                                   |
+| ------------ | ------- | -------- | --------------------------------------------- |
+| `operations` | array   | Yes      | Array of operation objects (minimum 2)        |
+| `simulate`   | boolean | No       | Set `true` to estimate fees without executing |
 
 Each operation has a `type` and `params`:
 
-| Type     | Params                                   |
-| -------- | ---------------------------------------- |
-| `swap`   | `amount`, `from_token`, `to_token`       |
-| `stake`  | `amount`, `token`, `pool` or `validator` |
-| `supply` | `amount`, `token`, `pool`                |
-| `send`   | `amount`, `token`, `to`                  |
+| Type     | Params                                   | Example                                                                                      |
+| -------- | ---------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `swap`   | `amount`, `from_token`, `to_token`       | `{ "type": "swap", "params": { "amount": "100", "from_token": "USDC", "to_token": "ETH" } }` |
+| `stake`  | `amount`, `token`, `pool` or `validator` | `{ "type": "stake", "params": { "amount": "50", "token": "STRK", "validator": "karnot" } }`  |
+| `supply` | `amount`, `token`, `pool`                | `{ "type": "supply", "params": { "amount": "200", "token": "USDC", "pool": "Prime" } }`      |
+| `send`   | `amount`, `token`, `to`                  | `{ "type": "send", "params": { "amount": "10", "token": "STRK", "to": "0x04a3..." } }`       |
 
-> **Note:** Minimum 2 operations required per batch.
+> **Note:** Minimum 2 operations required per batch. Each operation is executed atomically — if any fails, the entire batch reverts.

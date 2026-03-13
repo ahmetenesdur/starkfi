@@ -1,32 +1,62 @@
 ---
 title: Lending Tools
-description: 7 tools for Vesu V2 lending operations
+description: 7 tools for Vesu V2 lending operations — supply, borrow, repay, withdraw, close
+---
+
+> **Prerequisite:** All lending tools require an active authenticated session. Call `get_auth_status` first to verify.
+
+## Recommended Flow
+
+### Supply (earn yield)
+
+```
+1. list_lending_pools    →  Find pools and check APY rates
+2. supply_assets         →  Deposit tokens into a pool
+3. get_lending_position  →  Verify position
+```
+
+### Borrow (leverage)
+
+```
+1. list_lending_pools    →  Find pools and supported pairs
+2. borrow_assets         →  Deposit collateral + borrow in one call
+3. get_lending_position  →  Monitor Health Factor
+4. repay_debt            →  Repay when ready
+5. close_position        →  Or close everything atomically
+```
+
 ---
 
 ## list_lending_pools
 
-List available Vesu V2 lending pools with supported collateral/debt pairs.
+List available Vesu V2 lending pools with live APY/APR data, supported assets, and pairs.
 
-| Param  | Type   | Required |
-| ------ | ------ | -------- |
-| `name` | string | No       |
+| Param  | Type   | Required | Description                                             |
+| ------ | ------ | -------- | ------------------------------------------------------- |
+| `name` | string | No       | Filter pools by name (partial match). Omit to list all. |
 
-Filter pools by name (partial match). Omit to list all pools.
+This is a **read-only** tool.
 
 ---
 
 ## get_lending_position
 
-Get the user's position in a lending pool.
+Get the user's position in a lending pool — collateral value, debt value, Health Factor, and risk level.
 
-| Param              | Type   | Required |
-| ------------------ | ------ | -------- |
-| `pool`             | string | Yes      |
-| `collateral_token` | string | Yes      |
-| `borrow_token`     | string | No       |
+| Param              | Type   | Required | Description                                                             |
+| ------------------ | ------ | -------- | ----------------------------------------------------------------------- |
+| `pool`             | string | Yes      | Pool name (e.g., `Prime`, `Re7`) or contract address                    |
+| `collateral_token` | string | Yes      | Collateral token symbol (e.g., `ETH`, `STRK`)                           |
+| `borrow_token`     | string | No       | Borrow token symbol (e.g., `USDC`). Optional for supply-only positions. |
 
-- `pool`: Pool name (e.g., `Prime`, `Re7`) or contract address
-- Returns collateral value, debt value, health factor, and risk level
+This is a **read-only** tool. Use it to monitor Health Factor before and after operations.
+
+> **Health Factor Guide:**
+>
+> - **> 2.0** — Safe
+> - **1.5 – 2.0** — Monitor closely
+> - **1.0 – 1.5** — At risk of liquidation
+> - **< 1.0** — Liquidation imminent
 
 ---
 
@@ -34,11 +64,11 @@ Get the user's position in a lending pool.
 
 Supply tokens into a Vesu V2 pool to earn interest. Tokens are deposited into the pool's ERC-4626 vToken vault.
 
-| Param    | Type   | Required |
-| -------- | ------ | -------- |
-| `pool`   | string | Yes      |
-| `amount` | string | Yes      |
-| `token`  | string | Yes      |
+| Param    | Type   | Required | Description                                          |
+| -------- | ------ | -------- | ---------------------------------------------------- |
+| `pool`   | string | Yes      | Pool name (e.g., `Prime`, `Re7`) or contract address |
+| `amount` | string | Yes      | Amount to supply (e.g., `100`, `0.5`)                |
+| `token`  | string | Yes      | Token symbol to supply (e.g., `STRK`, `ETH`, `USDC`) |
 
 > **Note:** Minimum supply is approximately $10 equivalent (dust limit protection).
 
@@ -48,11 +78,11 @@ Supply tokens into a Vesu V2 pool to earn interest. Tokens are deposited into th
 
 Withdraw previously supplied tokens from a pool.
 
-| Param    | Type   | Required |
-| -------- | ------ | -------- |
-| `pool`   | string | Yes      |
-| `amount` | string | Yes      |
-| `token`  | string | Yes      |
+| Param    | Type   | Required | Description                   |
+| -------- | ------ | -------- | ----------------------------- |
+| `pool`   | string | Yes      | Pool name or contract address |
+| `amount` | string | Yes      | Amount to withdraw            |
+| `token`  | string | Yes      | Token symbol to withdraw      |
 
 ---
 
@@ -60,16 +90,16 @@ Withdraw previously supplied tokens from a pool.
 
 Borrow tokens by supplying collateral. Atomically deposits collateral and borrows the debt asset in a single transaction.
 
-| Param               | Type    | Required |
-| ------------------- | ------- | -------- |
-| `pool`              | string  | Yes      |
-| `collateral_amount` | string  | Yes      |
-| `collateral_token`  | string  | Yes      |
-| `borrow_amount`     | string  | Yes      |
-| `borrow_token`      | string  | Yes      |
-| `use_supplied`      | boolean | No       |
+| Param               | Type    | Required | Description                                                 |
+| ------------------- | ------- | -------- | ----------------------------------------------------------- |
+| `pool`              | string  | Yes      | Pool name or contract address                               |
+| `collateral_amount` | string  | Yes      | Collateral amount to deposit                                |
+| `collateral_token`  | string  | Yes      | Collateral token symbol (e.g., `ETH`, `STRK`)               |
+| `borrow_amount`     | string  | Yes      | Amount to borrow                                            |
+| `borrow_token`      | string  | Yes      | Token to borrow (e.g., `USDC`, `USDT`)                      |
+| `use_supplied`      | boolean | No       | Set `true` to use previously supplied vTokens as collateral |
 
-Set `use_supplied: true` to use previously supplied yield tokens as collateral instead of transferring fresh tokens from wallet.
+> **Important:** Monitor your Health Factor after borrowing. Use `get_lending_position` to check.
 
 ---
 
@@ -77,14 +107,12 @@ Set `use_supplied: true` to use previously supplied yield tokens as collateral i
 
 Repay borrowed tokens on an existing lending position.
 
-| Param              | Type   | Required |
-| ------------------ | ------ | -------- |
-| `pool`             | string | Yes      |
-| `amount`           | string | Yes      |
-| `token`            | string | Yes      |
-| `collateral_token` | string | Yes      |
-
-The `collateral_token` is needed to identify the specific position to repay.
+| Param              | Type   | Required | Description                                                                   |
+| ------------------ | ------ | -------- | ----------------------------------------------------------------------------- |
+| `pool`             | string | Yes      | Pool name or contract address                                                 |
+| `amount`           | string | Yes      | Amount to repay                                                               |
+| `token`            | string | Yes      | Token to repay (e.g., `USDC`, `USDT`)                                         |
+| `collateral_token` | string | Yes      | Collateral token of the position — needed to identify which position to repay |
 
 ---
 
@@ -92,8 +120,10 @@ The `collateral_token` is needed to identify the specific position to repay.
 
 Atomically close an active lending position. Repays all outstanding debt and withdraws all collateral in a single transaction.
 
-| Param              | Type   | Required |
-| ------------------ | ------ | -------- |
-| `pool`             | string | Yes      |
-| `collateral_token` | string | Yes      |
-| `debt_token`       | string | Yes      |
+| Param              | Type   | Required | Description                                   |
+| ------------------ | ------ | -------- | --------------------------------------------- |
+| `pool`             | string | Yes      | Pool name or contract address                 |
+| `collateral_token` | string | Yes      | Collateral token symbol (e.g., `STRK`, `ETH`) |
+| `debt_token`       | string | Yes      | Borrowed token symbol (e.g., `USDC`, `USDT`)  |
+
+> **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction.

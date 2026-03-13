@@ -1,0 +1,146 @@
+---
+title: Using Skills
+description: Per-skill usage guides, command reference, and real-world examples
+---
+
+## Authentication
+
+Before using any skill, you must authenticate:
+
+```bash
+npx starkfi@latest auth login user@example.com
+npx starkfi@latest auth verify 123456
+```
+
+The `authenticate-wallet` skill handles this automatically — just tell your AI agent "log me in" and provide the OTP from your email.
+
+## Transaction Skills
+
+### Trade (Single Swap)
+
+Swap one token for another using Fibrous aggregation for the best route:
+
+```bash
+npx starkfi@latest trade 0.1 ETH USDC
+npx starkfi@latest trade 100 USDC STRK --slippage 0.5
+npx starkfi@latest trade 0.5 ETH DAI --simulate
+```
+
+The `--simulate` flag estimates fees without executing — useful for previewing before committing.
+
+### Multi-Swap
+
+Execute up to 3 swap pairs in a single Starknet transaction:
+
+```bash
+npx starkfi@latest multi-swap "100 USDC ETH" "50 DAI STRK"
+npx starkfi@latest multi-swap "0.1 ETH USDC" "200 USDT DAI" --simulate
+```
+
+### Batch (Multicall)
+
+Combine different operation types — swaps, staking, lending, and sends — in one atomic transaction:
+
+```bash
+npx starkfi@latest batch \
+  --swap "0.1 ETH USDC" \
+  --stake "50 STRK karnot" \
+  --simulate
+```
+
+Requires at least 2 operations. Each flag (`--swap`, `--stake`, `--supply`, `--send`) can be repeated.
+
+### Staking
+
+Stake STRK, WBTC, tBTC, SolvBTC, or LBTC with a validator:
+
+```bash
+npx starkfi@latest validators                # List validators
+npx starkfi@latest pools                      # List staking pools
+npx starkfi@latest stake 100 STRK -v karnot   # Stake
+npx starkfi@latest rewards                    # Check rewards
+npx starkfi@latest unstake 50 STRK -v karnot  # Unstake
+npx starkfi@latest stake-status               # View staking overview
+```
+
+### Lending (Vesu V2)
+
+Supply, borrow, repay, and manage lending positions:
+
+```bash
+npx starkfi@latest lend-pools                                          # List pools
+npx starkfi@latest lend-supply 100 USDC -p "Genesis: Re7 Labs" -t USDC  # Supply
+npx starkfi@latest lend-borrow 50 USDC -p "Genesis: Re7 Labs" -t USDC   # Borrow
+npx starkfi@latest lend-repay 50 USDC -p "Genesis: Re7 Labs" -t USDC    # Repay
+npx starkfi@latest lend-withdraw 100 USDC -p "Genesis: Re7 Labs" -t USDC # Withdraw
+npx starkfi@latest lend-status                                         # View positions
+```
+
+### Send
+
+Transfer tokens to another Starknet address:
+
+```bash
+npx starkfi@latest send 10 STRK 0x04a3...abc
+npx starkfi@latest send 0.5 ETH 0x07b1...def --simulate
+```
+
+## Data Skills
+
+### Balance
+
+Check individual or all token balances:
+
+```bash
+npx starkfi@latest balance               # All tokens
+npx starkfi@latest balance --token STRK   # Specific token
+npx starkfi@latest balance --json         # Machine-readable
+```
+
+### Portfolio
+
+View a comprehensive DeFi dashboard (balances + staking + lending with USD values):
+
+```bash
+npx starkfi@latest portfolio
+npx starkfi@latest portfolio --json
+```
+
+## Utility Skills
+
+### Config
+
+Manage RPC, network, gas settings, and transaction status:
+
+```bash
+npx starkfi@latest config set-rpc https://starknet-mainnet.g.alchemy.com/v2/<key>
+npx starkfi@latest config set-network mainnet
+npx starkfi@latest config set-gasfree on       # Developer sponsors gas
+npx starkfi@latest config set-gas-token USDC    # Pay gas in USDC
+npx starkfi@latest config list                  # Show all settings
+npx starkfi@latest tx-status 0x0abc...          # Check any transaction
+```
+
+## Simulation
+
+Every transaction skill supports `--simulate` for dry-run execution:
+
+```bash
+npx starkfi@latest trade 100 USDC ETH --simulate
+npx starkfi@latest send 10 STRK 0x04a3... --simulate
+npx starkfi@latest batch --swap "0.1 ETH USDC" --stake "50 STRK karnot" --simulate
+```
+
+Simulation returns estimated fees and validates the transaction without spending gas.
+
+## JSON Output
+
+Every skill supports `--json` for machine-readable output:
+
+```bash
+npx starkfi@latest balance --json
+npx starkfi@latest portfolio --json
+npx starkfi@latest trade 100 USDC ETH --json
+```
+
+This is especially useful when AI agents need to parse results programmatically.

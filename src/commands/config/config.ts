@@ -29,7 +29,7 @@ export function registerConfigCommand(program: Command): void {
 			const rpcUrl = configService.get("rpcUrl") as string | undefined;
 			console.log(
 				formatResult({
-					rpcUrl: rpcUrl || "default (StarkZap preset)",
+					rpcUrl: rpcUrl || "default (Starkzap preset)",
 				})
 			);
 		});

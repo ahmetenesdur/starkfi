@@ -1,11 +1,13 @@
 ---
 title: Auth & Config Tools
-description: get_auth_status, config_action
+description: get_auth_status and config_action — session management and CLI configuration
 ---
 
 ## get_auth_status
 
-Check the current authentication state.
+Check the current authentication state and verify the session is active.
+
+> **Best Practice:** Always call this first before any other tool to ensure the user is authenticated.
 
 **Parameters:** None
 
@@ -19,16 +21,38 @@ Check the current authentication state.
 }
 ```
 
+If not authenticated, the response will indicate the user needs to log in:
+
+```json
+{
+	"authenticated": false,
+	"message": "Not authenticated. Run: npx starkfi@latest auth login <email>"
+}
+```
+
+---
+
 ## config_action
 
-Read or update StarkFi configuration.
+Read or update StarkFi configuration — RPC, network, gas mode, and gas token settings.
 
 **Parameters:**
 
 | Param    | Type   | Required | Description                                                                 |
 | -------- | ------ | -------- | --------------------------------------------------------------------------- |
 | `action` | string | Yes      | `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token` |
-| `value`  | string | No       | Value for the action (e.g., RPC URL, `on`/`off`, token symbol)              |
+| `value`  | string | No       | Value for the action (see examples below)                                   |
+
+**Available Actions:**
+
+| Action          | Value                   | Description                                                   |
+| --------------- | ----------------------- | ------------------------------------------------------------- |
+| `list`          | —                       | Show all current configuration settings                       |
+| `set-rpc`       | URL string              | Set a custom RPC endpoint                                     |
+| `get-rpc`       | —                       | Show the current RPC URL                                      |
+| `set-network`   | `mainnet` or `sepolia`  | Switch between mainnet and testnet                            |
+| `set-gasfree`   | `on` or `off`           | Enable/disable developer-sponsored gas (Gasfree mode)         |
+| `set-gas-token` | Token symbol or `reset` | Set gas payment token (ETH, USDC, USDT, DAI) or reset to STRK |
 
 **Examples:**
 
@@ -37,4 +61,7 @@ Read or update StarkFi configuration.
 { "action": "set-network", "value": "mainnet" }
 { "action": "set-gasfree", "value": "on" }
 { "action": "set-gas-token", "value": "USDC" }
+{ "action": "set-rpc", "value": "https://starknet-mainnet.g.alchemy.com/v2/<key>" }
 ```
+
+> **Note:** Gasfree and Gasless modes are mutually exclusive. Enabling gasfree clears any gas token setting, and vice versa.

@@ -1,47 +1,121 @@
 ---
 title: Agent Skills
-description: 10 pre-packaged multi-step workflows for AI agents
+description: 10 pre-packaged multi-step workflows for AI agents — install in one command
 ---
 
 ## What Are Skills?
 
-Skills are pre-packaged, multi-step workflows that AI agents can follow to accomplish complex DeFi tasks. Each skill contains a `SKILL.md` file with step-by-step instructions, prerequisites, and expected outcomes.
+Skills are pre-packaged, multi-step workflows that AI agents can follow to accomplish complex DeFi tasks on Starknet. Each skill contains a `SKILL.md` file with step-by-step instructions, prerequisites, error handling, and expected outcomes.
 
-Skills are located in the `skills/` directory of the StarkFi package.
+Unlike MCP tools (which are individual function calls), skills orchestrate **multiple tools and decisions** into a complete workflow — for example, checking auth status → fetching a swap quote → confirming with the user → executing → verifying the transaction.
+
+## Installation
+
+Install all 10 StarkFi skills into your AI assistant with a single command:
+
+```bash
+npx skills add ahmetenesdur/starkfi
+```
+
+This uses [Vercel's Skills CLI](https://skills.sh) to add the skills directly to your agent (e.g., Antigravity, Claude Code).
+
+### Prerequisites
+
+1. **Node.js** v18 or later
+2. **StarkFi Auth Server** running (required for authentication and transaction signing)
+3. No manual CLI installation needed — all skills use `npx starkfi@latest` internally
 
 ## Available Skills
 
-| Skill                   | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| **authenticate-wallet** | Complete auth flow: login → verify → confirm address         |
-| **balance**             | Check all token balances and format results                  |
-| **batch**               | Compose and execute atomic multicall transactions            |
-| **config**              | View and modify network, RPC, and gas settings               |
-| **lending**             | Supply, borrow, repay, withdraw on Vesu V2 pools             |
-| **multi-swap**          | Execute multi-pair swaps in a single transaction             |
-| **portfolio**           | Aggregate full DeFi dashboard (balances + staking + lending) |
-| **send**                | Send tokens with address validation and simulation           |
-| **staking**             | Stake, unstake, claim/compound rewards                       |
-| **trade**               | Single token swap with quote → execute flow                  |
+| Skill                   | Category    | Description                                           |
+| ----------------------- | ----------- | ----------------------------------------------------- |
+| **authenticate-wallet** | auth        | Email OTP login, session management, wallet deploy    |
+| **balance**             | wallet-data | Check STRK, ETH, and ERC-20 token balances            |
+| **send**                | transaction | Transfer tokens to a Starknet address                 |
+| **trade**               | transaction | Swap tokens via Fibrous aggregation                   |
+| **multi-swap**          | transaction | Multiple swaps in one transaction (up to 3 pairs)     |
+| **batch**               | transaction | Combine swap + stake + supply + send in one multicall |
+| **staking**             | transaction | Stake, unstake, claim, compound rewards               |
+| **lending**             | transaction | Vesu V2: supply, borrow, repay, withdraw, close       |
+| **portfolio**           | wallet-data | Aggregated DeFi dashboard with USD valuations         |
+| **config**              | utility     | RPC, network, gas settings, transaction status        |
+
+## Getting Started
+
+### Typical Workflow
+
+Skills follow a natural progression — authenticate first, then check your state, then execute operations:
+
+```
+1. authenticate-wallet  →  Login and verify your session
+2. balance / portfolio  →  Check funds and existing positions
+3. trade / send / ...   →  Execute DeFi operations
+4. config (tx-status)   →  Verify transaction results
+```
+
+### Trigger Examples
+
+Your AI agent automatically selects the right skill based on what you say:
+
+| You say...                      | Skill triggered       |
+| ------------------------------- | --------------------- |
+| "Log me in with my email"       | `authenticate-wallet` |
+| "How much STRK do I have?"      | `balance`             |
+| "Send 10 USDC to 0x04a3..."     | `send`                |
+| "Swap 100 USDC for ETH"         | `trade`               |
+| "Swap USDC→ETH and USDT→STRK"   | `multi-swap`          |
+| "Swap ETH then stake STRK"      | `batch`               |
+| "Stake 1000 STRK with Karnot"   | `staking`             |
+| "Supply 500 USDC to Prime pool" | `lending`             |
+| "Show me my portfolio"          | `portfolio`           |
+| "I'm getting rate limit errors" | `config`              |
+
+## Skill Structure
+
+Each skill is a self-contained directory with a `SKILL.md` file:
+
+```
+skills/
+├── authenticate-wallet/
+│   └── SKILL.md
+├── trade/
+│   └── SKILL.md
+├── staking/
+│   └── SKILL.md
+└── ...
+```
+
+Every `SKILL.md` follows a consistent structure:
+
+| Section              | Purpose                                                |
+| -------------------- | ------------------------------------------------------ |
+| **YAML Frontmatter** | Name, description (triggers AI matching), and metadata |
+| **Prerequisites**    | Required auth state, minimum versions                  |
+| **Rules**            | Hard constraints the agent must follow                 |
+| **Commands**         | CLI commands with full syntax                          |
+| **Parameters**       | Options table with types and defaults                  |
+| **Examples**         | Real-world command examples                            |
+| **Error Handling**   | Error → cause → resolution table                       |
+| **Related Skills**   | Cross-references to complementary skills               |
 
 ## How Agents Use Skills
 
-When an MCP-compatible agent (like Claude or Cursor) connects to StarkFi:
+When an MCP-compatible agent (like Claude, Cursor, or Windsurf) connects to StarkFi:
 
 1. The agent discovers available skills via the `skills/` directory
-2. Each `SKILL.md` provides a structured recipe with:
-    - **Description** — What the skill does
-    - **Prerequisites** — Required auth state, minimum balances
-    - **Steps** — Sequential MCP tool calls
-    - **Error handling** — What to do when things fail
-3. The agent follows the recipe, calling MCP tools in the specified order
+2. It matches the user's intent to the best skill using the **description** field
+3. The `SKILL.md` provides a structured recipe — the agent follows it step by step
+4. Each step maps to a CLI command (via `npx starkfi@latest`)
+5. Error handling tables tell the agent exactly what to do when things fail
 
-## Example: Trade Skill Flow
+### Skills vs MCP Tools
 
-```
-1. Call get_auth_status → verify authenticated
-2. Call get_swap_quote → show quote to user
-3. User confirms → call swap_tokens
-4. Call get_tx_status → wait for confirmation
-5. Return result with explorer link
-```
+|              | Skills                                                 | MCP Tools                 |
+| ------------ | ------------------------------------------------------ | ------------------------- |
+| **Scope**    | Multi-step workflows                                   | Single function calls     |
+| **Format**   | Markdown instructions                                  | JSON-schema typed tools   |
+| **Usage**    | Agent reads and follows                                | Agent calls directly      |
+| **Example**  | "Complete a swap" (quote → confirm → execute → verify) | `swap_tokens(args)`       |
+| **Best for** | Complex workflows with decisions                       | Simple, atomic operations |
+
+Skills and MCP tools are complementary — an agent can use skills for guided workflows and MCP tools for ad-hoc operations.
