@@ -5,29 +5,43 @@ description: Gas abstraction — Gasfree and Gasless transaction modes
 
 ## Overview
 
-StarkFi integrates with the [AVNU Paymaster](https://www.avnu.fi) to enable gas abstraction on Starknet. Users can transact without holding native STRK for gas.
+StarkFi integrates with the [AVNU Paymaster](https://www.avnu.fi) to enable gas abstraction on Starknet. This allows users to transact without holding native STRK for gas fees.
 
 ## Two Modes
 
+StarkFi supports two mutually exclusive gas abstraction modes. Only one can be active at a time.
+
 ### Gasfree (Developer Sponsors Gas)
 
-The developer pre-funds the paymaster. Users execute transactions with zero gas cost.
+The developer pre-funds the Paymaster with credits. Users execute transactions with **zero gas cost** — the developer covers all fees.
 
 ```bash
 starkfi config set-gasfree on
 ```
 
-Technically, the SDK sends transactions with `feeMode: "sponsored"` to the AVNU Paymaster endpoint.
+Under the hood, transactions are sent with `feeMode: "sponsored"` to the AVNU Paymaster endpoint.
+
+| Best for             | How it works                                   |
+| -------------------- | ---------------------------------------------- |
+| Onboarding new users | Developer pays all gas from pre-funded credits |
+| Demo environments    | Users need zero token balance to transact      |
 
 ### Gasless (User Pays in ERC-20)
 
-Users pay gas in an ERC-20 token (USDC, USDT, DAI, ETH) instead of STRK.
+Users pay gas in an ERC-20 token (ETH, USDC, USDT, DAI) instead of the default STRK. The Paymaster handles the token-to-gas conversion automatically.
 
 ```bash
 starkfi config set-gas-token USDC
 ```
 
-The SDK patches the wallet's `executePaymasterTransaction` to inject `{ mode: "default", gasToken: tokenAddress }`.
+Under the hood, the SDK patches the wallet's `executePaymasterTransaction` to inject `{ mode: "default", gasToken: <tokenAddress> }`.
+
+| Best for                 | How it works                        |
+| ------------------------ | ----------------------------------- |
+| Users without STRK       | Pay gas in tokens they already hold |
+| Stablecoin-heavy wallets | Use USDC/USDT/DAI for gas           |
+
+> **Note:** Setting a gas token clears gasfree mode, and vice versa. Use `starkfi config list` to verify your current mode.
 
 ## Paymaster URLs
 
@@ -36,12 +50,26 @@ The SDK patches the wallet's `executePaymasterTransaction` to inject `{ mode: "d
 | Mainnet | `https://starknet.paymaster.avnu.fi` |
 | Sepolia | `https://sepolia.paymaster.avnu.fi`  |
 
+StarkFi selects the correct URL automatically based on the configured network.
+
 ## Supported Gas Tokens
 
-| Token    | Description    |
-| -------- | -------------- |
-| **ETH**  | Ether          |
-| **STRK** | Default gas    |
-| **USDC** | USD Coin       |
-| **USDT** | Tether         |
-| **DAI**  | Dai Stablecoin |
+| Token    | Address (Mainnet)                 |
+| -------- | --------------------------------- |
+| **ETH**  | `0x049d36570d...004dc7`           |
+| **STRK** | `0x04718f5a0f...7c938d` (default) |
+| **USDC** | `0x033068f653...3b35fb`           |
+| **USDT** | `0x068f5c6a61...09c0fb8`          |
+| **DAI**  | `0x05574eb6b8...ddf4ad`           |
+
+## How StarkFi Uses the Paymaster
+
+| StarkFi Command                    | Paymaster Role                                        |
+| ---------------------------------- | ----------------------------------------------------- |
+| `trade`, `send`, `batch`           | Pays gas in configured token or via developer credits |
+| `stake`, `unstake`, `rewards`      | Same gas abstraction for staking operations           |
+| `lend-supply`, `lend-borrow`, etc. | Same gas abstraction for lending operations           |
+| `deploy`                           | Wallet deployment can also be gas-abstracted          |
+| `config set-gasfree on/off`        | Toggle developer-sponsored mode                       |
+| `config set-gas-token <token>`     | Switch gas payment token                              |
+| `config list`                      | View current fee mode and gas token                   |

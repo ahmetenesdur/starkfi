@@ -5,33 +5,38 @@ description: Supply, borrow, and manage lending positions on Vesu pools
 
 ## Overview
 
-[Vesu](https://vesu.xyz) provides V2 lending pools on Starknet. StarkFi integrates directly with Vesu's on-chain contracts for full lending lifecycle management.
+[Vesu](https://vesu.xyz) provides V2 lending pools on Starknet. StarkFi integrates directly with Vesu's on-chain contracts and REST API for full lending lifecycle management — supply, withdraw, borrow, repay, and close positions.
+
+## How StarkFi Uses Vesu
+
+| Feature        | Vesu Integration                         | StarkFi Command |
+| -------------- | ---------------------------------------- | --------------- |
+| Browse Pools   | REST API (`/pools/{address}`)            | `lend-pools`    |
+| Supply         | `vToken.deposit()` (ERC-4626)            | `lend-supply`   |
+| Withdraw       | `vToken.withdraw()`                      | `lend-withdraw` |
+| Borrow         | `pool.modify_position()`                 | `lend-borrow`   |
+| Repay          | `pool.modify_position()`                 | `lend-repay`    |
+| Close Position | `pool.modify_position()`                 | `lend-close`    |
+| Check Position | On-chain `pool.position()` + USD pricing | `lend-status`   |
 
 ## Supported Pools
 
-| Pool                 | Description                 |
-| -------------------- | --------------------------- |
-| Prime                | Primary multi-asset pool    |
-| Re7 USDC Core        | Core USDC lending pool      |
-| Re7 USDC Prime       | Premium USDC lending        |
-| Re7 USDC Frontier    | Frontier USDC lending       |
-| Re7 xBTC             | Bitcoin-denominated lending |
-| Re7 USDC Stable Core | Stablecoin-focused lending  |
+StarkFi supports 6 Vesu V2 pools:
 
-## Operations
+| Pool                     | Description                 |
+| ------------------------ | --------------------------- |
+| **Prime**                | Primary multi-asset pool    |
+| **Re7 USDC Core**        | Core USDC lending pool      |
+| **Re7 USDC Prime**       | Premium USDC lending        |
+| **Re7 USDC Frontier**    | Frontier USDC lending       |
+| **Re7 xBTC**             | Bitcoin-denominated lending |
+| **Re7 USDC Stable Core** | Stablecoin-focused lending  |
 
-| Operation | Contract Method          | Description            |
-| --------- | ------------------------ | ---------------------- |
-| Supply    | `vToken.deposit()`       | ERC-4626 vault deposit |
-| Withdraw  | `vToken.withdraw()`      | Direct withdrawal      |
-| Borrow    | `pool.modify_position()` | Add collateral + debt  |
-| Repay     | `pool.modify_position()` | Reduce debt            |
-| Close     | `pool.modify_position()` | Remove all             |
-| Query     | `pool.position()`        | Read position state    |
+> **Tip:** Use `starkfi lend-pools` to see live APY/APR rates and available assets for each pool.
 
 ## Health Factor
 
-StarkFi calculates health factor as:
+StarkFi calculates health factor from on-chain position data:
 
 ```
 healthFactor = (collateralUSD × maxLTV) / debtUSD
@@ -39,12 +44,40 @@ healthFactor = (collateralUSD × maxLTV) / debtUSD
 
 Risk levels:
 
-- **SAFE**: health factor > 1.5
-- **WARNING**: 1.1 – 1.5
-- **DANGER**: < 1.1
+| Risk Level  | Health Factor | Meaning                |
+| ----------- | ------------- | ---------------------- |
+| **SAFE**    | Above 1.5     | Position is healthy    |
+| **WARNING** | 1.1 – 1.5     | Monitor closely        |
+| **DANGER**  | Below 1.1     | At risk of liquidation |
+
+> **Important:** Monitor your health factor regularly with `starkfi lend-status`. If it drops below 1.0, your position can be liquidated.
+
+## On-Chain Operations
+
+| Operation | Contract Method          | Description                                             |
+| --------- | ------------------------ | ------------------------------------------------------- |
+| Supply    | `vToken.deposit()`       | ERC-4626 vault deposit — receives yield-bearing vTokens |
+| Withdraw  | `vToken.withdraw()`      | Redeem vTokens for underlying tokens                    |
+| Borrow    | `pool.modify_position()` | Deposit collateral + take on debt atomically            |
+| Repay     | `pool.modify_position()` | Reduce outstanding debt                                 |
+| Close     | `pool.modify_position()` | Repay all debt + withdraw all collateral in one call    |
+| Query     | `pool.position()`        | Read on-chain position state                            |
 
 ## Technical Details
 
-- **API Base**: `https://api.vesu.xyz` (cached for 5 minutes)
-- **Dust Limit**: Minimum ~$10 equivalent for supply/borrow
-- **U256 Encoding**: Amounts are split into low/high 128-bit parts for Cairo calldata
+| Setting         | Value                                                     |
+| --------------- | --------------------------------------------------------- |
+| API Base        | `https://api.vesu.xyz`                                    |
+| Cache TTL       | 5 minutes                                                 |
+| Request Timeout | 15 seconds                                                |
+| Dust Limit      | ~$10 minimum for supply/borrow                            |
+| Amount Encoding | U256 split into low/high 128-bit parts for Cairo calldata |
+| Pool Factory    | `0x03760f903a...fb388c0`                                  |
+
+## Error Handling
+
+| Error            | Cause                        | Resolution                                        |
+| ---------------- | ---------------------------- | ------------------------------------------------- |
+| `LENDING_ERROR`  | On-chain operation failed    | Check token allowance, balance, and health factor |
+| `POOL_NOT_FOUND` | Invalid pool name or address | Run `lend-pools` to see available pools           |
+| `NETWORK_ERROR`  | Vesu API unreachable         | Retry — requests use automatic retry with backoff |

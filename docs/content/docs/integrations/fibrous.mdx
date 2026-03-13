@@ -1,20 +1,30 @@
 ---
 title: Fibrous DEX Aggregator
-description: Optimal swap routing and calldata generation
+description: Optimal swap routing, batch routing, and USD pricing
 ---
 
 ## Overview
 
-[Fibrous](https://fibrous.finance) is a DEX aggregator on Starknet that finds optimal routes for token swaps. StarkFi uses Fibrous for all swap operations.
+[Fibrous](https://fibrous.finance) is a DEX aggregator on Starknet that finds optimal swap routes across multiple liquidity sources. StarkFi uses Fibrous for all swap operations — single trades, multi-swaps, and batch operations.
+
+## How StarkFi Uses Fibrous
+
+| Feature      | Fibrous API                              | StarkFi Command        |
+| ------------ | ---------------------------------------- | ---------------------- |
+| Single Swap  | `getRoute()` → `getCalldata()`           | `trade`                |
+| Multi-Swap   | `getRouteBatch()` → `getCalldataBatch()` | `multi-swap`           |
+| Batch Swap   | `getRoute()` per pair                    | `batch --swap`         |
+| USD Pricing  | `getRoute()` price field                 | `balance`, `portfolio` |
+| Health Check | `checkFibrousHealth()`                   | `status`               |
 
 ## API Endpoints
 
-| Endpoint           | Function               | Purpose                          |
-| ------------------ | ---------------------- | -------------------------------- |
-| `GET /route`       | `getRoute()`           | Get swap route + expected output |
-| `GET /calldata`    | `getCalldata()`        | Get executable calldata          |
-| `GET /routeBatch`  | `getRouteBatch()`      | Batch routing (up to 3 pairs)    |
-| `GET /healthCheck` | `checkFibrousHealth()` | API health status                |
+| Endpoint           | Function               | Purpose                                                  |
+| ------------------ | ---------------------- | -------------------------------------------------------- |
+| `GET /route`       | `getRoute()`           | Get swap route + expected output for a single pair       |
+| `GET /calldata`    | `getCalldata()`        | Get executable calldata with slippage protection         |
+| `GET /routeBatch`  | `getRouteBatch()`      | Batch routing for up to 3 pairs (same destination token) |
+| `GET /healthCheck` | `checkFibrousHealth()` | API health and availability status                       |
 
 **Base URL:** `https://api.fibrous.finance/starknet`
 
@@ -27,10 +37,40 @@ description: Optimal swap routing and calldata generation
 | Default Slippage | 1%                                     |
 | Max Batch Pairs  | 3                                      |
 
+## How Routing Works
+
+### Single Swap
+
+```
+1. getRoute(tokenIn, tokenOut, amount)    →  Find optimal route + expected output
+2. getCalldata(tokenIn, tokenOut, amount) →  Generate executable calldata with slippage
+3. Execute via TxBuilder:  approve → swap
+```
+
+### Multi-Swap (Batch)
+
+When all pairs share the same output token, Fibrous uses the native `routeBatch` endpoint for more efficient routing. Otherwise, StarkFi falls back to parallel individual `getRoute()` calls:
+
+```
+1. getRouteBatch(pairs)       →  Get routes for 2-3 pairs simultaneously
+2. getCalldataBatch(pairs)    →  Generate calldata for each pair
+3. Execute via TxBuilder:  approve₁ → swap₁ → approve₂ → swap₂ → ...
+```
+
 ## USD Pricing
 
-StarkFi uses Fibrous route data for USD price estimation:
+StarkFi uses Fibrous route data for real-time USD price estimation. This powers the `balance`, `portfolio`, and `lend-status` commands:
 
-1. Route 1 unit of token → USDC
+1. Route 1 unit of the target token → USDC
 2. Read the `inputToken.price` from the route response
-3. USDC/USDT short-circuit to $1.0
+3. USDC and USDT short-circuit to $1.00 (no API call needed)
+
+## Error Handling
+
+| Error                  | Cause                           | Resolution                                      |
+| ---------------------- | ------------------------------- | ----------------------------------------------- |
+| `NO_ROUTE_FOUND`       | No liquidity path exists        | Try a different token pair or smaller amount    |
+| `BATCH_LIMIT_EXCEEDED` | More than 3 pairs in multi-swap | Split into multiple transactions                |
+| `NETWORK_ERROR`        | Fibrous API unreachable         | Check status with `starkfi status`, retry later |
+
+All requests use automatic retry with exponential backoff for transient network errors.

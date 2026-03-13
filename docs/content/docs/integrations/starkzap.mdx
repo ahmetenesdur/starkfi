@@ -1,11 +1,25 @@
 ---
 title: Starkzap SDK
-description: Core SDK powering wallets, tokens, staking, and transactions
+description: Core SDK powering wallets, tokens, staking, and transaction building
 ---
 
 ## Overview
 
-[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet: wallet management, token operations, staking, and gas abstraction.
+[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, gas abstraction, and multicall transaction building.
+
+StarkFi uses **Starkzap v1.0.0** as a direct dependency.
+
+## How StarkFi Uses Starkzap
+
+| Feature              | Starkzap API                                | StarkFi Command                |
+| -------------------- | ------------------------------------------- | ------------------------------ |
+| Token Balances       | `wallet.balanceOf()`                        | `balance`, `portfolio`         |
+| Token Transfers      | `wallet.transfer()`                         | `send`                         |
+| Staking              | `wallet.stake()`, `wallet.exitPoolIntent()` | `stake`, `unstake`             |
+| Rewards              | `wallet.claimPoolRewards()`                 | `rewards --claim / --compound` |
+| Wallet Deploy        | `wallet.ensureReady()`                      | `deploy`                       |
+| Transaction Building | `wallet.tx()` (TxBuilder)                   | `batch`, `multi-swap`          |
+| Gas Abstraction      | `feeMode: "sponsored"`                      | `config set-gasfree`           |
 
 ## SDK Initialization
 
@@ -14,7 +28,7 @@ import { Starkzap } from "starkzap";
 
 const sdk = new Starkzap({
 	network: "mainnet",
-	rpcUrl: "https://your-rpc.com", // optional
+	rpcUrl: "https://your-rpc.com", // optional — uses Starkzap preset by default
 	paymaster: {
 		nodeUrl: "https://starknet.paymaster.avnu.fi",
 	},
@@ -23,7 +37,7 @@ const sdk = new Starkzap({
 
 ## Wallet Connection
 
-StarkFi uses the **Privy** onboarding strategy with **ArgentX v0.5.0** preset:
+StarkFi uses the **Privy** onboarding strategy with the **ArgentX v0.5.0** account preset:
 
 ```typescript
 import { PrivySigner, ArgentXV050Preset } from "starkzap";
@@ -41,24 +55,30 @@ const wallet = await sdk.connectWallet({
 });
 ```
 
-## Key APIs Used
+## Key APIs
 
 ### Token Operations
 
-- `wallet.balanceOf(token)` — Get token balance
-- `wallet.transfer(token, transfers)` — Send tokens
-- `Amount.parse("100", token)` — Parse human-readable amount
-- `Amount.fromRaw(wei, token)` — Create from raw bigint
+```typescript
+wallet.balanceOf(token); // Get token balance (Amount object)
+wallet.transfer(token, transfers); // Send tokens to an address
+Amount.parse("100", token); // Parse human-readable → Amount
+Amount.fromRaw(wei, token); // Create from raw bigint
+```
 
 ### Staking
 
-- `wallet.stake(poolAddress, amount)` — Stake tokens
-- `wallet.exitPoolIntent(pool, amount)` — Begin unstaking
-- `wallet.exitPool(pool)` — Finalize unstaking
-- `wallet.claimPoolRewards(pool)` — Claim rewards
-- `wallet.getPoolPosition(pool)` — Get position details
+```typescript
+wallet.stake(poolAddress, amount); // Stake tokens
+wallet.exitPoolIntent(pool, amount); // Begin unstaking (step 1)
+wallet.exitPool(pool); // Finalize unstaking (step 2)
+wallet.claimPoolRewards(pool); // Claim rewards
+wallet.getPoolPosition(pool); // Get position details
+```
 
 ### TxBuilder (Multicall)
+
+The `TxBuilder` composes multiple operations into a single atomic Starknet multicall:
 
 ```typescript
 const tx = await wallet
@@ -69,13 +89,15 @@ const tx = await wallet
 	.send({ feeMode: "sponsored" });
 ```
 
+StarkFi uses TxBuilder for `batch`, `multi-swap`, and lending operations where multiple calls must execute atomically.
+
 ### Token Presets
 
 ```typescript
 import { getPresets, ChainId } from "starkzap";
 
 const presets = getPresets(ChainId.MAINNET);
-const tokens = presets.tokens; // All known tokens
+const tokens = presets.tokens; // All known tokens with addresses and decimals
 ```
 
 ### Validator Presets
@@ -83,3 +105,5 @@ const tokens = presets.tokens; // All known tokens
 ```typescript
 import { mainnetValidators, sepoliaValidators } from "starkzap";
 ```
+
+Validator presets provide name-to-staker-address mappings used by the `validators` and `pools` commands.
