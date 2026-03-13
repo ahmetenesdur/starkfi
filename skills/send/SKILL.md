@@ -1,6 +1,6 @@
 ---
 name: send
-description: Send STRK, ETH, or any ERC-20 token to a Starknet address. Supports simulation (dry-run) before execution. Use this skill when the user wants to transfer, send, or move tokens to another wallet address.
+description: Send STRK, ETH, or any ERC-20 token to a Starknet address. Supports simulation (dry-run) before execution. Use this skill when the user wants to send, transfer, pay, tip, or move tokens to another wallet address on Starknet. Also trigger when the user mentions sending funds to someone, making a payment, transferring assets, or moving crypto to a specific address — even if they just say "pay 10 STRK to 0x...".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:

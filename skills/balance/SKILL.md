@@ -1,6 +1,6 @@
 ---
 name: balance
-description: Check Starknet wallet token balances — STRK, ETH, and all ERC-20 tokens. Use this skill when the user asks about their balance, holdings, funds, tokens, or wants to know how much of something they have. Also use before any transaction to verify sufficient funds.
+description: Check Starknet wallet token balances — STRK, ETH, and all ERC-20 tokens. Use this skill when the user asks about their balance, holdings, funds, tokens, wallet contents, or wants to know how much of something they have. Also use before any transaction to verify sufficient funds. Trigger whenever the user says "check my balance", "how much ETH do I have", "what's in my wallet", "do I have enough", "show my tokens", or any variation about checking available assets — even if they don't use the word "balance".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:

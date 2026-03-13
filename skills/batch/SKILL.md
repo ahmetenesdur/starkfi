@@ -1,6 +1,6 @@
 ---
 name: batch
-description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply, and token sends into one multicall. Use this skill when the user wants to batch, combine, or chain multiple diverse operations together, such as "swap ETH and then stake STRK" in one go.
+description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply, and token sends into one multicall. Use this skill when the user wants to batch, combine, bundle, or chain multiple diverse operations together in one atomic transaction, such as "swap ETH and then stake STRK" or "swap and send in one go". Also trigger when the user mentions multicall, combining operations, doing multiple things at once, or wants to save gas by bundling actions — even if they don't use the word "batch".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:

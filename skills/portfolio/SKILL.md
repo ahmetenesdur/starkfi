@@ -1,6 +1,6 @@
 ---
 name: portfolio
-description: View a comprehensive DeFi portfolio dashboard — token balances, staking positions, and lending positions with USD valuations. Use this skill when the user wants an overview, summary, total value, net worth, or wants to see all their positions across Starknet at once.
+description: View a comprehensive DeFi portfolio dashboard — token balances, staking positions, and lending positions with USD valuations. Use this skill when the user wants an overview, summary, dashboard, total value, net worth, or wants to see all their DeFi positions across Starknet at once. Also trigger when the user asks "what do I have", "show me everything", "how much am I worth", "my positions", "my investments", or any request for a holistic view of their Starknet holdings — even if they don't explicitly say "portfolio".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
