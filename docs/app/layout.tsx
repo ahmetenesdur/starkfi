@@ -9,15 +9,67 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
 	title: {
 		template: "%s | StarkFi Docs",
-		default: "StarkFi Docs",
+		default: "StarkFi Docs — Starknet DeFi CLI + MCP Server",
 	},
 	description:
-		"Documentation for StarkFi — Starknet DeFi CLI + MCP Server. Swaps, staking, lending, batch, gasless transactions.",
+		"Official documentation for StarkFi — Starknet DeFi CLI + MCP Server. 30+ commands, 27 MCP tools, 10 Agent Skills. Swaps, staking, lending, batch, gasless transactions.",
+	keywords: [
+		"StarkFi",
+		"Starknet",
+		"DeFi",
+		"CLI",
+		"MCP",
+		"MCP Server",
+		"AI Agent",
+		"Starkzap",
+		"Documentation",
+		"Swap",
+		"Stake",
+		"Lend",
+		"Batch",
+		"Gasless",
+		"Web3",
+	],
+	authors: [{ name: "ahmetenesdur", url: "https://github.com/ahmetenesdur" }],
+	creator: "ahmetenesdur",
+	publisher: "StarkFi",
 	icons: "/favicon.svg",
 	metadataBase: new URL("https://docs.starkfi.app"),
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			"max-snippet": -1,
+			"max-image-preview": "large",
+			"max-video-preview": -1,
+		},
+	},
 	openGraph: {
+		title: "StarkFi Docs — Starknet DeFi CLI + MCP Server",
+		description:
+			"Official documentation for StarkFi. 30+ CLI commands, 27 MCP tools, 10 Agent Skills for Starknet DeFi automation.",
+		url: "https://docs.starkfi.app",
 		siteName: "StarkFi Docs",
+		images: [
+			{
+				url: "/og-image.png",
+				width: 1200,
+				height: 630,
+				alt: "StarkFi — Starknet DeFi from your Terminal & AI",
+			},
+		],
+		locale: "en_US",
 		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "StarkFi Docs — Starknet DeFi from your Terminal & AI",
+		description:
+			"30+ CLI commands, 27 MCP tools, 10 Agent Skills. Swap, stake, lend, batch on Starknet with gas abstraction.",
+		images: ["/og-image.png"],
+		site: "@starkfiapp",
 	},
 };
 
