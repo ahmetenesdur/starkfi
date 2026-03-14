@@ -12,7 +12,7 @@ export function registerAddressCommand(program: Command): void {
 			if (!session) {
 				console.log(
 					warn(
-						"Not authenticated. Run 'starkfi auth login' or 'starkfi auth import' first."
+						"Not authenticated. Run 'starkfi auth login' first."
 					)
 				);
 				process.exit(1);

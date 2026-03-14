@@ -15,7 +15,7 @@ import { registerSendCommand } from "./commands/wallet/send.js";
 import { registerDeployCommand } from "./commands/wallet/deploy.js";
 import { registerSwapCommand } from "./commands/trade/swap.js";
 import { registerMultiSwapCommand } from "./commands/trade/multi-swap.js";
-import { registerStatusCommand } from "./commands/trade/status.js";
+import { registerStatusCommand } from "./commands/system/status.js";
 import { registerTxStatusCommand } from "./commands/chain/tx-status.js";
 import {
 	registerStakeCommand,
@@ -86,7 +86,7 @@ ${chalk.bold.hex(MINT)("Quick Start")}
 const COMMAND_GROUPS: Record<string, string[]> = {
 	Authentication: ["auth"],
 	Wallet: ["address", "balance", "send", "deploy"],
-	Trading: ["trade", "multi-swap", "status"],
+	Trading: ["trade", "multi-swap"],
 	Staking: ["stake", "unstake", "rewards", "pools", "validators", "stake-status"],
 	Lending: [
 		"lend-pools",
@@ -100,7 +100,7 @@ const COMMAND_GROUPS: Record<string, string[]> = {
 	Portfolio: ["portfolio"],
 	Operations: ["batch"],
 	Configuration: ["config"],
-	System: ["tx-status", "mcp-start", "help"],
+	System: ["status", "tx-status", "mcp-start", "help"],
 };
 
 const program = new Command();

@@ -67,7 +67,7 @@ export function requireSession(): Session {
 	if (!session) {
 		throw new StarkfiError(
 			ErrorCode.AUTH_REQUIRED,
-			"Not authenticated. Run 'starkfi auth login <email>' or 'starkfi auth import' first."
+			"Not authenticated. Run 'starkfi auth login <email>' first."
 		);
 	}
 

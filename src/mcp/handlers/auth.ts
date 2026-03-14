@@ -10,7 +10,7 @@ export async function handleGetAuthStatus() {
 		return jsonResult({
 			authenticated: false,
 			fibrous: health,
-			message: "Not authenticated. Use 'starkfi auth login' or 'starkfi auth import'.",
+			message: "Not authenticated. Use 'starkfi auth login'.",
 		});
 	}
 
