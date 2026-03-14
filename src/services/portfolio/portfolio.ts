@@ -104,38 +104,36 @@ async function fetchStaking(
 	const overview = await getStakingOverview(sdk, wallet, session.network, session.address);
 	if (overview.positions.length === 0) return [];
 
-	// Cache prices per token symbol to avoid duplicate API calls.
-	const priceCache = new Map<string, number>();
+	// Collect unique token symbols and fetch their prices concurrently.
+	const uniqueSymbols = [...new Set(overview.positions.map((p) => p.token))];
+	const priceEntries = await Promise.allSettled(
+		uniqueSymbols.map(async (symbol) => {
+			try {
+				const token = resolveToken(symbol);
+				return { symbol, price: await getTokenUsdPrice(token) };
+			} catch {
+				return { symbol, price: 0 };
+			}
+		})
+	);
 
-	async function getPrice(symbol: string): Promise<number> {
-		const cached = priceCache.get(symbol);
-		if (cached !== undefined) return cached;
-		try {
-			const token = resolveToken(symbol);
-			const price = await getTokenUsdPrice(token);
-			priceCache.set(symbol, price);
-			return price;
-		} catch {
-			priceCache.set(symbol, 0);
-			return 0;
+	const priceCache = new Map<string, number>();
+	for (const entry of priceEntries) {
+		if (entry.status === "fulfilled") {
+			priceCache.set(entry.value.symbol, entry.value.price);
 		}
 	}
 
-	const results: PortfolioStaking[] = [];
-	for (const p of overview.positions) {
-		const price = await getPrice(p.token);
-		results.push({
-			validator: p.validator,
-			pool: p.pool,
-			token: p.token,
-			staked: p.staked,
-			rewards: p.rewards,
-			unpooling: p.unpooling,
-			cooldownEndsAt: p.cooldownEndsAt,
-			usdValue: parseNumericPart(p.total) * price,
-		});
-	}
-	return results;
+	return overview.positions.map((p) => ({
+		validator: p.validator,
+		pool: p.pool,
+		token: p.token,
+		staked: p.staked,
+		rewards: p.rewards,
+		unpooling: p.unpooling,
+		cooldownEndsAt: p.cooldownEndsAt,
+		usdValue: parseNumericPart(p.total) * (priceCache.get(p.token) ?? 0),
+	}));
 }
 
 function parseNumericPart(formatted: string): number {

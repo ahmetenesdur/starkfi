@@ -6,12 +6,12 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-/** Collect repeatable options into array. */
+// Collect repeatable options into array.
 function collect(value: string, previous: string[]): string[] {
 	return previous.concat([value]);
 }
 
-/** Parse "100 USDC ETH" into a typed BatchOperation. */
+// Parse "100 USDC ETH" into a typed BatchOperation.
 function parseOperation(type: string, raw: string): BatchOperation {
 	const parts = raw.trim().split(/\s+/);
 

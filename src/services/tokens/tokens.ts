@@ -1,24 +1,32 @@
 import { ChainId, getPresets, type Token } from "starkzap";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-export function fetchTokens(): Token[] {
-	const presetTokens = getPresets(ChainId.MAINNET);
-	return Object.values(presetTokens);
+// Lazy-initialised Map for O(1) token lookup by uppercase symbol.
+let tokenMap: Map<string, Token> | null = null;
+
+function getTokenMap(): Map<string, Token> {
+	if (tokenMap) return tokenMap;
+	const presets = getPresets(ChainId.MAINNET);
+	tokenMap = new Map<string, Token>();
+	for (const token of Object.values(presets)) {
+		tokenMap.set(token.symbol.toUpperCase(), token);
+	}
+	return tokenMap;
 }
 
-export function resolveToken(symbol: string): Token {
-	const tokens = fetchTokens();
-	const upperSymbol = symbol.toUpperCase();
+export function fetchTokens(): Token[] {
+	return Array.from(getTokenMap().values());
+}
 
-	const token = tokens.find((t) => t.symbol.toUpperCase() === upperSymbol);
+// Resolve a token by symbol (case-insensitive, O(1) lookup).
+export function resolveToken(symbol: string): Token {
+	const token = getTokenMap().get(symbol.toUpperCase());
 
 	if (!token) {
+		const available = Array.from(getTokenMap().keys()).slice(0, 15).join(", ");
 		throw new StarkfiError(
 			ErrorCode.NO_ROUTE_FOUND,
-			`Token not found: ${symbol}. Available tokens: ${tokens
-				.slice(0, 15)
-				.map((t) => t.symbol)
-				.join(", ")}...`
+			`Token not found: ${symbol}. Available tokens: ${available}...`
 		);
 	}
 

@@ -1,6 +1,4 @@
 import { Amount, fromAddress } from "starkzap";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import {
 	getCalldataBatch,
@@ -9,7 +7,8 @@ import {
 } from "../../services/fibrous/route.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { jsonResult } from "./utils.js";
+import { withWallet } from "./context.js";
+import { jsonResult, simulationResult } from "./utils.js";
 
 async function resolvePairs(
 	swaps: { amount: string; from_token: string; to_token: string }[]
@@ -46,53 +45,44 @@ export async function handleMultiSwap(args: {
 	slippage?: number;
 	simulate?: boolean;
 }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withWallet(async ({ session, wallet }) => {
+		const pairs = await resolvePairs(args.swaps);
+		const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
 
-	await wallet.ensureReady({ deploy: "if_needed" });
+		const builder = wallet.tx();
+		for (let i = 0; i < pairs.length; i++) {
+			const pair = pairs[i];
+			const cd = calldataResults[i];
+			const parsedAmount = Amount.parse(args.swaps[i].amount, pair.tokenIn);
 
-	const pairs = await resolvePairs(args.swaps);
-	const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
+			builder.approve(pair.tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount).add({
+				contractAddress: FIBROUS_ROUTER_ADDRESS,
+				entrypoint: "swap",
+				calldata: cd.calldata,
+			});
+		}
 
-	const builder = wallet.tx();
-	for (let i = 0; i < pairs.length; i++) {
-		const pair = pairs[i];
-		const cd = calldataResults[i];
-		const parsedAmount = Amount.parse(args.swaps[i].amount, pair.tokenIn);
-
-		builder.approve(pair.tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount).add({
-			contractAddress: FIBROUS_ROUTER_ADDRESS,
-			entrypoint: "swap",
-			calldata: cd.calldata,
+		const formatSwap = (i: number) => ({
+			amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
+			expectedAmountOut: `~${Amount.fromRaw(BigInt(calldataResults[i].route.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
 		});
-	}
 
-	const formatSwap = (i: number) => ({
-		amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
-		expectedAmountOut: `~${Amount.fromRaw(BigInt(calldataResults[i].route.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
-	});
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				swaps: pairs.map((_, i) => formatSwap(i)),
+			});
+		}
 
-	if (args.simulate) {
-		const sim = await simulateTransaction(builder);
+		const tx = await builder.send();
+		await tx.wait();
+
 		return jsonResult({
-			success: sim.success,
-			mode: "SIMULATION (no TX sent)",
+			success: true,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 			swaps: pairs.map((_, i) => formatSwap(i)),
-			estimatedFee: sim.estimatedFee,
-			estimatedFeeUsd: sim.estimatedFeeUsd,
-			callCount: sim.callCount,
-			...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+			slippage: `${args.slippage ?? 1}%`,
 		});
-	}
-
-	const tx = await builder.send();
-	await tx.wait();
-
-	return jsonResult({
-		success: true,
-		txHash: tx.hash,
-		explorerUrl: tx.explorerUrl,
-		swaps: pairs.map((_, i) => formatSwap(i)),
-		slippage: `${args.slippage ?? 1}%`,
 	});
 }

@@ -44,8 +44,10 @@ export function resolveFeeModeConfig(
 function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 	const account = wallet.getAccount();
 
-	// Defensive guard — if StarkZap SDK changes the internal method name, fail gracefully
-	const exec = (account as unknown as Record<string, unknown>).executePaymasterTransaction;
+	// Guarded by runtime type check below
+	const accountInternal = account as unknown as Record<string, unknown>;
+
+	const exec = accountInternal.executePaymasterTransaction;
 	if (typeof exec !== "function") {
 		console.warn(
 			"[StarkFi] Cannot patch gasless mode — executePaymasterTransaction not found on account. " +
@@ -56,7 +58,7 @@ function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 
 	const originalExecutePaymaster = (exec as (...args: unknown[]) => unknown).bind(account);
 
-	(account as unknown as Record<string, unknown>).executePaymasterTransaction = async function (
+	accountInternal.executePaymasterTransaction = async function (
 		calls: unknown[],
 		details: Record<string, unknown>,
 		...rest: unknown[]

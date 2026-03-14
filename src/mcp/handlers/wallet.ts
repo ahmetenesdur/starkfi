@@ -1,63 +1,57 @@
 import { requireSession } from "../../services/auth/session.js";
-import {
-	initSDKAndWallet,
-	createSDK,
-	resolveFeeModeConfig,
-} from "../../services/starkzap/client.js";
+import { createSDK, resolveFeeModeConfig } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
 import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { Amount, fromAddress } from "starkzap";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { formatActualFee } from "../../lib/format.js";
-import { jsonResult } from "./utils.js";
+import { withWallet, withReadonlyWallet } from "./context.js";
+import { jsonResult, simulationResult } from "./utils.js";
 
 export async function handleGetBalance(args: { token?: string }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withReadonlyWallet(async ({ session, wallet }) => {
+		if (args.token) {
+			const tokenType = resolveToken(args.token);
+			const balanceAmount = await wallet.balanceOf(tokenType);
+			return jsonResult({
+				symbol: tokenType.symbol,
+				name: tokenType.name,
+				balance: balanceAmount.toUnit(),
+			});
+		}
 
-	if (args.token) {
-		const tokenType = resolveToken(args.token);
-
-		const balanceAmount = await wallet.balanceOf(tokenType);
+		const balances = await getBalances(wallet);
 		return jsonResult({
-			symbol: tokenType.symbol,
-			name: tokenType.name,
-			balance: balanceAmount.toUnit(),
+			network: session.network,
+			address: session.address,
+			balances,
 		});
-	}
-
-	const balances = await getBalances(wallet);
-	return jsonResult({
-		network: session.network,
-		address: session.address,
-		balances,
 	});
 }
 
 export async function handleDeployAccount() {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withReadonlyWallet(async ({ session, wallet }) => {
+		const alreadyDeployed = await wallet.isDeployed();
 
-	const alreadyDeployed = await wallet.isDeployed();
+		if (!alreadyDeployed) {
+			const configService = ConfigService.getInstance();
+			const gasfreeMode = configService.get("gasfreeMode") === true;
+			const gasToken = configService.get("gasToken") as string | undefined;
+			const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
-	if (!alreadyDeployed) {
-		const configService = ConfigService.getInstance();
-		const gasfreeMode = configService.get("gasfreeMode") === true;
-		const gasToken = configService.get("gasToken") as string | undefined;
-		const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
+			await wallet.ensureReady({ deploy: "if_needed", feeMode });
+		}
 
-		await wallet.ensureReady({ deploy: "if_needed", feeMode });
-	}
-
-	return jsonResult({
-		alreadyDeployed,
-		success: true,
-		address: session.address,
-		network: session.network,
-		message: alreadyDeployed
-			? "Account is already deployed. No action needed."
-			: "Account deployed successfully. You can now send, swap, and stake.",
+		return jsonResult({
+			alreadyDeployed,
+			success: true,
+			address: session.address,
+			network: session.network,
+			message: alreadyDeployed
+				? "Account is already deployed. No action needed."
+				: "Account deployed successfully. You can now send, swap, and stake.",
+		});
 	});
 }
 
@@ -67,48 +61,38 @@ export async function handleSendTokens(args: {
 	recipient: string;
 	simulate?: boolean;
 }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withWallet(async ({ wallet }) => {
+		const token = resolveToken(args.token);
+		const amount = Amount.parse(args.amount, token);
 
-	await wallet.ensureReady({ deploy: "if_needed" });
+		const balance = await wallet.balanceOf(token);
+		if (balance.lt(amount)) {
+			return jsonResult({
+				success: false,
+				error: `Insufficient balance. You have: ${balance.toFormatted()}, attempting to send: ${amount.toFormatted()}`,
+			});
+		}
 
-	const token = resolveToken(args.token);
+		const builder = wallet.tx().transfer(token, [{ to: fromAddress(args.recipient), amount }]);
 
-	const amount = Amount.parse(args.amount, token);
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				amount: `${args.amount} ${args.token.toUpperCase()}`,
+				to: args.recipient,
+			});
+		}
 
-	const balance = await wallet.balanceOf(token);
-	if (balance.lt(amount)) {
+		const tx = await builder.send();
+		await tx.wait();
+
 		return jsonResult({
-			success: false,
-			error: `Insufficient balance. You have: ${balance.toFormatted()}, attempting to send: ${amount.toFormatted()}`,
-		});
-	}
-
-	const builder = wallet.tx().transfer(token, [{ to: fromAddress(args.recipient), amount }]);
-
-	if (args.simulate) {
-		const sim = await simulateTransaction(builder);
-		return jsonResult({
-			success: sim.success,
-			mode: "SIMULATION (no TX sent)",
+			success: true,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 			amount: `${args.amount} ${args.token.toUpperCase()}`,
 			to: args.recipient,
-			estimatedFee: sim.estimatedFee,
-			estimatedFeeUsd: sim.estimatedFeeUsd,
-			callCount: sim.callCount,
-			...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
 		});
-	}
-
-	const tx = await builder.send();
-	await tx.wait();
-
-	return jsonResult({
-		success: true,
-		txHash: tx.hash,
-		explorerUrl: tx.explorerUrl,
-		amount: `${args.amount} ${args.token.toUpperCase()}`,
-		to: args.recipient,
 	});
 }
 

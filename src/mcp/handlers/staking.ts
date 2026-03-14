@@ -1,24 +1,21 @@
 import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as stakingService from "../../services/staking/staking.js";
 import { getValidators, findValidator } from "../../services/staking/validators.js";
+import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, textResult } from "./utils.js";
 
 export async function handleStakeTokens(args: { amount: string; pool: string; token?: string }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withWallet(async ({ wallet }) => {
+		const tokenSymbol = (args.token ?? "STRK").toUpperCase();
+		const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol);
 
-	await wallet.ensureReady({ deploy: "if_needed" });
-
-	const tokenSymbol = (args.token ?? "STRK").toUpperCase();
-	const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol);
-
-	return jsonResult({
-		success: true,
-		txHash: result.hash,
-		explorerUrl: result.explorerUrl,
-		amount: `${args.amount} ${tokenSymbol}`,
-		pool: args.pool,
+		return jsonResult({
+			success: true,
+			txHash: result.hash,
+			explorerUrl: result.explorerUrl,
+			amount: `${args.amount} ${tokenSymbol}`,
+			pool: args.pool,
+		});
 	});
 }
 
@@ -28,82 +25,77 @@ export async function handleUnstakeTokens(args: {
 	amount?: string;
 	token?: string;
 }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
-
-	await wallet.ensureReady({ deploy: "if_needed" });
-
-	if (args.action === "intent") {
-		if (!args.amount) {
-			return textResult("Amount is required for exit intent.");
+	return withWallet(async ({ wallet }) => {
+		if (args.action === "intent") {
+			if (!args.amount) {
+				return textResult("Amount is required for exit intent.");
+			}
+			const tokenSymbol = (args.token ?? "STRK").toUpperCase();
+			const result = await stakingService.exitPoolIntent(
+				wallet,
+				args.pool,
+				args.amount,
+				tokenSymbol
+			);
+			return jsonResult({
+				success: true,
+				action: "exit_intent",
+				txHash: result.hash,
+				explorerUrl: result.explorerUrl,
+				message:
+					"Exit intent declared. Wait for cooldown period, then call with action='exit'.",
+			});
 		}
-		const tokenSymbol = (args.token ?? "STRK").toUpperCase();
-		const result = await stakingService.exitPoolIntent(
-			wallet,
-			args.pool,
-			args.amount,
-			tokenSymbol
-		);
+
+		// action === "exit"
+		const result = await stakingService.exitPool(wallet, args.pool);
 		return jsonResult({
 			success: true,
-			action: "exit_intent",
+			action: "exit_complete",
 			txHash: result.hash,
 			explorerUrl: result.explorerUrl,
-			message:
-				"Exit intent declared. Wait for cooldown period, then call with action='exit'.",
+			message: "Tokens withdrawn from pool.",
 		});
-	}
-
-	// action === "exit"
-	const result = await stakingService.exitPool(wallet, args.pool);
-	return jsonResult({
-		success: true,
-		action: "exit_complete",
-		txHash: result.hash,
-		explorerUrl: result.explorerUrl,
-		message: "Tokens withdrawn from pool.",
 	});
 }
 
 export async function handleGetStakingInfo(args: { pool: string }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withReadonlyWallet(async ({ wallet }) => {
+		const position = await stakingService.getPosition(wallet, args.pool);
 
-	const position = await stakingService.getPosition(wallet, args.pool);
+		if (!position) {
+			return jsonResult({
+				isMember: false,
+				pool: args.pool,
+				message: "Not a member of this pool.",
+			});
+		}
 
-	if (!position) {
 		return jsonResult({
-			isMember: false,
+			isMember: true,
 			pool: args.pool,
-			message: "Not a member of this pool.",
+			staked: position.staked,
+			rewards: position.rewards,
+			total: position.total,
+			unpooling: position.unpooling,
+			cooldownEndsAt: position.unpoolTime ? position.unpoolTime.toISOString() : null,
+			commissionPercent: position.commissionPercent,
 		});
-	}
-
-	return jsonResult({
-		isMember: true,
-		pool: args.pool,
-		staked: position.staked,
-		rewards: position.rewards,
-		total: position.total,
-		unpooling: position.unpooling,
-		cooldownEndsAt: position.unpoolTime ? position.unpoolTime.toISOString() : null,
-		commissionPercent: position.commissionPercent,
 	});
 }
 
 export async function handleListPools(args: { validator: string }) {
-	const session = requireSession();
-	const { sdk, wallet } = await initSDKAndWallet(session);
+	return withReadonlyWallet(async ({ session, sdk, wallet }) => {
+		const found = findValidator(args.validator, session.network);
+		const stakerAddress = found ? found.stakerAddress.toString() : args.validator;
 
-	const found = findValidator(args.validator, session.network);
-	const stakerAddress = found ? found.stakerAddress.toString() : args.validator;
+		const pools = await stakingService.getValidatorPools(sdk, stakerAddress, wallet);
 
-	const pools = await stakingService.getValidatorPools(sdk, stakerAddress, wallet);
-
-	return jsonResult({
-		validator: found ? found.name : args.validator,
-		stakerAddress,
-		pools,
+		return jsonResult({
+			validator: found ? found.name : args.validator,
+			stakerAddress,
+			pools,
+		});
 	});
 }
 
@@ -122,47 +114,40 @@ export async function handleListValidators() {
 }
 
 export async function handleClaimRewards(args: { pool: string }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withWallet(async ({ wallet }) => {
+		const result = await stakingService.claimRewards(wallet, args.pool);
 
-	await wallet.ensureReady({ deploy: "if_needed" });
-
-	const result = await stakingService.claimRewards(wallet, args.pool);
-
-	return jsonResult({
-		success: true,
-		txHash: result.hash,
-		explorerUrl: result.explorerUrl,
+		return jsonResult({
+			success: true,
+			txHash: result.hash,
+			explorerUrl: result.explorerUrl,
+		});
 	});
 }
 
 export async function handleCompoundRewards(args: { pool: string }) {
-	const session = requireSession();
-	const { wallet } = await initSDKAndWallet(session);
+	return withWallet(async ({ wallet }) => {
+		const result = await stakingService.compoundRewards(wallet, args.pool);
 
-	await wallet.ensureReady({ deploy: "if_needed" });
-
-	const result = await stakingService.compoundRewards(wallet, args.pool);
-
-	return jsonResult({
-		success: true,
-		txHash: result.hash,
-		explorerUrl: result.explorerUrl,
-		compounded: result.compounded,
+		return jsonResult({
+			success: true,
+			txHash: result.hash,
+			explorerUrl: result.explorerUrl,
+			compounded: result.compounded,
+		});
 	});
 }
 
 export async function handleGetStakeStatus({ validator }: { validator?: string } = {}) {
-	const session = requireSession();
-	const { sdk, wallet } = await initSDKAndWallet(session);
+	return withReadonlyWallet(async ({ session, sdk, wallet }) => {
+		const overview = await stakingService.getStakingOverview(
+			sdk,
+			wallet,
+			session.network,
+			session.address,
+			validator
+		);
 
-	const overview = await stakingService.getStakingOverview(
-		sdk,
-		wallet,
-		session.network,
-		session.address,
-		validator
-	);
-
-	return jsonResult(overview);
+		return jsonResult(overview);
+	});
 }

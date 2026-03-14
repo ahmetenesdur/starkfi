@@ -3,18 +3,8 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as lendingService from "../../services/vesu/lending.js";
 import chalk from "chalk";
-import { getVesuPools, findPoolEntry } from "../../services/vesu/pools.js";
+import { getVesuPools, resolvePoolAddress } from "../../services/vesu/pools.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
-import { validateAddress } from "../../lib/validation.js";
-
-function resolvePoolAddress(
-	poolQuery: string,
-	network: "mainnet" | "sepolia"
-): { address: string; name: string | null } {
-	const found = findPoolEntry(poolQuery, network);
-	if (found) return { address: found.address, name: found.name };
-	return { address: validateAddress(poolQuery), name: null };
-}
 
 function handleLendingError(error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
@@ -442,10 +432,9 @@ export function registerLendStatusCommand(program: Command): void {
 					const { wallet } = await initSDKAndWallet(session);
 
 					const pools = await getVesuPools(session.network);
-					const positions: { pool: string; asset: string; supplied: string }[] = [];
 
-					for (const pool of pools) {
-						for (const asset of pool.assets) {
+					const tasks = pools.flatMap((pool) =>
+						pool.assets.map(async (asset) => {
 							try {
 								const supplied = await lendingService.getSuppliedBalance(
 									wallet,
@@ -453,17 +442,27 @@ export function registerLendStatusCommand(program: Command): void {
 									asset.symbol
 								);
 								if (supplied && supplied !== "0") {
-									positions.push({
-										pool: pool.name,
-										asset: asset.symbol,
-										supplied,
-									});
+									return { pool: pool.name, asset: asset.symbol, supplied };
 								}
 							} catch {
 								// skip assets that fail
 							}
-						}
-					}
+							return null;
+						})
+					);
+
+					const results = await Promise.allSettled(tasks);
+					const positions = results
+						.filter(
+							(
+								r
+							): r is PromiseFulfilledResult<{
+								pool: string;
+								asset: string;
+								supplied: string;
+							}> => r.status === "fulfilled" && r.value !== null
+						)
+						.map((r) => r.value);
 
 					if (positions.length === 0) {
 						spinner.info("No active lending positions found");

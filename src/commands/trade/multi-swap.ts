@@ -13,7 +13,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-/** Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs. */
+// Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs.
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
 	const segments = input.split(",").map((s) => s.trim());
 	const parsed = [];

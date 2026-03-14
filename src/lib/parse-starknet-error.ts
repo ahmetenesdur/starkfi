@@ -1,10 +1,6 @@
-/**
- * Maps raw Starknet/Cairo execution errors to human-readable messages.
- *
- * Cairo errors are short-strings encoded as hex felt values inside nested
- * `TRANSACTION_EXECUTION_ERROR` / `execution_error` payloads. This module
- * extracts the decoded short-strings and maps known patterns to friendly text.
- */
+// Maps raw Starknet/Cairo execution errors to human-readable messages.
+// Cairo errors are short-strings encoded as hex felt values inside
+// TRANSACTION_EXECUTION_ERROR payloads.
 
 const ERROR_MAP: [pattern: RegExp, message: string][] = [
 	[
@@ -34,12 +30,7 @@ const ERROR_MAP: [pattern: RegExp, message: string][] = [
 	[/nonce/i, "Transaction nonce error — please retry"],
 ];
 
-/**
- * Extract the innermost meaningful error from a Starknet execution error.
- *
- * Strips away the verbose RPC envelope, JSON-RPC params dump, and nested
- * `ENTRYPOINT_FAILED` wrappers to surface the actual root cause.
- */
+// Extract the innermost meaningful error from a Starknet execution error.
 export function parseStarknetError(raw: string): string {
 	// Try to extract the execution_error JSON field from the raw dump.
 	const execMatch = raw.match(/execution_error["']?\s*:\s*["'](.+?)["']\s*\}/s);
@@ -66,7 +57,7 @@ export function parseStarknetError(raw: string): string {
 	return raw;
 }
 
-/** Decode hex-encoded Cairo short-strings like ('u256_sub Overflow') inline. */
+// Decode hex-encoded Cairo short-strings inline.
 function decodeHexStrings(input: string): string {
 	// Already-decoded strings in parenthesized comments: 0x... ('readable')
 	// Extract the readable parts and discard hex.
