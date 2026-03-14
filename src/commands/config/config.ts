@@ -142,4 +142,14 @@ export function registerConfigCommand(program: Command): void {
 				})
 			);
 		});
+
+	configCmd
+		.command("reset")
+		.description("Reset all configuration to defaults")
+		.addHelpText("after", "\nExample:\n  $ starkfi config reset")
+		.action(() => {
+			const configService = ConfigService.getInstance();
+			configService.clear();
+			console.log(success("All settings reset to defaults."));
+		});
 }

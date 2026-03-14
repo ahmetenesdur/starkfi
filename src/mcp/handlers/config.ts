@@ -3,7 +3,7 @@ import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
 import { jsonResult, textResult } from "./utils.js";
 
 export async function handleConfigAction(args: {
-	action: "set-rpc" | "get-rpc" | "set-network" | "set-gasfree" | "set-gas-token" | "list";
+	action: "set-rpc" | "get-rpc" | "set-network" | "set-gasfree" | "set-gas-token" | "list" | "reset";
 	value?: string;
 }) {
 	const configService = ConfigService.getInstance();
@@ -72,6 +72,10 @@ export async function handleConfigAction(args: {
 			if (gasfreeMode) feeMode = "gasfree (developer-sponsored via Paymaster)";
 			else if (gasToken) feeMode = `gasless (pays ${gasToken} via Paymaster)`;
 			return jsonResult({ ...all, feeMode });
+		}
+		case "reset": {
+			configService.clear();
+			return jsonResult({ success: true, note: "All settings reset to defaults." });
 		}
 		default:
 			return textResult(`Unknown action: ${args.action}`);

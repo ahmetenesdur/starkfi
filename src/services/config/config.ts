@@ -44,6 +44,11 @@ export class ConfigService {
 		this.save();
 	}
 
+	clear(): void {
+		this.config = {};
+		this.save();
+	}
+
 	getAll(): StarkfiConfig {
 		this.refreshIfChanged();
 		return { ...this.config };
