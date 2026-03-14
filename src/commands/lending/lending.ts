@@ -456,7 +456,7 @@ export function registerLendStatusCommand(program: Command): void {
 									positions.push({
 										pool: pool.name,
 										asset: asset.symbol,
-												supplied,
+										supplied,
 									});
 								}
 							} catch {

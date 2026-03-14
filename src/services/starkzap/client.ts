@@ -69,18 +69,23 @@ function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 		return originalExecutePaymaster(calls, patchedDetails, ...rest);
 	};
 }
+
 export function createSDK(
 	network: Network = "mainnet",
 	rpcUrl?: string,
 	needsPaymaster = false,
-	paymasterUrl?: string
+	paymasterUrl?: string,
+	paymasterHeaders?: Record<string, string>
 ): StarkZap {
 	const config: ConstructorParameters<typeof StarkZap>[0] = { network };
 	if (rpcUrl) config.rpcUrl = rpcUrl;
 
 	if (needsPaymaster) {
 		const defaultUrl = network === "sepolia" ? AVNU_PAYMASTER_SEPOLIA_URL : AVNU_PAYMASTER_URL;
-		config.paymaster = { nodeUrl: paymasterUrl ?? defaultUrl };
+		config.paymaster = {
+			nodeUrl: paymasterUrl ?? defaultUrl,
+			...(paymasterHeaders ? { headers: paymasterHeaders } : {}),
+		};
 	}
 
 	return new StarkZap(config);
@@ -130,7 +135,10 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 			? session.serverUrl.replace("/sign/hash", "/paymaster")
 			: undefined;
 
-	const sdk = createSDK(session.network, rpcUrl, needsPaymaster, paymasterUrl);
+	const paymasterHeaders =
+		paymasterUrl && session.token ? { Authorization: `Bearer ${session.token}` } : undefined;
+
+	const sdk = createSDK(session.network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
 	const wallet = await connectWallet(sdk, session);
 
 	return { sdk, wallet, gasTokenAddress };
