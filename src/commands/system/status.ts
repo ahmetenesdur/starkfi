@@ -18,9 +18,7 @@ export function registerStatusCommand(program: Command): void {
 
 				if (!session) {
 					console.log(warn("Not authenticated"));
-					console.log(
-						"  Run 'starkfi auth login' to connect a wallet.\n"
-					);
+					console.log("  Run 'starkfi auth login' to connect a wallet.\n");
 				} else {
 					console.log(success("Authenticated"));
 					console.log(

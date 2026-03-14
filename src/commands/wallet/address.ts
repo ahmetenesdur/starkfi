@@ -10,11 +10,7 @@ export function registerAddressCommand(program: Command): void {
 			const session = loadSession();
 
 			if (!session) {
-				console.log(
-					warn(
-						"Not authenticated. Run 'starkfi auth login' first."
-					)
-				);
+				console.log(warn("Not authenticated. Run 'starkfi auth login' first."));
 				process.exit(1);
 			}
 
