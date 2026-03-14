@@ -1,4 +1,5 @@
 import { StarkfiError } from "../../lib/errors.js";
+import { parseStarknetError } from "../../lib/parse-starknet-error.js";
 
 export function withErrorHandling<
 	T extends (...args: never[]) => Promise<{ content: { type: "text"; text: string }[] }>,
@@ -19,7 +20,7 @@ export function withErrorHandling<
 						text: JSON.stringify(
 							{
 								success: false,
-								error: message,
+								error: parseStarknetError(message),
 								code: isStarkfiError ? error.code : "UNKNOWN_ERROR",
 								...(isStarkfiError && error.details
 									? { details: error.details }
