@@ -10,8 +10,9 @@ import {
 } from "../../services/fibrous/route.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
+import { createSpinner, formatTable, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { outputResult } from "../../lib/cli-helpers.js";
 
 // Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs.
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
@@ -148,11 +149,7 @@ export function registerMultiSwapCommand(program: Command): void {
 						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
 					};
 
-					if (opts.json) {
-						console.log(JSON.stringify(simResult, null, 2));
-					} else {
-						console.log(formatResult(simResult));
-					}
+					outputResult(simResult, opts);
 					return;
 				}
 
@@ -169,11 +166,7 @@ export function registerMultiSwapCommand(program: Command): void {
 					explorer: tx.explorerUrl,
 				};
 
-				if (opts.json) {
-					console.log(JSON.stringify(txResult, null, 2));
-				} else {
-					console.log(formatResult(txResult));
-				}
+				outputResult(txResult, opts);
 			} catch (error) {
 				spinner.fail("Multi-swap failed");
 				console.error(formatError(error));

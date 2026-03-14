@@ -28,6 +28,14 @@ const ERROR_MAP: [pattern: RegExp, message: string][] = [
 	],
 	[/UNAUTHORIZED/i, "Unauthorized — session may have expired, try: starkfi auth login"],
 	[/nonce/i, "Transaction nonce error — please retry"],
+	[
+		/dusty-collateral-balance/i,
+		"Collateral amount is below the pool's minimum (dust limit). Please increase the amount.",
+	],
+	[
+		/dusty-debt-balance/i,
+		"Borrow amount is below the pool's minimum (dust limit). Please increase the amount.",
+	],
 ];
 
 // Extract the innermost meaningful error from a Starknet execution error.

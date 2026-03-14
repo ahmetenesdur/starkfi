@@ -44,22 +44,19 @@ export function registerDeployCommand(program: Command): void {
 
 				if (wasAlreadyDeployed) {
 					spinner.succeed("Account already deployed");
-					console.log(
-						formatResult({
-							address: session.address,
-							network: session.network,
-							status: "deployed",
-						})
-					);
 				} else {
 					spinner.succeed("Account deployed successfully");
-					console.log(
-						formatResult({
-							address: session.address,
-							network: session.network,
-							status: "deployed",
-						})
-					);
+				}
+
+				console.log(
+					formatResult({
+						address: session.address,
+						network: session.network,
+						status: "deployed",
+					})
+				);
+
+				if (!wasAlreadyDeployed) {
 					console.log(
 						success(
 							"Your account is ready! You can now use send, swap, and other commands."
@@ -67,10 +64,10 @@ export function registerDeployCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				const msg = error instanceof Error ? error.message : String(error);
-				console.error(formatError(error));
 				spinner.fail("Deployment failed");
+				console.error(formatError(error));
 
+				const msg = error instanceof Error ? error.message : String(error);
 				if (msg.includes("exceed balance") || msg.includes("insufficient")) {
 					console.error(
 						warn(
@@ -81,8 +78,6 @@ export function registerDeployCommand(program: Command): void {
 								`  starkfi config set-gasfree on`
 						)
 					);
-				} else {
-					console.error(msg);
 				}
 
 				process.exit(1);

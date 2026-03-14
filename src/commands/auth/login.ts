@@ -10,15 +10,15 @@ export function registerLoginCommand(program: Command): void {
 		.command("login <email>")
 		.description("Send OTP to email for Privy wallet authentication")
 		.action(async (email: string) => {
+			const spinner = createSpinner("Sending OTP...").start();
 			try {
-				const spinner = createSpinner("Sending OTP...").start();
-
 				await apiLogin(email);
 
 				spinner.succeed("OTP sent");
 				console.log(success(`Check your email (${email}) for the code.`));
 				console.log(`Run: starkfi auth verify ${email} <code>`);
 			} catch (error) {
+				spinner.fail("Login failed");
 				console.error(formatError(error));
 				process.exit(1);
 			}

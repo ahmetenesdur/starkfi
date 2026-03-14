@@ -3,7 +3,8 @@ import { requireSession } from "../../services/auth/session.js";
 import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
-import { createSpinner, formatTable, formatResult, formatError } from "../../lib/format.js";
+import { createSpinner, formatTable, formatError } from "../../lib/format.js";
+import { outputResult } from "../../lib/cli-helpers.js";
 
 export function registerBalanceCommand(program: Command): void {
 	program
@@ -25,42 +26,37 @@ export function registerBalanceCommand(program: Command): void {
 					spinner.stop();
 
 					if (opts.json) {
-						console.log(
-							JSON.stringify(
-								{
-									token: tokenType.symbol,
-									balance: balanceAmount.toUnit(),
-									network: session.network,
-								},
-								null,
-								2
-							)
+						outputResult(
+							{
+								token: tokenType.symbol,
+								balance: balanceAmount.toUnit(),
+								network: session.network,
+							},
+							opts
 						);
 						return;
 					}
 
-					console.log(
-						formatResult({
+					outputResult(
+						{
 							token: tokenType.symbol,
 							balance: balanceAmount.toUnit(),
 							network: session.network,
-						})
+						},
+						opts
 					);
 				} else {
 					const balances = await getBalances(wallet);
 					spinner.stop();
 
 					if (opts.json) {
-						console.log(
-							JSON.stringify(
-								{
-									wallet: session.address,
-									network: session.network,
-									tokens: balances,
-								},
-								null,
-								2
-							)
+						outputResult(
+							{
+								wallet: session.address,
+								network: session.network,
+								tokens: balances,
+							},
+							opts
 						);
 						return;
 					}

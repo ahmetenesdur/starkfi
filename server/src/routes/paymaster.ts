@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { config } from "../lib/config.js";
 import { authMiddleware } from "../middleware/auth.js";
 
@@ -32,8 +33,7 @@ paymaster.post("/", async (c) => {
 			console.warn(`[Paymaster Proxy] Error ${response.status}:`, JSON.stringify(data));
 		}
 
-		// @ts-expect-error Hono type doesn't natively accept variable number, but it's fine
-		return c.json(data, response.status);
+		return c.json(data, response.status as ContentfulStatusCode);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		console.error(`[Paymaster Proxy] Exception:`, message);

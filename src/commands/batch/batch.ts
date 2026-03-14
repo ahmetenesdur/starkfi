@@ -3,7 +3,8 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { buildBatch, type BatchOperation } from "../../services/batch/batch.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { createSpinner, formatResult, formatError } from "../../lib/format.js";
+import { createSpinner, formatError } from "../../lib/format.js";
+import { outputResult } from "../../lib/cli-helpers.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 // Collect repeatable options into array.
@@ -153,11 +154,7 @@ Minimum 2 operations required. Each flag can be repeated.`
 						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
 					};
 
-					if (opts.json) {
-						console.log(JSON.stringify(simResult, null, 2));
-					} else {
-						console.log(formatResult(simResult));
-					}
+					outputResult(simResult, opts);
 					return;
 				}
 
@@ -175,11 +172,7 @@ Minimum 2 operations required. Each flag can be repeated.`
 					explorer: tx.explorerUrl,
 				};
 
-				if (opts.json) {
-					console.log(JSON.stringify(txResult, null, 2));
-				} else {
-					console.log(formatResult(txResult));
-				}
+				outputResult(txResult, opts);
 			} catch (error) {
 				spinner.fail("Batch failed");
 				console.error(formatError(error));

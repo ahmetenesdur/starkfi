@@ -3,10 +3,11 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { getRoute, getCalldata } from "../../services/fibrous/route.js";
-import { createSpinner, formatResult, formatError } from "../../lib/format.js";
+import { createSpinner, formatError } from "../../lib/format.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { Amount, fromAddress } from "starkzap";
+import { outputResult } from "../../lib/cli-helpers.js";
 
 export function registerSwapCommand(program: Command): void {
 	program
@@ -90,11 +91,7 @@ export function registerSwapCommand(program: Command): void {
 						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
 					};
 
-					if (opts.json) {
-						console.log(JSON.stringify(simResult, null, 2));
-					} else {
-						console.log(formatResult(simResult));
-					}
+					outputResult(simResult, opts);
 					return;
 				}
 
@@ -112,11 +109,7 @@ export function registerSwapCommand(program: Command): void {
 					explorer: tx.explorerUrl,
 				};
 
-				if (opts.json) {
-					console.log(JSON.stringify(txResult, null, 2));
-				} else {
-					console.log(formatResult(txResult));
-				}
+				outputResult(txResult, opts);
 			} catch (error) {
 				spinner.fail("Swap failed");
 				console.error(formatError(error));

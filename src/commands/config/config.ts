@@ -4,6 +4,7 @@ import { success, formatResult, warn } from "../../lib/format.js";
 import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
 
 export function registerConfigCommand(program: Command): void {
+	const configService = ConfigService.getInstance();
 	const configCmd = program.command("config").description("Manage starkfi configuration");
 
 	configCmd
@@ -15,7 +16,6 @@ export function registerConfigCommand(program: Command): void {
 			"\nExample:\n  $ starkfi config set-rpc https://starknet-mainnet.g.alchemy.com/v2/<key>"
 		)
 		.action((url: string) => {
-			const configService = ConfigService.getInstance();
 			configService.set("rpcUrl", url);
 			console.log(success(`RPC URL set to: ${url}`));
 		});
@@ -25,7 +25,6 @@ export function registerConfigCommand(program: Command): void {
 		.description("Show the current RPC URL")
 		.addHelpText("after", "\nExample:\n  $ starkfi config get-rpc")
 		.action(() => {
-			const configService = ConfigService.getInstance();
 			const rpcUrl = configService.get("rpcUrl") as string | undefined;
 			console.log(
 				formatResult({
@@ -47,7 +46,6 @@ export function registerConfigCommand(program: Command): void {
 				console.log(warn("Network must be 'mainnet' or 'sepolia'"));
 				process.exit(1);
 			}
-			const configService = ConfigService.getInstance();
 			configService.set("network", network);
 			console.log(success(`Network set to: ${network}`));
 		});
@@ -66,7 +64,6 @@ export function registerConfigCommand(program: Command): void {
 				console.log(warn("Mode must be 'on' or 'off'"));
 				process.exit(1);
 			}
-			const configService = ConfigService.getInstance();
 			configService.set("gasfreeMode", mode === "on");
 			if (mode === "on") {
 				// Gasfree and Gasless are mutually exclusive
@@ -92,7 +89,6 @@ export function registerConfigCommand(program: Command): void {
 			`\nExamples:\n  $ starkfi config set-gas-token ETH\n  $ starkfi config set-gas-token USDC\n  $ starkfi config set-gas-token reset    # revert to STRK`
 		)
 		.action((token: string) => {
-			const configService = ConfigService.getInstance();
 			if (["off", "reset", "default"].includes(token.toLowerCase())) {
 				configService.delete("gasToken");
 				console.log(success("Gas token reset to default: STRK"));
@@ -120,7 +116,6 @@ export function registerConfigCommand(program: Command): void {
 		.description("Show all configuration settings")
 		.addHelpText("after", "\nExample:\n  $ starkfi config list")
 		.action(() => {
-			const configService = ConfigService.getInstance();
 			const all = configService.getAll();
 
 			if (Object.keys(all).length === 0) {
@@ -148,7 +143,6 @@ export function registerConfigCommand(program: Command): void {
 		.description("Reset all configuration to defaults")
 		.addHelpText("after", "\nExample:\n  $ starkfi config reset")
 		.action(() => {
-			const configService = ConfigService.getInstance();
 			configService.clear();
 			console.log(success("All settings reset to defaults."));
 		});

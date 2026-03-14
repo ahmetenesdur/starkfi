@@ -4,7 +4,9 @@ import { logger } from "hono/logger";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { errorResponse } from "./lib/errors.js";
+import { config } from "./lib/config.js";
 import authRoutes from "./routes/auth.js";
 import walletRoutes from "./routes/wallet.js";
 import signRoutes from "./routes/sign.js";
@@ -17,8 +19,8 @@ app.use("*", logger());
 app.use("*", secureHeaders());
 app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-	? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+const allowedOrigins = config.ALLOWED_ORIGINS
+	? config.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
 	: [];
 
 app.use(
@@ -53,7 +55,7 @@ app.get("/health", (c) => {
 
 app.onError((err, c) => {
 	const { status, body } = errorResponse(err);
-	return c.json(body, status as 400 | 401 | 403 | 500);
+	return c.json(body, status as ContentfulStatusCode);
 });
 
 app.notFound((c) => {
@@ -68,7 +70,7 @@ app.notFound((c) => {
 	);
 });
 
-const port = Number(process.env.PORT) || 3001;
+const port = config.PORT;
 
 export default app;
 

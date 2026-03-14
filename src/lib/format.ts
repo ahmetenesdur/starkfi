@@ -128,4 +128,8 @@ class NonTtySpinner {
 		console.log(chalk.hex(BLUE)(`ℹ ${msg}`));
 		return this;
 	}
+	warn(msg: string): this {
+		console.log(chalk.yellow(`⚠ ${msg}`));
+		return this;
+	}
 }
