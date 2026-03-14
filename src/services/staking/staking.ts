@@ -230,8 +230,13 @@ export async function getStakingOverview(
 	// Discover all pools across all validators concurrently.
 	const validatorPools = await Promise.all(
 		validators.map(async (v) => {
-			const pools = await sdk.getStakerPools(v.stakerAddress);
-			return pools.map((p) => ({ validator: v.name, pool: p }));
+			try {
+				const pools = await sdk.getStakerPools(v.stakerAddress);
+				return pools.map((p) => ({ validator: v.name, pool: p }));
+			} catch {
+				// Validator's staker contract may not exist on-chain
+				return [];
+			}
 		})
 	);
 
@@ -240,7 +245,13 @@ export async function getStakingOverview(
 	// Query positions for all discovered pools concurrently.
 	const results = await Promise.all(
 		allPools.map(async ({ validator, pool: p }) => {
-			const position = await wallet.getPoolPosition(p.poolContract);
+			let position;
+			try {
+				position = await wallet.getPoolPosition(p.poolContract);
+			} catch {
+				// "Staker does not exist" — user has no position in this pool
+				return null;
+			}
 			if (!position) return null;
 
 			return {
