@@ -35,7 +35,7 @@ Manage lending and borrowing positions on Vesu V2 protocol on Starknet. Supply a
 
 1. BEFORE any lending action, run `npx starkfi@latest lend-pools` to discover available pools and tokens. Use `lend-pools <name>` for detailed pool info including APY rates.
 2. Pool can be specified by **name** (e.g. `Prime`, `Genesis`) or by **contract address** (`0x...`).
-3. BEFORE borrowing, run `npx starkfi@latest lend-status` to check Health Factor:
+3. BEFORE borrowing, run `npx starkfi@latest lend-status` to check existing positions, or with `--pool` and `--collateral-token` for Health Factor:
     - Health Factor **> 2.0** → Safe to borrow.
     - Health Factor **1.5 – 2.0** → WARN the user about increasing risk.
     - Health Factor **< 1.5** → STRONGLY advise against borrowing. Suggest repaying instead.
@@ -54,7 +54,10 @@ npx starkfi@latest lend-pools [--json]
 # Detailed pool info with APY rates
 npx starkfi@latest lend-pools <name> [--json]
 
-# View position status
+# View all lending positions (auto-scan)
+npx starkfi@latest lend-status
+
+# View specific position status
 npx starkfi@latest lend-status --pool <name|address> --collateral-token <symbol> [--borrow-token <symbol>]
 ```
 
@@ -129,11 +132,15 @@ npx starkfi@latest lend-close --pool <name|address> --collateral-token <symbol> 
 
 ### lend-status
 
-| Parameter            | Type   | Description                            | Required |
-| -------------------- | ------ | -------------------------------------- | -------- |
-| `--pool`             | string | Pool name or address                   | Yes      |
-| `--collateral-token` | string | Token supplied/used as collateral      | Yes      |
-| `--borrow-token`     | string | Borrow token (needed to see debt + HF) | No       |
+Run without arguments to **auto-scan all pools**. Or specify `--pool` + `--collateral-token` for a detailed position view.
+
+| Parameter            | Type   | Description                            | Required              |
+| -------------------- | ------ | -------------------------------------- | --------------------- |
+| `--pool`             | string | Pool name or address                   | No (auto-scan if omitted) |
+| `--collateral-token` | string | Token supplied/used as collateral      | No*                   |
+| `--borrow-token`     | string | Borrow token (needed to see debt + HF) | No                    |
+
+> \* Required when `--pool` is specified.
 
 ## Examples
 
@@ -161,7 +168,7 @@ npx starkfi@latest tx-status <hash>
 **User:** "Borrow 100 USDC with ETH collateral from Prime"
 
 ```bash
-npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-token USDC
+npx starkfi@latest lend-status
 # Check Health Factor before proceeding
 npx starkfi@latest lend-borrow \
   --pool Prime \
@@ -187,6 +194,10 @@ npx starkfi@latest tx-status <hash>
 **User:** "How healthy is my position?"
 
 ```bash
+# Quick overview of all positions
+npx starkfi@latest lend-status
+
+# Detailed health factor for specific position
 npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-token USDC
 ```
 

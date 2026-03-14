@@ -419,8 +419,8 @@ export function registerLendStatusCommand(program: Command): void {
 	program
 		.command("lend-status")
 		.description("View your lending position and supplied assets in a Vesu V2 pool")
-		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
-		.requiredOption(
+		.option("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
+		.option(
 			"--collateral-token <symbol>",
 			"Token supplied to vToken and/or Pool (e.g. 'ETH', 'STRK')"
 		)
@@ -430,9 +430,73 @@ export function registerLendStatusCommand(program: Command): void {
 		)
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC"
+			"\nExamples:\n  $ starkfi lend-status\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC"
 		)
 		.action(async (opts) => {
+			// If no pool specified, auto-scan all pools
+			if (!opts.pool) {
+				const spinner = createSpinner("Scanning all lending positions...").start();
+
+				try {
+					const session = requireSession();
+					const { wallet } = await initSDKAndWallet(session);
+
+					const pools = await getVesuPools(session.network);
+					const positions: { pool: string; asset: string; supplied: string }[] = [];
+
+					for (const pool of pools) {
+						for (const asset of pool.assets) {
+							try {
+								const supplied = await lendingService.getSuppliedBalance(
+									wallet,
+									pool.address,
+									asset.symbol
+								);
+								if (supplied && supplied !== "0") {
+									positions.push({
+										pool: pool.name,
+										asset: asset.symbol,
+												supplied,
+									});
+								}
+							} catch {
+								// skip assets that fail
+							}
+						}
+					}
+
+					if (positions.length === 0) {
+						spinner.info("No active lending positions found");
+						return;
+					}
+
+					spinner.succeed(`Found ${positions.length} lending position(s)`);
+					console.log(
+						formatTable(
+							["Pool", "Asset", "Supplied"],
+							positions.map((p) => [p.pool, p.asset, p.supplied])
+						)
+					);
+				} catch (error) {
+					spinner.fail("Failed to scan positions");
+					console.error(formatError(error));
+					process.exit(1);
+				}
+				return;
+			}
+
+			// Pool specified but no collateral-token — error
+			if (!opts.collateralToken) {
+				console.error(
+					formatError(
+						new Error(
+							"--collateral-token is required when using -p/--pool. Omit both to auto-scan all pools."
+						)
+					)
+				);
+				process.exit(1);
+			}
+
 			const spinner = createSpinner("Fetching lending position...").start();
 
 			try {

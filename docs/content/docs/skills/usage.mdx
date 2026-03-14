@@ -77,7 +77,8 @@ npx starkfi@latest lend-borrow -p Prime \                # Borrow
 npx starkfi@latest lend-repay 500 -p Prime -t USDC \     # Repay
   --collateral-token ETH
 npx starkfi@latest lend-withdraw 100 -p Prime -t USDC   # Withdraw
-npx starkfi@latest lend-status -p Prime \                # View position
+npx starkfi@latest lend-status                              # View all positions
+npx starkfi@latest lend-status -p Prime \                    # View specific position
   --collateral-token ETH
 ```
 

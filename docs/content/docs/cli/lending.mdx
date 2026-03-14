@@ -12,7 +12,7 @@ description: Supply, borrow, repay, and manage Vesu V2 lending positions
 ```
 1. starkfi lend-pools prime   →  Check pools and APY rates
 2. starkfi lend-supply 100 -p Prime -t USDC  →  Supply tokens
-3. starkfi lend-status -p Prime --collateral-token USDC  →  Verify position
+3. starkfi lend-status  →  Verify position (auto-scans all pools)
 ```
 
 ### Leverage (Borrow)
@@ -20,7 +20,8 @@ description: Supply, borrow, repay, and manage Vesu V2 lending positions
 ```
 1. starkfi lend-pools  →  Find pools and supported pairs
 2. starkfi lend-borrow -p Prime ...  →  Deposit collateral + borrow
-3. starkfi lend-status -p Prime ...  →  Monitor Health Factor
+3. starkfi lend-status  →  Overview of all positions
+3b. starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC  →  Detailed Health Factor
 4. starkfi lend-repay 500 -p Prime -t USDC ...  →  Repay when ready
 5. starkfi lend-close -p Prime ...  →  Or close everything atomically
 ```
@@ -186,20 +187,34 @@ starkfi lend-close -p Prime --collateral-token ETH --borrow-token USDC
 
 ## lend-status
 
-Checks your lending position in a pool.
+Checks your lending positions. Run without arguments to **auto-scan all pools**, or specify a pool for detailed position info.
 
 ```bash
+# Auto-scan all pools (no arguments needed)
+starkfi lend-status
+
+# Specific pool + token
 starkfi lend-status -p <pool> --collateral-token <symbol> [--borrow-token <symbol>]
 ```
 
 **Flags:**
 
-| Flag                          | Description                                             |
-| ----------------------------- | ------------------------------------------------------- |
-| `-p, --pool <name>`           | Pool name or contract address                           |
-| `--collateral-token <symbol>` | Token supplied to the pool (e.g., `ETH`)                |
-| `--borrow-token <symbol>`     | Borrow token (optional — required to see debt position) |
-| `--json`                      | Output raw JSON                                         |
+| Flag                          | Description                                             | Required |
+| ----------------------------- | ------------------------------------------------------- | -------- |
+| `-p, --pool <name>`           | Pool name or contract address                           | No       |
+| `--collateral-token <symbol>` | Token supplied to the pool (e.g., `ETH`)                | No*      |
+| `--borrow-token <symbol>`     | Borrow token (required to see debt position + HF)       | No       |
+| `--json`                      | Output raw JSON                                         | No       |
+
+> \* Required when `-p` is specified. Omit both `-p` and `--collateral-token` to auto-scan.
+
+**Examples:**
+
+```bash
+starkfi lend-status                                          # Scan all pools
+starkfi lend-status -p Prime --collateral-token ETH          # Supply position
+starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC  # With HF
+```
 
 Shows supplied yield balance, collateral value, debt value, health factor, and risk level:
 

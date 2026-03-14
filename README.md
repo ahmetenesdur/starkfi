@@ -134,7 +134,8 @@ npx starkfi@latest lend-supply 100 -p Prime -t STRK
 npx starkfi@latest lend-borrow -p Prime \
   --collateral-amount 200 --collateral-token STRK \
   --borrow-amount 50 --borrow-token USDC
-npx starkfi@latest lend-status -p Prime --collateral-token STRK --borrow-token USDC
+npx starkfi@latest lend-status                                                # Auto-scan all pools
+npx starkfi@latest lend-status -p Prime --collateral-token STRK --borrow-token USDC  # Specific position
 npx starkfi@latest lend-close -p Prime --collateral-token STRK --borrow-token USDC
 ```
 
@@ -328,7 +329,7 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | `lend-withdraw <amount> -p <pool> -t <token>`                                                                                  | Withdraw assets           |
 | `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied]` | Borrow                    |
 | `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                |
-| `lend-status -p <pool> --collateral-token <t> [--borrow-token <t>]`                                                            | Position status           |
+| `lend-status [-p <pool> --collateral-token <t> [--borrow-token <t>]]`                                                          | Position status (auto-scan if no args) |
 | `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically |
 
 ### Configuration
