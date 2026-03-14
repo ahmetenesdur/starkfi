@@ -9,6 +9,7 @@ import { getBalances } from "../../services/tokens/balances.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { Amount, fromAddress } from "starkzap";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
+import { formatActualFee } from "../../lib/format.js";
 import { jsonResult } from "./utils.js";
 
 export async function handleGetBalance(args: { token?: string }) {
@@ -120,7 +121,8 @@ export async function handleGetTxStatus(args: { hash: string }) {
 	const provider = sdk.getProvider();
 	const receipt = await provider.getTransactionReceipt(args.hash);
 
-	const actualFee = "actual_fee" in receipt ? String(receipt.actual_fee) : undefined;
+	const rawFee = "actual_fee" in receipt ? receipt.actual_fee : undefined;
+	const actualFee = rawFee ? formatActualFee(rawFee) : undefined;
 	const blockNumber = "block_number" in receipt ? receipt.block_number : undefined;
 
 	return jsonResult({

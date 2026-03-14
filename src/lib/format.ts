@@ -43,6 +43,20 @@ export function formatResult(data: Record<string, unknown>, options?: { json?: b
 		.join("\n");
 }
 
+// Convert Starknet receipt actual_fee ({amount, unit}) to readable format.
+export function formatActualFee(rawFee: unknown, fallback = "N/A"): string {
+	if (!rawFee) return fallback;
+	if (typeof rawFee === "object" && rawFee !== null && "amount" in rawFee) {
+		const fee = rawFee as { amount: string; unit: string };
+		const value = BigInt(fee.amount);
+		const whole = value / BigInt(10 ** 18);
+		const frac = value % BigInt(10 ** 18);
+		const fracStr = frac.toString().padStart(18, "0").slice(0, 6);
+		return `${whole}.${fracStr} STRK`;
+	}
+	return String(rawFee);
+}
+
 export function formatError(error: unknown): string {
 	const msg = error instanceof Error ? error.message : String(error);
 	const parsed = parseStarknetError(msg);

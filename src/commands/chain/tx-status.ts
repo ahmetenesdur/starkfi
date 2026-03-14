@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { requireSession } from "../../services/auth/session.js";
 import { createSDK } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
-import { createSpinner, formatResult, formatError } from "../../lib/format.js";
+import { createSpinner, formatResult, formatError, formatActualFee } from "../../lib/format.js";
 import { explorerUrl } from "../../lib/config.js";
 
 export function registerTxStatusCommand(program: Command): void {
@@ -24,7 +24,8 @@ export function registerTxStatusCommand(program: Command): void {
 
 				spinner.succeed("Transaction found");
 
-				const actualFee = "actual_fee" in receipt ? String(receipt.actual_fee) : "N/A";
+				const rawFee = "actual_fee" in receipt ? receipt.actual_fee : null;
+				const actualFee = formatActualFee(rawFee);
 				const blockNumber =
 					"block_number" in receipt ? String(receipt.block_number) : "pending";
 
