@@ -208,7 +208,7 @@ npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-toke
 | `Pool not found`          | Run `lend-pools` to list valid pool names.                    |
 | `Health Factor too low`   | Warn of liquidation risk. Suggest repaying or supplying more. |
 | `Insufficient collateral` | Cannot borrow without supplying first.                        |
-| `Dust limit`              | Amount is below the pool's minimum dollar value. Increase it. |
+| `Dust limit`              | Borrow amount is below the pool's minimum dollar value (~$10). Increase it. |
 | `Insufficient balance`    | Check `balance` — user may need to swap for the token.        |
 | `Not authenticated`       | Run `authenticate-wallet` skill first.                        |
 

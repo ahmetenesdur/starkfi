@@ -42,17 +42,6 @@ export async function supply(
 	const parsedAmount = Amount.parse(amount, token);
 	const userAddress = wallet.address.toString();
 
-	const usdPrice = await getTokenUsdPrice(token);
-	if (usdPrice > 0) {
-		const usdValue = parseFloat(amount) * usdPrice;
-		if (usdValue < 10.0) {
-			throw new StarkfiError(
-				ErrorCode.LENDING_FAILED,
-				`Amount is too small (dust limit). Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${usdValue.toFixed(2)}`
-			);
-		}
-	}
-
 	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
 
 	const tx = await wallet

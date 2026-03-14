@@ -89,10 +89,6 @@ export function formatTable(headers: string[], rows: string[][]): string {
 	return [headerLine, separator, ...dataLines].join("\n");
 }
 
-export function sectionHeader(title: string): string {
-	return chalk.bold.hex(MINT)(title);
-}
-
 export function success(msg: string): string {
 	return chalk.hex(MINT).bold(`✔ ${msg}`);
 }
