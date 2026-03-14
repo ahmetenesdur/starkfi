@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { BLUE, MINT, SLATE } from "./brand.js";
+import { parseStarknetError } from "./parse-starknet-error.js";
 
 function hyperlink(text: string, url: string): string {
 	return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
@@ -44,7 +45,8 @@ export function formatResult(data: Record<string, unknown>, options?: { json?: b
 
 export function formatError(error: unknown): string {
 	const msg = error instanceof Error ? error.message : String(error);
-	return chalk.red(`✖ ${msg}`);
+	const parsed = parseStarknetError(msg);
+	return chalk.red(`✖ ${parsed}`);
 }
 
 export function formatTable(headers: string[], rows: string[][]): string {
