@@ -44,7 +44,7 @@ npx starkfi@latest portfolio [--json]
 The portfolio displays three sections:
 
 1. **Token Balances** — STRK, ETH, and all ERC-20 tokens with non-zero balances and their USD values.
-2. **Staking Positions** — Active stakes across all validators/pools with pending rewards.
+2. **Staking Positions** — Active stakes across all validators/pools with pending rewards. Shows unpooling amounts and cooldown dates when exit intents are active.
 3. **Lending Positions** — Active Vesu V2 positions: supplied and borrowed amounts with pool details.
 
 ## Examples

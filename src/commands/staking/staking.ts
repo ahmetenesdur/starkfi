@@ -459,20 +459,42 @@ export function registerStakeStatusCommand(program: Command): void {
 
 				console.log();
 
-				console.log(
-					formatTable(
-						["Validator", "Token", "Pool", "Staked", "Rewards", "Total", "Commission"],
-						overview.positions.map((p) => [
-							p.validator,
-							p.token,
-							p.pool.slice(0, 10) + "…",
-							p.staked,
-							p.rewards,
-							p.total,
-							p.commission,
-						])
-					)
-				);
+				const hasUnpooling = overview.positions.some((p) => p.unpooling !== `${p.token} 0`);
+
+				const headers = hasUnpooling
+					? [
+							"Validator",
+							"Token",
+							"Pool",
+							"Staked",
+							"Rewards",
+							"Total",
+							"Unpooling",
+							"Cooldown",
+							"Commission",
+						]
+					: ["Validator", "Token", "Pool", "Staked", "Rewards", "Total", "Commission"];
+
+				const rows = overview.positions.map((p) => {
+					const base = [
+						p.validator,
+						p.token,
+						p.pool.slice(0, 10) + "…",
+						p.staked,
+						p.rewards,
+						p.total,
+					];
+					if (hasUnpooling) {
+						base.push(
+							p.unpooling,
+							p.cooldownEndsAt ? new Date(p.cooldownEndsAt).toLocaleDateString() : "—"
+						);
+					}
+					base.push(p.commission);
+					return base;
+				});
+
+				console.log(formatTable(headers, rows));
 				console.log();
 			} catch (error) {
 				spinner.fail("Failed to fetch staking stats");

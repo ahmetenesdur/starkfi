@@ -48,7 +48,7 @@ Manage Starknet staking operations: delegate tokens to validators, claim or comp
 3. Unstaking is a **two-step process**: first `unstake intent` starts a cooldown, then `unstake exit` finalizes after the cooldown period. The user must wait between these steps.
 4. `rewards --compound` atomically claims and restakes in one transaction.
 5. AFTER any transactional operation (stake, unstake, rewards), verify with `tx-status`.
-6. Use `stake-status` to view the user's current staking positions across all validators.
+6. Use `stake-status` to view the user's current staking positions across all validators. When exit intents are active, unpooling amounts and cooldown dates are shown automatically.
 7. Token defaults to `STRK` if `--token` is not specified.
 
 ## Commands

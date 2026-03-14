@@ -21,6 +21,8 @@ export interface PortfolioStaking {
 	token: string;
 	staked: string;
 	rewards: string;
+	unpooling: string;
+	cooldownEndsAt: string | null;
 	usdValue: number;
 }
 
@@ -128,6 +130,8 @@ async function fetchStaking(
 			token: p.token,
 			staked: p.staked,
 			rewards: p.rewards,
+			unpooling: p.unpooling,
+			cooldownEndsAt: p.cooldownEndsAt,
 			usdValue: parseNumericPart(p.total) * price,
 		});
 	}

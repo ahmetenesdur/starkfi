@@ -48,18 +48,32 @@ export function registerPortfolioCommand(program: Command): void {
 				console.log(`\n  Staking Positions\n`);
 
 				if (portfolio.staking.length > 0) {
-					console.log(
-						formatTable(
-							["Validator", "Pool", "Staked", "Rewards", "USD Value"],
-							portfolio.staking.map((s) => [
-								s.validator,
-								s.pool.slice(0, 10) + "…",
-								`${s.staked} ${s.token}`,
-								s.rewards,
-								s.usdValue > 0 ? `$${s.usdValue.toFixed(2)}` : "—",
-							])
-						)
+					const hasUnpooling = portfolio.staking.some(
+						(s) => s.unpooling !== `${s.token} 0`
 					);
+
+					const headers = hasUnpooling
+						? ["Validator", "Pool", "Staked", "Rewards", "Unpooling", "USD Value"]
+						: ["Validator", "Pool", "Staked", "Rewards", "USD Value"];
+
+					const rows = portfolio.staking.map((s) => {
+						const base = [
+							s.validator,
+							s.pool.slice(0, 10) + "…",
+							`${s.staked} ${s.token}`,
+							s.rewards,
+						];
+						if (hasUnpooling) {
+							const cooldown = s.cooldownEndsAt
+								? ` (until ${new Date(s.cooldownEndsAt).toLocaleDateString()})`
+								: "";
+							base.push(`${s.unpooling}${cooldown}`);
+						}
+						base.push(s.usdValue > 0 ? `$${s.usdValue.toFixed(2)}` : "—");
+						return base;
+					});
+
+					console.log(formatTable(headers, rows));
 				} else {
 					console.log("  No staking positions found.\n");
 				}
