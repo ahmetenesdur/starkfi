@@ -106,6 +106,35 @@ StarkFi defines 25 typed error codes organized by domain:
 | --------- | ---------------------------- | ----------------------------------- |
 | `UNKNOWN` | Unexpected error (catch-all) | Check the error message for details |
 
+## Starknet Error Parsing
+
+Raw Starknet JSON-RPC errors often contain hex-encoded Cairo short strings (e.g., `0x753235365f737562204f766572666c6f77` → `u256_sub Overflow`) that are unreadable. The `parseStarknetError()` utility automatically:
+
+1. **Decodes** hex-encoded short strings from `execution_error` payloads
+2. **Matches** known Cairo error patterns against a map of 13 common errors
+3. **Returns** a user-friendly message, or passes through the original if no match is found
+
+### Error Map
+
+| Cairo Error | User-Friendly Message |
+|---|---|
+| `u256_sub Overflow` | Insufficient balance — you don't have enough tokens (including gas fees) |
+| `u256_add Overflow` | Amount overflow — the value is too large |
+| `ERC20: transfer amount exceeds balance` | Insufficient token balance for this transfer |
+| `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation |
+| `argent/multicall-failed` | One or more calls in the transaction failed |
+| `argent/invalid-signature` | Invalid signature — try re-authenticating with: starkfi auth login |
+| `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
+| `Contract not found` | Contract not found — the target contract does not exist on this network |
+| `nonce` | Transaction nonce error — please retry |
+
+### Integration
+
+- **CLI**: `formatError()` in `lib/format.ts` calls `parseStarknetError()` before displaying
+- **MCP**: `withErrorHandling()` in `mcp/tools/error-handling.ts` calls `parseStarknetError()` before returning JSON
+
+This ensures both human users and AI agents receive the same readable error messages.
+
 ## Retry Logic
 
 Network requests use automatic retry with exponential backoff via `withRetry()`:

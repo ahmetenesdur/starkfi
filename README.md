@@ -162,7 +162,7 @@ Estimate fees and validate any transaction before broadcasting.
 
 ```bash
 npx starkfi@latest trade 100 USDC ETH --simulate
-# → mode: SIMULATION, estimatedFee: 0.000142 ETH ($0.52), callCount: 4
+# → mode: SIMULATION, estimatedFee: 0.054 STRK ($0.0024), callCount: 4
 ```
 
 ### 📊 Portfolio Dashboard
@@ -337,6 +337,7 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | Command                                 | Description                    |
 | --------------------------------------- | ------------------------------ |
 | `config list`                           | Show current configuration     |
+| `config reset`                          | Reset all settings to defaults |
 | `config set-rpc <url>`                  | Set custom RPC endpoint        |
 | `config get-rpc`                        | Show current RPC               |
 | `config set-network <mainnet\|sepolia>` | Switch network                 |
@@ -400,6 +401,19 @@ StarkFi implements a robust error handling system with a custom `StarkfiError` c
 | **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                              |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.
+
+### Readable Starknet Errors
+
+Raw Starknet JSON-RPC errors (hex-encoded Cairo strings like `u256_sub Overflow`) are automatically parsed into human-readable messages:
+
+| Raw Error | Displayed Message |
+|-----------|------------------|
+| `u256_sub Overflow` | Insufficient balance — you don't have enough tokens (including gas fees) |
+| `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation |
+| `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
+| `argent/multicall-failed` | One or more calls in the transaction failed |
+
+This applies to both CLI output (`formatError`) and MCP responses (`withErrorHandling`).
 
 ---
 

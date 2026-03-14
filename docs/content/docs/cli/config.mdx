@@ -119,6 +119,18 @@ starkfi config set-gas-token reset
 
 > **Note:** Setting a gas token clears gasfree mode. The two modes are mutually exclusive.
 
+---
+
+### config reset
+
+Resets all configuration settings to their defaults. Removes custom RPC URL, network, gas token, and gasfree mode settings.
+
+```bash
+starkfi config reset
+```
+
+> **Tip:** Use this after testing or when you want a clean slate — no need to reset each setting individually.
+
 ## Gas Abstraction Modes
 
 StarkFi supports two gas abstraction modes:

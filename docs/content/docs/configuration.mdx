@@ -83,6 +83,18 @@ starkfi config set-gas-token reset    # Revert to default (STRK)
 
 ---
 
+## Reset All Settings
+
+Clear all custom configuration and revert to defaults:
+
+```bash
+starkfi config reset
+```
+
+This removes custom RPC URL, network, gas token, and gasfree mode settings in one command.
+
+---
+
 ## MCP Server Configuration
 
 When using the MCP server, the same settings are available through the `config_action` tool:
@@ -91,10 +103,11 @@ When using the MCP server, the same settings are available through the `config_a
 { "action": "set-gasfree", "value": "on" }
 { "action": "set-gas-token", "value": "USDC" }
 { "action": "set-network", "value": "mainnet" }
+{ "action": "reset" }
 { "action": "list" }
 ```
 
-All 6 subcommands work identically in both CLI and MCP: `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`.
+All 7 subcommands work identically in both CLI and MCP: `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`.
 
 ---
 

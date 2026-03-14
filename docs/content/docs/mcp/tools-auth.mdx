@@ -40,7 +40,7 @@ Read or update StarkFi configuration — RPC, network, gas mode, and gas token s
 
 | Param    | Type   | Required | Description                                                                 |
 | -------- | ------ | -------- | --------------------------------------------------------------------------- |
-| `action` | string | Yes      | `list`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token` |
+| `action` | string | Yes      | `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token` |
 | `value`  | string | No       | Value for the action (see examples below)                                   |
 
 **Available Actions:**
@@ -48,6 +48,7 @@ Read or update StarkFi configuration — RPC, network, gas mode, and gas token s
 | Action          | Value                   | Description                                                   |
 | --------------- | ----------------------- | ------------------------------------------------------------- |
 | `list`          | —                       | Show all current configuration settings                       |
+| `reset`         | —                       | Reset all settings to defaults                                |
 | `set-rpc`       | URL string              | Set a custom RPC endpoint                                     |
 | `get-rpc`       | —                       | Show the current RPC URL                                      |
 | `set-network`   | `mainnet` or `sepolia`  | Switch between mainnet and testnet                            |
@@ -58,6 +59,7 @@ Read or update StarkFi configuration — RPC, network, gas mode, and gas token s
 
 ```json
 { "action": "list" }
+{ "action": "reset" }
 { "action": "set-network", "value": "mainnet" }
 { "action": "set-gasfree", "value": "on" }
 { "action": "set-gas-token", "value": "USDC" }

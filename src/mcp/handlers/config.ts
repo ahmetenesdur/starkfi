@@ -3,7 +3,14 @@ import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
 import { jsonResult, textResult } from "./utils.js";
 
 export async function handleConfigAction(args: {
-	action: "set-rpc" | "get-rpc" | "set-network" | "set-gasfree" | "set-gas-token" | "list" | "reset";
+	action:
+		| "set-rpc"
+		| "get-rpc"
+		| "set-network"
+		| "set-gasfree"
+		| "set-gas-token"
+		| "list"
+		| "reset";
 	value?: string;
 }) {
 	const configService = ConfigService.getInstance();

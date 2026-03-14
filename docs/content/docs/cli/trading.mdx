@@ -1,6 +1,6 @@
 ---
 title: Trading Commands
-description: Token swaps, multi-swap, and status checks
+description: Token swaps and multi-swap via Fibrous aggregation
 ---
 
 > **Prerequisite:** All trading commands require an active authenticated session. Run `starkfi auth login` first.
@@ -38,7 +38,7 @@ starkfi trade 0.1 ETH DAI --simulate
 starkfi trade 50 STRK USDC --json
 ```
 
-> **Tip:** Use `--simulate` first to preview the route and estimated fees before committing.
+> **Tip:** Use `--simulate` first to preview the route and estimated fees before committing. Simulation fees are always displayed in STRK.
 
 ---
 
@@ -70,14 +70,3 @@ starkfi multi-swap "100 USDC>ETH, 50 STRK>ETH" --simulate
 
 > **Note:** Minimum 2, maximum 3 swap pairs per transaction.
 
----
-
-## status
-
-Checks authentication status and Fibrous API health.
-
-```bash
-starkfi status
-```
-
-Shows whether you're authenticated (wallet address, network) and whether the Fibrous Starknet API is online. Use this to diagnose connection issues before executing trades.

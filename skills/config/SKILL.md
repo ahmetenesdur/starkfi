@@ -27,6 +27,9 @@ Manage local configuration for the StarkFi CLI and check transaction status on-c
 # List all current settings
 npx starkfi@latest config list
 
+# Reset all settings to defaults
+npx starkfi@latest config reset
+
 # Set custom RPC URL
 npx starkfi@latest config set-rpc <url>
 
@@ -119,6 +122,12 @@ npx starkfi@latest config set-gas-token USDC
 
 ```bash
 npx starkfi@latest config set-gas-token reset
+```
+
+**User:** "Reset all my settings"
+
+```bash
+npx starkfi@latest config reset
 ```
 
 **User:** "Did my transaction go through? Hash is 0xabc..."
