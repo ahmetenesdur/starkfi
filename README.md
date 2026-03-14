@@ -12,6 +12,11 @@
   A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/v/starkfi?style=flat-square&color=CB3837&logo=npm&logoColor=white" alt="npm version"/></a>
+  <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/dm/starkfi?style=flat-square&color=blue" alt="npm downloads"/></a>
+</p>
+
 ```bash
 npx starkfi@latest --help
 ```
