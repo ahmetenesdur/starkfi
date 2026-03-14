@@ -12,6 +12,8 @@ export interface SimulationResult {
 	revertReason?: string;
 }
 
+const FEE_TOKEN_SYMBOL = "STRK";
+
 export async function simulateTransaction(builder: TxBuilder): Promise<SimulationResult> {
 	const calls = await builder.calls();
 	const callCount = calls.length;
@@ -39,15 +41,15 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 		const feeEstimate = await builder.estimateFee();
 		const overallFee = BigInt(feeEstimate.overall_fee);
 
-		const ethToken = resolveToken("ETH");
-		const feeAmount = Amount.fromRaw(overallFee, ethToken);
+		const feeToken = resolveToken(FEE_TOKEN_SYMBOL);
+		const feeAmount = Amount.fromRaw(overallFee, feeToken);
 		const feeFormatted = feeAmount.toUnit();
 
 		let feeUsd = "unknown";
 		try {
-			const ethPrice = await getTokenUsdPrice(ethToken);
-			if (ethPrice > 0) {
-				const usdValue = parseFloat(feeFormatted) * ethPrice;
+			const tokenPrice = await getTokenUsdPrice(feeToken);
+			if (tokenPrice > 0) {
+				const usdValue = parseFloat(feeFormatted) * tokenPrice;
 				feeUsd = `$${usdValue.toFixed(4)}`;
 			}
 		} catch {
@@ -56,7 +58,7 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 
 		return {
 			success: true,
-			estimatedFee: `${feeFormatted} ETH`,
+			estimatedFee: `${feeFormatted} ${FEE_TOKEN_SYMBOL}`,
 			estimatedFeeUsd: feeUsd,
 			callCount,
 		};
