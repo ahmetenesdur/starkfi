@@ -412,6 +412,8 @@ Raw Starknet JSON-RPC errors (hex-encoded Cairo strings like `u256_sub Overflow`
 | `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation |
 | `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
 | `argent/multicall-failed` | One or more calls in the transaction failed |
+| `dusty-collateral-balance` | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
+| `dusty-debt-balance` | Borrow amount is below the pool's minimum (dust limit). Please increase the amount. |
 
 This applies to both CLI output (`formatError`) and MCP responses (`withErrorHandling`).
 
