@@ -1,7 +1,7 @@
 {
 	"name": "starkfi",
-	"version": "0.3.2",
-	"description": "Starknet DeFi CLI + MCP Server — Swaps, multi-swap, batch (multicall), staking, lending, simulation, portfolio, gasless transactions",
+	"version": "0.3.4",
+	"description": "AI-native Starknet DeFi CLI + MCP Server + Agent Skills — Swaps, multi-swap, batch (multicall), staking, lending, simulation, portfolio, gas abstraction",
 	"type": "module",
 	"bin": {
 		"starkfi": "./dist/index.js"
@@ -40,6 +40,8 @@
 		"cli",
 		"mcp",
 		"mcp-server",
+		"ai-native",
+		"agent-skills",
 		"starkzap",
 		"swap",
 		"multi-swap",
@@ -49,6 +51,8 @@
 		"portfolio",
 		"staking",
 		"lending",
+		"gasless",
+		"gas-abstraction",
 		"vesu",
 		"fibrous",
 		"web3",
@@ -63,7 +67,7 @@
 	"bugs": {
 		"url": "https://github.com/ahmetenesdur/starkfi/issues"
 	},
-	"homepage": "https://github.com/ahmetenesdur/starkfi#readme",
+	"homepage": "https://starkfi.app",
 	"engines": {
 		"node": ">=18"
 	},
