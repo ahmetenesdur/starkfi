@@ -6,6 +6,7 @@ import { resolveToken } from "../tokens/tokens.js";
 import { getCalldata } from "../fibrous/route.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../fibrous/config.js";
 import { getVTokenAddress, splitU256 } from "../vesu/lending.js";
+import { resolvePoolAddress } from "../vesu/pools.js";
 import { findValidator } from "../staking/validators.js";
 import { getValidatorPools, resolvePoolForToken } from "../staking/staking.js";
 import { validateAddress } from "../../lib/validation.js";
@@ -75,7 +76,7 @@ export async function buildBatch(
 				await addStakeCalls(builder, op.params as BatchStakeParams, wallet, session);
 				break;
 			case "supply":
-				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet);
+				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet, session);
 				break;
 			case "send":
 				await addSendCalls(builder, op.params as BatchSendParams);
@@ -156,12 +157,14 @@ async function addStakeCalls(
 async function addSupplyCalls(
 	builder: TxBuilder,
 	params: BatchSupplyParams,
-	wallet: Wallet
+	wallet: Wallet,
+	session: Session
 ): Promise<void> {
 	const token = resolveToken(params.token);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const userAddress = wallet.address.toString();
-	const vTokenAddress = await getVTokenAddress(wallet, params.pool, token);
+	const pool = resolvePoolAddress(params.pool, session.network);
+	const vTokenAddress = await getVTokenAddress(wallet, pool.address, token);
 
 	builder.approve(token, fromAddress(vTokenAddress), parsedAmount).add({
 		contractAddress: fromAddress(vTokenAddress),
