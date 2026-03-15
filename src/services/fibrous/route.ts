@@ -202,12 +202,50 @@ export async function getCalldataBatch(
 	);
 }
 
+//Price cache: deduplicates concurrent requests via promise caching
+interface PriceCacheEntry {
+	promise: Promise<number>;
+	timestamp: number;
+}
+
+const priceCache = new Map<string, PriceCacheEntry>();
+const PRICE_CACHE_TTL_MS = 60_000;
+const MAX_PRICE_CACHE_SIZE = 50;
+
+export function clearPriceCache(): void {
+	priceCache.clear();
+}
+
 // Fetch current USD price of a token via Fibrous routing data.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
-	if (token.symbol.toUpperCase() === "USDC" || token.symbol.toUpperCase() === "USDT") {
+	const symbolUpper = token.symbol.toUpperCase();
+	if (symbolUpper === "USDC" || symbolUpper === "USDT") {
 		return 1.0;
 	}
 
+	const cacheKey = token.address.toLowerCase();
+	const cached = priceCache.get(cacheKey);
+
+	if (cached && Date.now() - cached.timestamp < PRICE_CACHE_TTL_MS) {
+		return cached.promise;
+	}
+
+	// Evict oldest entry when at capacity (Map preserves insertion order)
+	if (priceCache.size >= MAX_PRICE_CACHE_SIZE) {
+		const oldest = priceCache.keys().next().value;
+		if (oldest) priceCache.delete(oldest);
+	}
+
+	const promise = fetchTokenPrice(token);
+	priceCache.set(cacheKey, { promise, timestamp: Date.now() });
+
+	// Auto-evict on rejection so the next caller retries immediately
+	promise.catch(() => priceCache.delete(cacheKey));
+
+	return promise;
+}
+
+async function fetchTokenPrice(token: Token): Promise<number> {
 	try {
 		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC"));
 		const oneUnit = (10n ** BigInt(token.decimals)).toString();
