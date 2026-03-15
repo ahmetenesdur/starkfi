@@ -111,22 +111,29 @@ StarkFi defines 25 typed error codes organized by domain:
 Raw Starknet JSON-RPC errors often contain hex-encoded Cairo short strings (e.g., `0x753235365f737562204f766572666c6f77` → `u256_sub Overflow`) that are unreadable. The `parseStarknetError()` utility automatically:
 
 1. **Decodes** hex-encoded short strings from `execution_error` payloads
-2. **Matches** known Cairo error patterns against a map of 13 common errors
+2. **Matches** known Cairo error patterns against a map of 15 common errors
 3. **Returns** a user-friendly message, or passes through the original if no match is found
+4. **Strips** `ENTRYPOINT_FAILED` noise from error chains
 
-### Error Map
+### Error Map (15 patterns)
 
 | Cairo Error | User-Friendly Message |
 |---|---|
 | `u256_sub Overflow` | Insufficient balance — you don't have enough tokens (including gas fees) |
 | `u256_add Overflow` | Amount overflow — the value is too large |
 | `ERC20: transfer amount exceeds balance` | Insufficient token balance for this transfer |
+| `ERC20: burn amount exceeds balance` | Insufficient token balance to burn |
 | `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation |
 | `argent/multicall-failed` | One or more calls in the transaction failed |
 | `argent/invalid-signature` | Invalid signature — try re-authenticating with: starkfi auth login |
-| `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
+| `argent/invalid-timestamp` | Transaction expired — please retry |
+| `is_valid_signature` | Signature validation failed — try re-authenticating |
+| `assert_not_zero` | Operation failed — a required value was zero |
 | `Contract not found` | Contract not found — the target contract does not exist on this network |
+| `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
 | `nonce` | Transaction nonce error — please retry |
+| `dusty-collateral-balance` | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
+| `dusty-debt-balance` | Borrow amount is below the pool's minimum (dust limit). Please increase the amount. |
 
 ### Integration
 

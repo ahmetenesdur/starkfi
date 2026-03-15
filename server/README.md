@@ -1,6 +1,6 @@
 # StarkFi Authentication Server
 
-The StarkFi Authentication Server operates as a lightweight, secure backend proxy for the StarkFi CLI. Its primary objective is to bridge Privy authentication (Email OTP) to app-managed Starknet wallets, guaranteeing that the CLI client never directly processes or stores sensitive Privy API keys.
+A lightweight, secure backend proxy for the StarkFi CLI. Bridges Privy authentication (Email OTP) to app-managed Starknet wallets, ensuring the CLI never directly handles sensitive Privy API keys.
 
 ## Architecture and Security Model
 
@@ -34,7 +34,7 @@ The server requires specific environment variables to function correctly. Ensure
 | Environment Variable | Requirement  | Description                                                                   |
 | -------------------- | ------------ | ----------------------------------------------------------------------------- |
 | `PRIVY_APP_ID`       | **Required** | The primary application identifier defined in the Privy Dashboard.            |
-| `PRIVY_APP_SECRET`   | **Required** | The highly sensitive secret key granting full access to app-managed wallets.  |
+| `PRIVY_APP_SECRET`   | **Required** | Secret key for app-managed wallet access (from Privy Dashboard).             |
 | `JWT_SECRET`         | **Required** | A high-entropy string (minimum 32 characters) utilized for JWT signing.       |
 | `PORT`               | Optional     | The TCP port on which the server will listen (defaults to `3001`).            |
 | `NODE_ENV`           | Optional     | Runtime environment: `development`, `production`, or `test` (defaults to `development`). |

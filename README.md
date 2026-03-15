@@ -7,8 +7,7 @@
 <h1 align="center">StarkFi</h1>
 
 <p align="center">
-  <strong>The Gas-Abstracted DeFi CLI & Agent.</strong><br>
-  <em>The AI-native DeFi toolkit for Starknet.</em><br>
+  <strong>The AI-native DeFi toolkit for Starknet.</strong><br>
   A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
@@ -141,7 +140,7 @@ npx starkfi@latest lend-close -p Prime --collateral-token STRK --borrow-token US
 
 ### 💸 Gas Abstraction
 
-All transactions are gasless by default. Users pay gas fees in their preferred ERC-20 token via Paymaster.
+Users pay gas fees in their preferred ERC-20 token via AVNU Paymaster — no native STRK or ETH required. Alternatively, developers can sponsor gas entirely.
 
 ```bash
 # Pay gas in USDC instead of STRK

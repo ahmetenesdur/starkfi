@@ -75,13 +75,15 @@ src/
 ├── mcp/              # MCP server layer
 │   ├── server.ts     # Server setup + stdio transport
 │   ├── tools/        # 7 tool registration files (Zod schemas)
-│   └── handlers/     # 11 handler modules
-└── lib/              # 10 shared utilities
+│   └── handlers/     # 9 domain handlers + context + utils
+└── lib/              # 12 shared utilities
     ├── errors.ts     # ErrorCode enum + StarkfiError class
+    ├── parse-starknet-error.ts # Cairo hex decoding + error map
     ├── retry.ts      # Exponential backoff retry
     ├── concurrency.ts # Sliding-window concurrent execution
     ├── fetch.ts      # Fetch with AbortController timeout
     ├── format.ts     # Table, result, and error formatting
+    ├── cli-helpers.ts # runCommand wrapper + outputResult
     ├── validation.ts # Address and input validation
     ├── types.ts      # Shared TypeScript types
     ├── config.ts     # Config file paths
