@@ -11,21 +11,20 @@ No browser needed. No wallet extension. Just authenticate with your email and st
 
 ## Get Started in 60 Seconds
 
-```bash
-# Install
-npm i -g starkfi@latest
+No install needed — just run with `npx`:
 
+```bash
 # Authenticate
-starkfi auth login you@email.com
-starkfi auth verify you@email.com 123456   # check your email for the code
+npx starkfi@latest auth login you@email.com
+npx starkfi@latest auth verify you@email.com 123456   # check your email for the code
 
 # You're ready
-starkfi balance
-starkfi trade 0.1 ETH USDC
-starkfi portfolio
+npx starkfi@latest balance
+npx starkfi@latest trade 0.1 ETH USDC
+npx starkfi@latest portfolio
 ```
 
-Or run without installing — `npx starkfi@latest` works everywhere.
+Or install globally with `npm i -g starkfi@latest` for a shorter command.
 
 ## What You Can Do
 
@@ -71,7 +70,7 @@ StarkFi connects to Starknet through these integrations:
 
 New to StarkFi? Follow this path:
 
-1. **[Install](/docs/installation)** — Set up StarkFi on your machine
+1. **[Get Started](/docs/installation)** — Run StarkFi with npx or install globally
 2. **[Authenticate](/docs/authentication)** — Connect your Starknet wallet
 3. **[Quick Start](/docs/quick-start)** — Your first swap in under 2 minutes
 4. **[Configuration](/docs/configuration)** — Customize network, RPC, and gas settings

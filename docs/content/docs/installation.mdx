@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install StarkFi on your machine in under a minute
+description: Start using StarkFi instantly with npx — no install required
 ---
 
 ## Requirements
@@ -8,31 +8,25 @@ description: Install StarkFi on your machine in under a minute
 - **Node.js** 18 or later
 - **npm**, **pnpm**, or **yarn**
 
-## Quick Install
+## Run Instantly with npx (Recommended)
 
-The fastest way to get started — install globally and run from anywhere:
-
-```bash
-npm i -g starkfi@latest
-```
-
-Verify it works:
-
-```bash
-starkfi --version
-```
-
-## Run Without Installing
-
-Don't want to install? Use `npx` to run any command directly:
+No installation needed — run any command directly with `npx`:
 
 ```bash
 npx starkfi@latest trade 0.1 ETH USDC
 ```
 
-This downloads the latest version on-the-fly. Great for quick one-off commands or trying StarkFi for the first time.
+This downloads the latest version on-the-fly and runs it. Always up-to-date, zero setup. This is the recommended way to use StarkFi.
 
-## Other Package Managers
+Verify it works:
+
+```bash
+npx starkfi@latest --version
+```
+
+## Install Globally (Optional)
+
+If you prefer a shorter command, you can install globally:
 
 ```bash tab="npm"
 npm i -g starkfi@latest
@@ -46,26 +40,32 @@ pnpm add -g starkfi@latest
 yarn global add starkfi@latest
 ```
 
-## What Gets Installed
+After global install, you can use the shorter `starkfi` command directly:
 
-The `starkfi` package ships everything in a single install:
+```bash
+starkfi --version
+```
+
+## What's Included
+
+The `starkfi` package ships everything in a single package:
 
 | Component        | What It Includes                                                  |
 | ---------------- | ----------------------------------------------------------------- |
 | **CLI**          | 30+ commands for trading, staking, lending, and wallet management |
-| **MCP Server**   | 27 typed tools — start with `starkfi mcp-start`                   |
+| **MCP Server**   | 27 typed tools — start with `npx starkfi@latest mcp-start`       |
 | **Agent Skills** | 10 pre-packaged workflows in the `skills/` folder                 |
 
-## Verify Installation
+## Verify Setup
 
 ```bash
 # Show all available commands
-starkfi --help
+npx starkfi@latest --help
 
 # Check current configuration
-starkfi config list
+npx starkfi@latest config list
 ```
 
 ## Next Step
 
-After installation, **[authenticate your wallet](/docs/authentication)** to start using StarkFi.
+After setup, **[authenticate your wallet](/docs/authentication)** to start using StarkFi.
