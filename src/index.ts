@@ -6,6 +6,18 @@ import chalk from "chalk";
 import { formatError } from "./lib/format.js";
 import { startMcpServer } from "./mcp/server.js";
 import { BLUE, MINT, LOGO_ROW_COLORS } from "./lib/brand.js";
+
+/**
+ * STARKFI_VERSION is replaced at build time by tsup (esbuild define).
+ * For dev mode (tsx), the fallback reads from package.json directly.
+ */
+declare const STARKFI_VERSION: string;
+
+const version: string =
+	typeof STARKFI_VERSION !== "undefined"
+		? STARKFI_VERSION
+		: (createRequire(import.meta.url)("../package.json") as { version: string }).version;
+
 import { registerLoginCommand } from "./commands/auth/login.js";
 import { registerVerifyCommand } from "./commands/auth/verify.js";
 import { registerLogoutCommand } from "./commands/auth/logout.js";
@@ -40,9 +52,6 @@ import { registerConfigCommand } from "./commands/config/config.js";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
-
-const require = createRequire(import.meta.url);
-const { version } = require("../package.json") as { version: string };
 
 const LOGO_LINES = [
 	"███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗",

@@ -3,8 +3,15 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools, type ToolSummary } from "./tools/index.js";
 
-const require = createRequire(import.meta.url);
-const pkg = require("../../package.json") as { name: string; version: string };
+declare const STARKFI_VERSION: string;
+
+const pkg = {
+	name: "starkfi",
+	version:
+		typeof STARKFI_VERSION !== "undefined"
+			? STARKFI_VERSION
+			: (createRequire(import.meta.url)("../../package.json") as { version: string }).version,
+};
 
 const MCP_INSTRUCTIONS = `StarkFi is a Starknet DeFi toolkit. You can:
 - Check auth status and configure settings (network, RPC, gas payment mode)

@@ -17,7 +17,7 @@ export default tseslint.config(
 			},
 			parserOptions: {
 				projectService: {
-					allowDefaultProject: ["eslint.config.ts"],
+					allowDefaultProject: ["eslint.config.ts", "tsup.config.ts"],
 				},
 				tsconfigRootDir: import.meta.dirname,
 			},
