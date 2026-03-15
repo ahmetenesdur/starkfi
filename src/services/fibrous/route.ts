@@ -202,9 +202,19 @@ export async function getCalldataBatch(
 	);
 }
 
-// In-memory cache for token prices (60 seconds) to prevent redundant API calls
-const priceCache = new Map<string, { price: number; timestamp: number }>();
-const PRICE_CACHE_TTL_MS = 60 * 1000;
+//Price cache: deduplicates concurrent requests via promise caching
+interface PriceCacheEntry {
+	promise: Promise<number>;
+	timestamp: number;
+}
+
+const priceCache = new Map<string, PriceCacheEntry>();
+const PRICE_CACHE_TTL_MS = 60_000;
+const MAX_PRICE_CACHE_SIZE = 50;
+
+export function clearPriceCache(): void {
+	priceCache.clear();
+}
 
 // Fetch current USD price of a token via Fibrous routing data.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
@@ -215,19 +225,34 @@ export async function getTokenUsdPrice(token: Token): Promise<number> {
 
 	const cacheKey = token.address.toLowerCase();
 	const cached = priceCache.get(cacheKey);
+
 	if (cached && Date.now() - cached.timestamp < PRICE_CACHE_TTL_MS) {
-		return cached.price;
+		return cached.promise;
 	}
 
+	// Evict oldest entry when at capacity (Map preserves insertion order)
+	if (priceCache.size >= MAX_PRICE_CACHE_SIZE) {
+		const oldest = priceCache.keys().next().value;
+		if (oldest) priceCache.delete(oldest);
+	}
+
+	const promise = fetchTokenPrice(token);
+	priceCache.set(cacheKey, { promise, timestamp: Date.now() });
+
+	// Auto-evict on rejection so the next caller retries immediately
+	promise.catch(() => priceCache.delete(cacheKey));
+
+	return promise;
+}
+
+async function fetchTokenPrice(token: Token): Promise<number> {
 	try {
 		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC"));
 		const oneUnit = (10n ** BigInt(token.decimals)).toString();
 		const routeData = await getRoute(token, usdc, oneUnit);
 
 		if (routeData.success && routeData.inputToken?.price) {
-			const price = parseFloat(routeData.inputToken.price);
-			priceCache.set(cacheKey, { price, timestamp: Date.now() });
-			return price;
+			return parseFloat(routeData.inputToken.price);
 		}
 	} catch {
 		// Best-effort pricing
