@@ -202,10 +202,21 @@ export async function getCalldataBatch(
 	);
 }
 
+// In-memory cache for token prices (60 seconds) to prevent redundant API calls
+const priceCache = new Map<string, { price: number; timestamp: number }>();
+const PRICE_CACHE_TTL_MS = 60 * 1000;
+
 // Fetch current USD price of a token via Fibrous routing data.
 export async function getTokenUsdPrice(token: Token): Promise<number> {
-	if (token.symbol.toUpperCase() === "USDC" || token.symbol.toUpperCase() === "USDT") {
+	const symbolUpper = token.symbol.toUpperCase();
+	if (symbolUpper === "USDC" || symbolUpper === "USDT") {
 		return 1.0;
+	}
+
+	const cacheKey = token.address.toLowerCase();
+	const cached = priceCache.get(cacheKey);
+	if (cached && Date.now() - cached.timestamp < PRICE_CACHE_TTL_MS) {
+		return cached.price;
 	}
 
 	try {
@@ -214,7 +225,9 @@ export async function getTokenUsdPrice(token: Token): Promise<number> {
 		const routeData = await getRoute(token, usdc, oneUnit);
 
 		if (routeData.success && routeData.inputToken?.price) {
-			return parseFloat(routeData.inputToken.price);
+			const price = parseFloat(routeData.inputToken.price);
+			priceCache.set(cacheKey, { price, timestamp: Date.now() });
+			return price;
 		}
 	} catch {
 		// Best-effort pricing
