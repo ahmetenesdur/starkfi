@@ -6,7 +6,7 @@ import { resolveToken } from "../../services/tokens/tokens.js";
 import { createSpinner, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { outputResult } from "../../lib/cli-helpers.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 
 export function registerSendCommand(program: Command): void {
 	program
@@ -49,23 +49,10 @@ export function registerSendCommand(program: Command): void {
 					spinner.text = "Simulating transaction...";
 					const sim = await simulateTransaction(builder);
 
-					if (sim.success) {
-						spinner.succeed("Simulation complete");
-					} else {
-						spinner.fail("Simulation failed");
-					}
-
-					const simResult = {
-						mode: "SIMULATION (no TX sent)",
+					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${token.toUpperCase()}`,
 						to: validatedTo,
-						estimatedFee: sim.estimatedFee,
-						estimatedFeeUsd: sim.estimatedFeeUsd,
-						calls: sim.callCount,
-						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-					};
-
-					outputResult(simResult, opts);
+					});
 					return;
 				}
 

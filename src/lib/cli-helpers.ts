@@ -1,4 +1,5 @@
 import { createSpinner, formatResult, formatError } from "./format.js";
+import type { SimulationResult } from "../services/simulate/simulate.js";
 
 type Spinner = ReturnType<typeof createSpinner>;
 
@@ -25,4 +26,30 @@ export async function runCommand<T>(
 // Outputs a result object, respecting the --json flag.
 export function outputResult(data: Record<string, unknown>, opts: { json?: boolean }): void {
 	console.log(formatResult(data, { json: opts.json }));
+}
+
+// Handles spinner update, result construction, and output for --simulate runs.
+export function handleSimulationResult(
+	sim: SimulationResult,
+	spinner: Spinner,
+	opts: { json?: boolean },
+	extraFields: Record<string, unknown> = {}
+): void {
+	if (sim.success) {
+		spinner.succeed("Simulation complete");
+	} else {
+		spinner.fail("Simulation failed");
+	}
+
+	// Property order: mode → command-specific fields → fee fields → revert reason.
+	const simResult = {
+		mode: "SIMULATION (no TX sent)",
+		...extraFields,
+		estimatedFee: sim.estimatedFee,
+		estimatedFeeUsd: sim.estimatedFeeUsd,
+		calls: sim.callCount,
+		...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
+	};
+
+	outputResult(simResult, opts);
 }

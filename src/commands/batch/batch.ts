@@ -4,7 +4,7 @@ import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { buildBatch, type BatchOperation } from "../../services/batch/batch.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatError } from "../../lib/format.js";
-import { outputResult } from "../../lib/cli-helpers.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 // Collect repeatable options into array.
@@ -139,22 +139,9 @@ Minimum 2 operations required. Each flag can be repeated.`
 					spinner.text = "Simulating batch...";
 					const sim = await simulateTransaction(builder);
 
-					if (sim.success) {
-						spinner.succeed("Simulation complete");
-					} else {
-						spinner.fail("Simulation failed");
-					}
-
-					const simResult = {
-						mode: "SIMULATION (no TX sent)",
+					handleSimulationResult(sim, spinner, opts, {
 						operations: operations.length,
-						estimatedFee: sim.estimatedFee,
-						estimatedFeeUsd: sim.estimatedFeeUsd,
-						calls: sim.callCount,
-						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-					};
-
-					outputResult(simResult, opts);
+					});
 					return;
 				}
 

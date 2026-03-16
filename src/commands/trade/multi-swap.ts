@@ -12,7 +12,7 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatTable, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
-import { outputResult } from "../../lib/cli-helpers.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 
 // Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs.
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
@@ -134,22 +134,9 @@ export function registerMultiSwapCommand(program: Command): void {
 					spinner.text = "Simulating transaction...";
 					const sim = await simulateTransaction(builder);
 
-					if (sim.success) {
-						spinner.succeed("Simulation complete");
-					} else {
-						spinner.fail("Simulation failed");
-					}
-
-					const simResult = {
-						mode: "SIMULATION (no TX sent)",
+					handleSimulationResult(sim, spinner, opts, {
 						pairs: pairs.length,
-						estimatedFee: sim.estimatedFee,
-						estimatedFeeUsd: sim.estimatedFeeUsd,
-						calls: sim.callCount,
-						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-					};
-
-					outputResult(simResult, opts);
+					});
 					return;
 				}
 
