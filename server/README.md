@@ -31,17 +31,17 @@ pnpm dev
 
 The server requires specific environment variables to function correctly. Ensure these are defined in your `.env` file before execution.
 
-| Environment Variable | Requirement  | Description                                                                   |
-| -------------------- | ------------ | ----------------------------------------------------------------------------- |
-| `PRIVY_APP_ID`       | **Required** | The primary application identifier defined in the Privy Dashboard.            |
-| `PRIVY_APP_SECRET`   | **Required** | Secret key for app-managed wallet access (from Privy Dashboard).             |
-| `JWT_SECRET`         | **Required** | A high-entropy string (minimum 32 characters) utilized for JWT signing.       |
-| `PORT`               | Optional     | The TCP port on which the server will listen (defaults to `3001`).            |
+| Environment Variable | Requirement  | Description                                                                              |
+| -------------------- | ------------ | ---------------------------------------------------------------------------------------- |
+| `PRIVY_APP_ID`       | **Required** | The primary application identifier defined in the Privy Dashboard.                       |
+| `PRIVY_APP_SECRET`   | **Required** | Secret key for app-managed wallet access (from Privy Dashboard).                         |
+| `JWT_SECRET`         | **Required** | A high-entropy string (minimum 32 characters) utilized for JWT signing.                  |
+| `PORT`               | Optional     | The TCP port on which the server will listen (defaults to `3001`).                       |
 | `NODE_ENV`           | Optional     | Runtime environment: `development`, `production`, or `test` (defaults to `development`). |
-| `ALLOWED_ORIGINS`    | Optional     | A comma-separated list of fully qualified domains authorized for CORS.        |
-| `PUBLIC_URL`         | Optional     | Public-facing URL of the server (for CORS and redirects).                     |
-| `AVNU_API_KEY`       | Optional     | AVNU Paymaster API key, required to process developer-sponsored transactions. |
-| `AVNU_PAYMASTER_URL` | Optional     | AVNU Paymaster endpoint URL (defaults to `https://starknet.paymaster.avnu.fi/v1`). |
+| `ALLOWED_ORIGINS`    | Optional     | A comma-separated list of fully qualified domains authorized for CORS.                   |
+| `PUBLIC_URL`         | Optional     | Public-facing URL of the server (for CORS and redirects).                                |
+| `AVNU_API_KEY`       | Optional     | AVNU Paymaster API key, required to process developer-sponsored transactions.            |
+| `AVNU_PAYMASTER_URL` | Optional     | AVNU Paymaster endpoint URL (defaults to `https://starknet.paymaster.avnu.fi/v1`).       |
 
 ## API Endpoint Reference
 
