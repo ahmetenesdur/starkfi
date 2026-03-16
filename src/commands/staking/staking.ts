@@ -8,6 +8,7 @@ import { createSpinner, formatResult, formatTable, formatError } from "../../lib
 import { validateAddress } from "../../lib/validation.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
+import { handleSimulationResult } from "../../lib/cli-helpers.js";
 
 export function registerStakeCommand(program: Command): void {
 	program
@@ -65,23 +66,10 @@ export function registerStakeCommand(program: Command): void {
 					const builder = wallet.tx().stake(fromAddress(poolAddress), parsedAmount);
 					const sim = await simulateTransaction(builder);
 
-					if (sim.success) {
-						spinner.succeed("Simulation complete");
-					} else {
-						spinner.fail("Simulation failed");
-					}
-
-					console.log(
-						formatResult({
-							mode: "SIMULATION (no TX sent)",
-							amount: `${amount} ${tokenSymbol}`,
-							pool: poolAddress,
-							estimatedFee: sim.estimatedFee,
-							estimatedFeeUsd: sim.estimatedFeeUsd,
-							calls: sim.callCount,
-							...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-						})
-					);
+					handleSimulationResult(sim, spinner, opts, {
+						amount: `${amount} ${tokenSymbol}`,
+						pool: poolAddress,
+					});
 					return;
 				}
 

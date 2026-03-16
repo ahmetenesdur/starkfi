@@ -7,7 +7,7 @@ import { createSpinner, formatError } from "../../lib/format.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { Amount, fromAddress } from "starkzap";
-import { outputResult } from "../../lib/cli-helpers.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 
 export function registerSwapCommand(program: Command): void {
 	program
@@ -75,23 +75,10 @@ export function registerSwapCommand(program: Command): void {
 					spinner.text = "Simulating transaction...";
 					const sim = await simulateTransaction(builder);
 
-					if (sim.success) {
-						spinner.succeed("Simulation complete");
-					} else {
-						spinner.fail("Simulation failed");
-					}
-
-					const simResult = {
-						mode: "SIMULATION (no TX sent)",
+					handleSimulationResult(sim, spinner, opts, {
 						input: `${amount} ${tokenIn.symbol}`,
 						expectedOutput: `~${outputFormatted} ${tokenOut.symbol}`,
-						estimatedFee: sim.estimatedFee,
-						estimatedFeeUsd: sim.estimatedFeeUsd,
-						calls: sim.callCount,
-						...(sim.revertReason ? { revertReason: sim.revertReason } : {}),
-					};
-
-					outputResult(simResult, opts);
+					});
 					return;
 				}
 
