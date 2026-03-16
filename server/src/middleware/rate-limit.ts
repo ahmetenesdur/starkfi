@@ -28,6 +28,10 @@ export function rateLimit(options: RateLimitOptions) {
 		for (const [key, entry] of store) {
 			if (now > entry.resetAt) {
 				store.delete(key);
+			} else {
+				// Since we maintain insertion order and move updated entries to the end,
+				// we can stop iterating once we find a non-expired entry.
+				break;
 			}
 		}
 	}
@@ -41,11 +45,16 @@ export function rateLimit(options: RateLimitOptions) {
 		const entry = store.get(key);
 
 		if (!entry || now > entry.resetAt) {
+			// If entry exists but is expired, delete it first to maintain insertion order when re-setting.
+			// This ensures the Map is always sorted by expiration time.
+			if (entry) store.delete(key);
 			store.set(key, { count: 1, resetAt: now + windowMs });
 			await next();
 			return;
 		}
 
+		// Update entry count. We don't move it to the end of the Map because its resetAt
+		// remains the same, maintaining the chronological order for cleanup.
 		entry.count++;
 
 		if (entry.count > maxRequests) {
