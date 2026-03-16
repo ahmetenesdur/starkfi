@@ -25,7 +25,7 @@ export function registerStakeCommand(program: Command): void {
 		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi stake 10 STRK -v karnot\n  $ starkfi stake 50 STRK -v fibrous --simulate\n  $ starkfi stake 100 STRK -p 0x04a3..."
+			"\nExamples:\n  $ starkfi stake 10 -v karnot\n  $ starkfi stake 50 -v fibrous --simulate\n  $ starkfi stake 100 -p 0x04a3... -t STRK"
 		)
 		.action(async (amount: string, opts) => {
 			if (!opts.pool && !opts.validator) {
@@ -77,12 +77,15 @@ export function registerStakeCommand(program: Command): void {
 				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol);
 
 				spinner.succeed("Staking confirmed");
-				outputResult({
-					amount: `${amount} ${tokenSymbol}`,
-					pool: poolAddress,
-					txHash: result.hash,
-					explorer: result.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						amount: `${amount} ${tokenSymbol}`,
+						pool: poolAddress,
+						txHash: result.hash,
+						explorer: result.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Staking failed");
 				console.error(formatError(error));

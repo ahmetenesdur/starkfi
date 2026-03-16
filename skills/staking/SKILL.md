@@ -60,7 +60,7 @@ npx starkfi@latest pools <validator> [--json]
 npx starkfi@latest stake-status [validator] [--json]
 
 # Stake tokens
-npx starkfi@latest stake <amount> --validator <name> [--token <symbol>] [--simulate]
+npx starkfi@latest stake <amount> --validator <name> [--token <symbol>] [--simulate] [--json]
 
 # Unstake (two-step)
 npx starkfi@latest unstake intent --validator <name> --amount <amount> [--token <symbol>]
@@ -82,6 +82,7 @@ npx starkfi@latest rewards --compound --validator <name> [--token <symbol>]
 | `--pool`      | string | Pool contract address (alternative to validator) | Yes\*    |
 | `--token`     | string | Token symbol (default: `STRK`)                   | No       |
 | `--simulate`  | flag   | Estimate fees without broadcasting               | No       |
+| `--json`      | flag   | Output raw JSON                                  | No       |
 
 \*Provide either `--validator` or `--pool`.
 

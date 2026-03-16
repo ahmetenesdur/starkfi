@@ -156,7 +156,7 @@ export function registerLendSupplyCommand(program: Command): void {
 		.requiredOption("-t, --token <symbol>", "Token symbol (e.g. 'STRK', 'ETH', 'USDC')")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-supply 100 USDC -p Prime -t USDC\n  $ starkfi lend-supply 0.5 ETH -p Prime -t ETH"
+			"\nExamples:\n  $ starkfi lend-supply 100 -p Prime -t USDC\n  $ starkfi lend-supply 0.5 -p Prime -t ETH"
 		)
 		.action(async (amount: string, opts) => {
 			const spinner = createSpinner(`Supplying ${amount} ${opts.token}...`).start();
