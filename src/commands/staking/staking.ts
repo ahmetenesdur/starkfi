@@ -8,7 +8,7 @@ import { createSpinner, formatResult, formatTable, formatError } from "../../lib
 import { validateAddress } from "../../lib/validation.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { handleSimulationResult } from "../../lib/cli-helpers.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 
 export function registerStakeCommand(program: Command): void {
 	program
@@ -22,6 +22,7 @@ export function registerStakeCommand(program: Command): void {
 		)
 		.option("-t, --token <symbol>", "Token to stake (default: STRK)", "STRK")
 		.option("--simulate", "Estimate fees and validate without executing")
+		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
 			"\nExamples:\n  $ starkfi stake 10 STRK -v karnot\n  $ starkfi stake 50 STRK -v fibrous --simulate\n  $ starkfi stake 100 STRK -p 0x04a3..."
@@ -76,14 +77,12 @@ export function registerStakeCommand(program: Command): void {
 				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol);
 
 				spinner.succeed("Staking confirmed");
-				console.log(
-					formatResult({
-						amount: `${amount} ${tokenSymbol}`,
-						pool: poolAddress,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+				outputResult({
+					amount: `${amount} ${tokenSymbol}`,
+					pool: poolAddress,
+					txHash: result.hash,
+					explorer: result.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Staking failed");
 				console.error(formatError(error));

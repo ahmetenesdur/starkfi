@@ -314,7 +314,7 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | ----------------------------------------------------------------------------- | ---------------------- |
 | `validators [--json]`                                                         | List active validators |
 | `pools <validator> [--json]`                                                  | Show delegation pools  |
-| `stake <amount> --validator <name> [--token <symbol>] [--simulate]`           | Stake tokens           |
+| `stake <amount> --validator <name> [--token <symbol>] [--simulate] [--json]` | Stake tokens           |
 | `stake-status [validator] [--json]`                                           | Staking dashboard      |
 | `rewards --validator <name> [--token <symbol>] <--claim\|--compound>`         | Manage rewards         |
 | `unstake <intent\|exit> --validator <name> [--token <symbol>] [--amount <n>]` | Unstake (2-step)       |

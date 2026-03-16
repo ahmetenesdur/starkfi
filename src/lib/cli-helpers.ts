@@ -28,10 +28,7 @@ export function outputResult(data: Record<string, unknown>, opts: { json?: boole
 	console.log(formatResult(data, { json: opts.json }));
 }
 
-/**
- * Handles the common logic for displaying simulation results.
- * Updates the spinner, constructs the result object, and outputs it.
- */
+// Handles spinner update, result construction, and output for --simulate runs.
 export function handleSimulationResult(
 	sim: SimulationResult,
 	spinner: Spinner,
@@ -44,6 +41,7 @@ export function handleSimulationResult(
 		spinner.fail("Simulation failed");
 	}
 
+	// Property order: mode → command-specific fields → fee fields → revert reason.
 	const simResult = {
 		mode: "SIMULATION (no TX sent)",
 		...extraFields,
