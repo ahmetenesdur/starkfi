@@ -8,40 +8,22 @@ interface RateLimitEntry {
 }
 
 interface RateLimitOptions {
-	/** Maximum number of requests allowed within the time window. */
 	maxRequests: number;
-	/** Duration of the rate-limit window in milliseconds. */
 	windowMs: number;
-	/** Optional custom key extraction function. Defaults to client IP. */
 	keyFn?: (c: Context) => string;
-	/**
-	 * How often (in ms) to run the expired-entry cleanup sweep.
-	 * @default 60_000
-	 */
-	cleanupIntervalMs?: number;
-	/**
-	 * Maximum number of unique keys stored before forcing an early cleanup.
-	 * Prevents unbounded memory growth under IP-flood / DDoS scenarios.
-	 * @default 10_000
-	 */
-	maxStoreSize?: number;
+	cleanupIntervalMs?: number; // default: 60_000
+	maxStoreSize?: number; // default: 10_000
 }
 
-/**
- * In-memory, per-instance rate-limiting middleware for Hono.
- *
- * Uses a `Map` whose insertion order is kept chronologically sorted by
- * `resetAt`.  This invariant is maintained by:
- *   1. New entries are always appended (Map spec guarantees insertion order).
- *   2. Renewed entries (expired → re-created) are explicitly `delete`-d
- *      before `set` so they move to the end.
- *   3. Active entries (`count++`) stay in place because their `resetAt`
- *      doesn't change.
- *
- * Thanks to this ordering, the cleanup loop can `break` at the first
- * non-expired entry — turning an O(n) full scan into O(k) where
- * k = number of expired entries at the head of the Map.
- */
+// In-memory, per-instance rate-limiting middleware for Hono.
+//
+// The Map's insertion order is kept chronologically sorted by resetAt:
+//   1. New entries are always appended (Map spec guarantees insertion order)
+//   2. Renewed entries (expired → re-created) are delete-d before set so they move to the end
+//   3. Active entries (count++) stay in place because their resetAt doesn't change
+//
+// This lets the cleanup loop break at the first non-expired entry,
+// turning an O(n) full scan into O(k) where k = expired entries.
 export function rateLimit(options: RateLimitOptions) {
 	const {
 		maxRequests,
@@ -54,13 +36,9 @@ export function rateLimit(options: RateLimitOptions) {
 	const store = new Map<string, RateLimitEntry>();
 	let lastCleanup = Date.now();
 
-	/**
-	 * Sweep expired entries from the head of the ordered Map.
-	 *
-	 * Deleting keys during `for…of` iteration is safe per ECMAScript spec
-	 * (ECMA-262 §24.1.5.1): already-visited entries are unaffected and the
-	 * iterator advances correctly past deleted keys.
-	 */
+	// Sweep expired entries from the head of the ordered Map.
+	// Deleting keys during for…of iteration is safe per ECMAScript spec
+	// (ECMA-262 §24.1.5.1).
 	function cleanup(now: number) {
 		if (store.size === 0) return;
 		if (now - lastCleanup < cleanupIntervalMs) return;
@@ -70,26 +48,21 @@ export function rateLimit(options: RateLimitOptions) {
 			if (now > entry.resetAt) {
 				store.delete(key);
 			} else {
-				// Entries are ordered chronologically by resetAt.
-				// The first non-expired entry means all subsequent entries are also valid.
+				// Ordered by resetAt — first non-expired means all remaining are valid
 				break;
 			}
 		}
 	}
 
-	/**
-	 * When the store exceeds `maxStoreSize`, force an immediate cleanup
-	 * and, if still over the limit, evict the oldest entries (which are
-	 * the most likely to expire soonest thanks to insertion ordering).
-	 */
+	// When the store exceeds maxStoreSize, force an immediate cleanup
+	// and evict the oldest entries if still over the limit
 	function evictIfNeeded(now: number) {
 		if (store.size <= maxStoreSize) return;
 
-		// Force an out-of-schedule cleanup first.
+		// Force an out-of-schedule cleanup first
 		lastCleanup = 0;
 		cleanup(now);
 
-		// If still over the limit after cleanup, evict oldest entries.
 		if (store.size <= maxStoreSize) return;
 
 		const excess = store.size - maxStoreSize;
@@ -101,7 +74,6 @@ export function rateLimit(options: RateLimitOptions) {
 		}
 	}
 
-	/** Set standard rate-limit response headers. */
 	function setRateLimitHeaders(
 		c: Context,
 		remaining: number,
@@ -120,8 +92,7 @@ export function rateLimit(options: RateLimitOptions) {
 		const entry = store.get(key);
 
 		if (!entry || now > entry.resetAt) {
-			// Delete the expired entry first to maintain chronological
-			// insertion order, then set the fresh entry at the tail.
+			// Delete expired entry first to maintain chronological insertion order
 			if (entry) store.delete(key);
 
 			const newEntry: RateLimitEntry = {
@@ -137,8 +108,7 @@ export function rateLimit(options: RateLimitOptions) {
 			return;
 		}
 
-		// Increment in-place. The entry's position in the Map stays the same
-		// because its resetAt hasn't changed, preserving chronological order.
+		// Increment in-place — position stays the same since resetAt hasn't changed
 		entry.count++;
 
 		if (entry.count > maxRequests) {
@@ -159,11 +129,7 @@ export function rateLimit(options: RateLimitOptions) {
 	});
 }
 
-/**
- * Extract the most likely real client IP from common proxy headers.
- * Falls back to `"unknown"` if none are present (e.g., direct connections
- * without a reverse proxy).
- */
+// Extract the most likely real client IP from common proxy headers
 function getClientIp(c: Context): string {
 	return (
 		c.req.header("CF-Connecting-IP") ??
