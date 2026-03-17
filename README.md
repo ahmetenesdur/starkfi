@@ -36,14 +36,14 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                     StarkFi                                        │
-│                                                                                    │
-│  ┌──────────┐  ┌───────────────┐  ┌───────────────┐  ┌──────────────────────────┐  │
-│  │   CLI    │  │  MCP Server   │  │ Agent Skills   │  │    Telegram Bot          │  │
-│  │  (30+    │  │  (27 tools)   │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
+│                                     StarkFi                                         │
+│                                                                                     │
+│  ┌──────────┐  ┌───────────────-┐  ┌────────────────┐  ┌─────────────────────────┐  │
+│  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
+│  │  (30+    │  │  (27 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
-│  └────┬─────┘  └──────┬────────┘  └──────┬─────────┘  │  Gemini                 │  │
-│       │               │                  │            └────────────┬─────────────┘  │
+│  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
+│       │               │                  │             └───────────┬─────────────┘  │
 │       └───────────────┼──────────────────┼─────────────────────────┘                │
 │                       ▼                  ▼                                          │
 │  ┌──────────────────────────────────────────────────────────────────────────────┐   │
@@ -52,13 +52,13 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │  │  Portfolio   │      │   │
 │  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│  │  Dashboard   │      │   │
 │  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘  └──────┬───────┘      │   │
-│  │       └─────────────┴────────────┴────────────┴───────────────┘               │   │
-│  │                       │                                                       │   │
-│  │       ┌───────────────┴───────────────────────────┐                           │   │
-│  │       │       Starkzap SDK (starkzap v1.0.0)      │                           │   │
-│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                           │   │
-│  │       └───────────────┬───────────────────────────┘                           │   │
-│  └───────────────────────┼───────────────────────────────────────────────────────┘   │
+│  │       └─────────────┴────────────┴────────────┴───────────────┘              │   │
+│  │                       │                                                      │   │
+│  │       ┌───────────────┴───────────────────────────┐                          │   │
+│  │       │       Starkzap SDK (starkzap v1.0.0)      │                          │   │
+│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                          │   │
+│  │       └───────────────┬───────────────────────────┘                          │   │
+│  └───────────────────────┼──────────────────────────────────────────────────────┘   │
 │                          ▼                                                          │
 │  ┌──────────────────────────────────────┐  ┌──────────────────────┐                 │
 │  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │                 │
@@ -312,22 +312,22 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | ----------------------------------------------------------------------------- | ---------------------- |
 | `validators [--json]`                                                         | List active validators |
 | `pools <validator> [--json]`                                                  | Show delegation pools  |
-| `stake <amount> --validator <name> [--token <symbol>] [--simulate] [--json]` | Stake tokens           |
+| `stake <amount> --validator <name> [--token <symbol>] [--simulate] [--json]`  | Stake tokens           |
 | `stake-status [validator] [--json]`                                           | Staking dashboard      |
 | `rewards --validator <name> [--token <symbol>] <--claim\|--compound>`         | Manage rewards         |
 | `unstake <intent\|exit> --validator <name> [--token <symbol>] [--amount <n>]` | Unstake (2-step)       |
 
 ### Lending (Vesu V2)
 
-| Command                                                                                                                        | Description               |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
-| `lend-pools [name]`                                                                                                            | List lending pools        |
-| `lend-supply <amount> -p <pool> -t <token>`                                                                                    | Supply assets             |
-| `lend-withdraw <amount> -p <pool> -t <token>`                                                                                  | Withdraw assets           |
-| `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied]` | Borrow                    |
-| `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                |
+| Command                                                                                                                        | Description                            |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `lend-pools [name]`                                                                                                            | List lending pools                     |
+| `lend-supply <amount> -p <pool> -t <token>`                                                                                    | Supply assets                          |
+| `lend-withdraw <amount> -p <pool> -t <token>`                                                                                  | Withdraw assets                        |
+| `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied]` | Borrow                                 |
+| `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                             |
 | `lend-status [-p <pool> --collateral-token <t> [--borrow-token <t>]]`                                                          | Position status (auto-scan if no args) |
-| `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically |
+| `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically              |
 
 ### Configuration
 
@@ -375,13 +375,13 @@ StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi
 
 **BYOAI Model** — each user provides their own API key (OpenAI, Claude, or Gemini). No shared keys, no centralized billing.
 
-| Feature | Description |
-| --- | --- |
-| **Swap** | DEX-aggregated trading via Fibrous |
-| **Stake** | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC) |
-| **Lend** | Supply, borrow, repay, withdraw, close on Vesu V2 |
-| **Portfolio** | Balances with USD valuations and position health |
-| **Batch** | Combine swap + stake + supply + send in one transaction |
+| Feature       | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| **Swap**      | DEX-aggregated trading via Fibrous                        |
+| **Stake**     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)     |
+| **Lend**      | Supply, borrow, repay, withdraw, close on Vesu V2         |
+| **Portfolio** | Balances with USD valuations and position health          |
+| **Batch**     | Combine swap + stake + supply + send in one transaction   |
 | **Gas Modes** | Gasless (pay in ERC-20) and gasfree (developer-sponsored) |
 
 ```bash
@@ -429,14 +429,14 @@ All network operations include **automatic retry with exponential backoff** (500
 
 Raw Starknet JSON-RPC errors (hex-encoded Cairo strings like `u256_sub Overflow`) are automatically parsed into human-readable messages:
 
-| Raw Error | Displayed Message |
-|-----------|------------------|
-| `u256_sub Overflow` | Insufficient balance — you don't have enough tokens (including gas fees) |
-| `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation |
-| `UNAUTHORIZED` | Unauthorized — session may have expired, try: starkfi auth login |
-| `argent/multicall-failed` | One or more calls in the transaction failed |
-| `dusty-collateral-balance` | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
-| `dusty-debt-balance` | Borrow amount is below the pool's minimum (dust limit). Please increase the amount. |
+| Raw Error                       | Displayed Message                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `u256_sub Overflow`             | Insufficient balance — you don't have enough tokens (including gas fees)                |
+| `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation                       |
+| `UNAUTHORIZED`                  | Unauthorized — session may have expired, try: starkfi auth login                        |
+| `argent/multicall-failed`       | One or more calls in the transaction failed                                             |
+| `dusty-collateral-balance`      | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
+| `dusty-debt-balance`            | Borrow amount is below the pool's minimum (dust limit). Please increase the amount.     |
 
 This applies to both CLI output (`formatError`) and MCP responses (`withErrorHandling`).
 
