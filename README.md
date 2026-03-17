@@ -1,14 +1,11 @@
 <p align="center">
   <a href="https://starkfi.app">
-    <img src="landing/favicon.svg" alt="StarkFi Logo" width="100" height="100"/>
+    <img src="landing/readme-banner.png" alt="StarkFi — The AI-native DeFi toolkit for Starknet" width="100%" />
   </a>
 </p>
 
-<h1 align="center">StarkFi</h1>
-
 <p align="center">
-  <strong>The AI-native DeFi toolkit for Starknet.</strong><br>
-  A production-grade CLI and MCP server that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
+  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
 <p align="center">
@@ -31,42 +28,43 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 - 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
 - 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
 - 🧪 **Simulate Everything** — Dry-run any transaction to estimate fees before broadcasting
+- 💬 **Telegram Bot** — Chat-based DeFi via natural language, BYOAI model (OpenAI, Claude, Gemini)
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                              StarkFi                                     │
-│                                                                          │
-│  ┌──────────┐     ┌─────────────────────┐     ┌───────────────────────┐  │
-│  │   CLI    │     │    MCP Server       │     │    Agent Skills       │  │
-│  │  (30+    │     │    (27 tools)       │     │    (10 workflows)     │  │
-│  │ commands)│     │ stdio transport     │     │   npx starkfi@latest  │  │
-│  └────┬─────┘     └──────────┬──────────┘     └──────────┬────────────┘  │
-│       │                      │                           │               │
-│       └──────────────────────┼───────────────────────────┘               │
-│                              ▼                                           │
-│  ┌──────────────────────────────────────────────────────────────────┐    │
-│  │                      Service Layer                               │    │
-│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐            │    │
-│  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │            │    │
-│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│            │    │
-│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘            │    │
-│  │       └─────────────┴────────────┴────────────┘                  │    │
-│  │                       │                                          │    │
-│  │       ┌───────────────┴───────────────────────────┐              │    │
-│  │       │       Starkzap SDK (starkzap v1.0.0)      │              │    │
-│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │              │    │
-│  │       └───────────────┬───────────────────────────┘              │    │
-│  └───────────────────────┼──────────────────────────────────────────┘    │
-│                          ▼                                               │
-│  ┌──────────────────────────────────────┐  ┌──────────────────────┐      │
-│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │      │
-│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │      │
-│  └──────────────────────────────────────┘  └──────────────────────┘      │
-└──────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                     StarkFi                                        │
+│                                                                                    │
+│  ┌──────────┐  ┌───────────────┐  ┌───────────────┐  ┌──────────────────────────┐  │
+│  │   CLI    │  │  MCP Server   │  │ Agent Skills   │  │    Telegram Bot          │  │
+│  │  (30+    │  │  (27 tools)   │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
+│  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
+│  └────┬─────┘  └──────┬────────┘  └──────┬─────────┘  │  Gemini                 │  │
+│       │               │                  │            └────────────┬─────────────┘  │
+│       └───────────────┼──────────────────┼─────────────────────────┘                │
+│                       ▼                  ▼                                          │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
+│  │                           Service Layer                                      │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────────┐      │   │
+│  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │  │  Portfolio   │      │   │
+│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│  │  Dashboard   │      │   │
+│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘  └──────┬───────┘      │   │
+│  │       └─────────────┴────────────┴────────────┴───────────────┘               │   │
+│  │                       │                                                       │   │
+│  │       ┌───────────────┴───────────────────────────┐                           │   │
+│  │       │       Starkzap SDK (starkzap v1.0.0)      │                           │   │
+│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                           │   │
+│  │       └───────────────┬───────────────────────────┘                           │   │
+│  └───────────────────────┼───────────────────────────────────────────────────────┘   │
+│                          ▼                                                          │
+│  ┌──────────────────────────────────────┐  ┌──────────────────────┐                 │
+│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │                 │
+│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │                 │
+│  └──────────────────────────────────────┘  └──────────────────────┘                 │
+└─────────────────────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
                     ┌──────────────────┐
@@ -368,6 +366,32 @@ StarkFi includes a dedicated **authentication server** (`server/`) built for sec
 - **Graceful shutdown** (SIGTERM/SIGINT with 5s force-kill)
 
 See [`server/README.md`](server/README.md) for setup instructions.
+
+---
+
+## Telegram Bot
+
+StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi-telegram-bot)** that brings DeFi to chat. Users interact with natural language — the bot translates commands into StarkFi operations.
+
+**BYOAI Model** — each user provides their own API key (OpenAI, Claude, or Gemini). No shared keys, no centralized billing.
+
+| Feature | Description |
+| --- | --- |
+| **Swap** | DEX-aggregated trading via Fibrous |
+| **Stake** | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC) |
+| **Lend** | Supply, borrow, repay, withdraw, close on Vesu V2 |
+| **Portfolio** | Balances with USD valuations and position health |
+| **Batch** | Combine swap + stake + supply + send in one transaction |
+| **Gas Modes** | Gasless (pay in ERC-20) and gasfree (developer-sponsored) |
+
+```bash
+git clone https://github.com/ahmetenesdur/starkfi-telegram-bot.git
+cd starkfi-telegram-bot && pnpm install
+cp .env.example .env   # Configure TELEGRAM_BOT_TOKEN, BOT_ENCRYPTION_SECRET
+pnpm dev
+```
+
+See the [starkfi-telegram-bot](https://github.com/ahmetenesdur/starkfi-telegram-bot) repo for full setup and deployment (Docker support included).
 
 ---
 
