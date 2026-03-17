@@ -1,0 +1,91 @@
+---
+title: Telegram Bot
+description: AI-powered Telegram interface for StarkFi DeFi on Starknet
+---
+
+## Overview
+
+The [StarkFi Telegram Bot](https://t.me/starkfi_bot) lets you interact with Starknet DeFi through natural language in Telegram. Bring your own AI model — OpenAI, Claude, or Gemini — and your own API key. No shared keys, no centralized billing.
+
+**Repository:** [github.com/ahmetenesdur/starkfi-telegram-bot](https://github.com/ahmetenesdur/starkfi-telegram-bot)
+
+## Features
+
+| Feature   | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| Swap      | DEX-aggregated trading via Fibrous                           |
+| Stake     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)       |
+| Lend      | Supply, borrow, repay, withdraw, close on Vesu V2            |
+| Portfolio | Balances with USD valuations and position health             |
+| Batch     | Combine swap + stake + supply + send in one transaction      |
+| Gas Modes | Gasless (pay in ERC-20) and gasfree (sponsored) via Paymaster |
+
+## How It Works
+
+The bot routes natural language messages through your AI model to StarkFi's MCP server, which executes on-chain operations:
+
+```
+Telegram → AI Model (your key) → StarkFi MCP Server → Starknet
+```
+
+Each user gets a dedicated MCP child process with an isolated home directory. There is no cross-contamination of wallet credentials between users.
+
+## Commands
+
+### Setup
+
+| Command  | Description                               |
+| -------- | ----------------------------------------- |
+| `/start` | Welcome message and onboarding steps      |
+| `/setup` | Configure AI provider, model, and API key |
+| `/auth`  | Log in to StarkFi via email OTP           |
+| `/model` | Switch model or change provider           |
+
+### Session
+
+| Command      | Description                                     |
+| ------------ | ----------------------------------------------- |
+| `/status`    | View provider, model, wallet, and history count |
+| `/help`      | List commands and example prompts               |
+| `/clear`     | Reset conversation history                      |
+| `/deletekey` | Remove stored API key and end session           |
+
+## Natural Language Examples
+
+After setup and auth, send messages in any language. The AI handles the rest.
+
+| Message                  | What Happens                                  |
+| ------------------------ | --------------------------------------------- |
+| "What's my balance?"     | Returns token balances with USD values         |
+| "Swap 0.1 ETH to USDC"  | Gets a quote, asks for confirmation, executes  |
+| "Stake 100 STRK"        | Lists validators, user picks one, stakes       |
+| "Supply 0.5 ETH on Vesu"| Lists lending pools, user picks one, supplies  |
+| "Send 50 USDC to 0x04…" | Confirms recipient, executes transfer          |
+| "Swap + stake in one tx" | Batch operation — multiple actions combined    |
+
+## BYOK Model
+
+The bot supports three AI providers. You choose your provider and model during `/setup`:
+
+| Provider | Models                              |
+| -------- | ----------------------------------- |
+| OpenAI   | GPT-5 mini, GPT-5.4                |
+| Claude   | Haiku 4.5, Sonnet 4.6, Opus 4.6    |
+| Gemini   | 2.5 Flash, 2.5 Pro, 3 Flash        |
+
+Your API key is encrypted with AES-256-GCM before storage and never held in plain text. Messages containing API keys are automatically deleted after processing.
+
+## Self-Hosting
+
+```bash
+git clone https://github.com/ahmetenesdur/starkfi-telegram-bot.git
+cd starkfi-telegram-bot
+pnpm install
+
+cp .env.example .env
+# Fill in TELEGRAM_BOT_TOKEN, BOT_ENCRYPTION_SECRET, STARKFI_SERVER_URL
+
+pnpm dev
+```
+
+See the repo's [Setup Guide](https://github.com/ahmetenesdur/starkfi-telegram-bot/blob/main/docs/SETUP.md) for full configuration and [Deployment Guide](https://github.com/ahmetenesdur/starkfi-telegram-bot/blob/main/docs/DEPLOYMENT.md) for production (Docker, PM2, systemd).
