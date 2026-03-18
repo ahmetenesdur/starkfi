@@ -30,9 +30,10 @@ Bundle multiple diverse DeFi operations into a single Starknet multicall transac
 1. BEFORE any batch, you MUST run `npx starkfi@latest status` and `npx starkfi@latest balance` to verify connectivity and funds.
 2. A batch MUST include at least **2 operations**. For single operations, use the dedicated skill (`trade`, `send`, `staking`, or `lending`).
 3. Each `--swap`, `--stake`, `--supply`, and `--send` flag can appear **multiple times** (repeatable).
-4. Suggest using `--simulate` first to verify the entire batch would succeed.
-5. AFTER a successful batch, verify with `npx starkfi@latest tx-status <hash>`.
-6. All operations in a batch are **atomic** — if any one fails, the entire transaction reverts.
+4. If the batch includes a `--send` operation, you MUST confirm the recipient address with the user before executing.
+5. Suggest using `--simulate` first to verify the entire batch would succeed.
+6. AFTER a successful batch, verify with `npx starkfi@latest tx-status <hash>`.
+7. All operations in a batch are **atomic** — if any one fails, the entire transaction reverts.
 
 ## Commands
 
