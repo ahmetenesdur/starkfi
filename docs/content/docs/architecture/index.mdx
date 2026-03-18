@@ -50,16 +50,17 @@ StarkFi follows a layered architecture with four entry points that share a commo
 ```
 src/
 ├── index.ts          # CLI entry point (Commander.js)
-├── commands/         # 9 command groups
+├── commands/         # 10 command directories
 │   ├── auth/         # login, verify, logout
 │   ├── wallet/       # address, balance, send, deploy
-│   ├── trade/        # trade, multi-swap, status
+│   ├── trade/        # trade, multi-swap
 │   ├── staking/      # stake, unstake, rewards, pools, validators, stake-status
 │   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status
 │   ├── batch/        # batch multicall
 │   ├── portfolio/    # portfolio dashboard
 │   ├── config/       # config subcommands
-│   └── chain/        # tx-status, mcp-start
+│   ├── chain/        # tx-status
+│   └── system/       # status (mcp-start is inline in index.ts)
 ├── services/         # 11 service modules
 │   ├── starkzap/     # SDK client initialization + config
 │   ├── fibrous/      # DEX routing, calldata, pricing
@@ -74,8 +75,8 @@ src/
 │   └── config/       # Configuration persistence
 ├── mcp/              # MCP server layer
 │   ├── server.ts     # Server setup + stdio transport
-│   ├── tools/        # 7 tool registration files (Zod schemas)
-│   └── handlers/     # 9 domain handlers + context + utils
+│   ├── tools/        # 5 domain tool files + 2 utilities (Zod schemas)
+│   └── handlers/     # 9 domain handlers + 3 utility files
 └── lib/              # 12 shared utilities
     ├── errors.ts     # ErrorCode enum + StarkfiError class
     ├── parse-starknet-error.ts # Cairo hex decoding + error map

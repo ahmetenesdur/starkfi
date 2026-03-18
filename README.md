@@ -38,7 +38,7 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                                     StarkFi                                         │
 │                                                                                     │
-│  ┌──────────┐  ┌───────────────-┐  ┌────────────────┐  ┌─────────────────────────┐  │
+│  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐  │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
 │  │  (30+    │  │  (27 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │

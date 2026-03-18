@@ -73,9 +73,12 @@ The server employs a strict security architecture designed around **access minim
 | `PRIVY_APP_ID`     | **Yes**  | Application ID from the [Privy Dashboard](https://dashboard.privy.io/).          |
 | `PRIVY_APP_SECRET` | **Yes**  | Secret key for app-managed wallet access. Keep this secure.                      |
 | `JWT_SECRET`       | **Yes**  | High-entropy string (32+ characters) for JWT signing.                            |
-| `PORT`             | No       | Server port. Defaults to `3001`.                                                 |
-| `ALLOWED_ORIGINS`  | No       | Comma-separated domains for CORS (e.g., `https://starkfi.app`).                  |
-| `AVNU_API_KEY`     | No       | AVNU Paymaster API key. Required for developer-sponsored (gasfree) transactions. |
+| `PORT`               | No       | Server port. Defaults to `3001`.                                                     |
+| `NODE_ENV`           | No       | Runtime environment: `development`, `production`, or `test`. Defaults to `development`. |
+| `ALLOWED_ORIGINS`    | No       | Comma-separated domains for CORS (e.g., `https://starkfi.app`).                      |
+| `PUBLIC_URL`         | No       | Public-facing URL of the server (for CORS and redirects).                             |
+| `AVNU_API_KEY`       | No       | AVNU Paymaster API key. Required for developer-sponsored (gasfree) transactions.     |
+| `AVNU_PAYMASTER_URL` | No       | AVNU Paymaster endpoint URL. Defaults to `https://starknet.paymaster.avnu.fi/v1`.    |
 
 ## Local Setup
 
