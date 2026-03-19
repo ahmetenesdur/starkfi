@@ -279,7 +279,7 @@ Views and modifies global CLI behavior: RPC routing, network selection, and Gas 
 | Parameter | Type   | Required | Description                                                                                                                               |
 | --------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `action`  | enum   | **Yes**  | One of: `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`                                                 |
-| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia`. |
+| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`/`off`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia`. |
 
 ---
 

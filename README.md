@@ -427,16 +427,25 @@ All network operations include **automatic retry with exponential backoff** (500
 
 ### Readable Starknet Errors
 
-Raw Starknet JSON-RPC errors (hex-encoded Cairo strings like `u256_sub Overflow`) are automatically parsed into human-readable messages:
+Raw Starknet JSON-RPC errors (hex-encoded Cairo strings like `u256_sub Overflow`) are automatically parsed into human-readable messages (15 patterns):
 
-| Raw Error                       | Displayed Message                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------- |
-| `u256_sub Overflow`             | Insufficient balance — you don't have enough tokens (including gas fees)                |
-| `ERC20: insufficient allowance` | Token approval required — not enough allowance for this operation                       |
-| `UNAUTHORIZED`                  | Unauthorized — session may have expired, try: starkfi auth login                        |
-| `argent/multicall-failed`       | One or more calls in the transaction failed                                             |
-| `dusty-collateral-balance`      | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
-| `dusty-debt-balance`            | Borrow amount is below the pool's minimum (dust limit). Please increase the amount.     |
+| Raw Error                                | Displayed Message                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `u256_sub Overflow`                      | Insufficient balance — you don't have enough tokens (including gas fees)                |
+| `u256_add Overflow`                      | Amount overflow — the value is too large                                                |
+| `ERC20: transfer amount exceeds balance` | Insufficient token balance for this transfer                                            |
+| `ERC20: burn amount exceeds balance`     | Insufficient token balance to burn                                                      |
+| `ERC20: insufficient allowance`          | Token approval required — not enough allowance for this operation                       |
+| `argent/multicall-failed`                | One or more calls in the transaction failed                                             |
+| `argent/invalid-signature`               | Invalid signature — try re-authenticating with: starkfi auth login                      |
+| `argent/invalid-timestamp`               | Transaction expired — please retry                                                      |
+| `is_valid_signature`                     | Signature validation failed — try re-authenticating                                     |
+| `assert_not_zero`                        | Operation failed — a required value was zero                                            |
+| `Contract not found`                     | Contract not found — the target contract does not exist on this network                 |
+| `UNAUTHORIZED`                           | Unauthorized — session may have expired, try: starkfi auth login                        |
+| `nonce`                                  | Transaction nonce error — please retry                                                  |
+| `dusty-collateral-balance`               | Collateral amount is below the pool's minimum (dust limit). Please increase the amount. |
+| `dusty-debt-balance`                     | Borrow amount is below the pool's minimum (dust limit). Please increase the amount.     |
 
 This applies to both CLI output (`formatError`) and MCP responses (`withErrorHandling`).
 
