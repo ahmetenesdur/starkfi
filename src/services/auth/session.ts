@@ -82,4 +82,3 @@ export function requireSession(): Session {
 
 	return session;
 }
-

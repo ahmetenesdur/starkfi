@@ -386,12 +386,13 @@ StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi
 
 ```bash
 git clone https://github.com/ahmetenesdur/starkfi-telegram-bot.git
-cd starkfi-telegram-bot && pnpm install
+cd starkfi-telegram-bot
+pnpm install
 cp .env.example .env   # Configure TELEGRAM_BOT_TOKEN, BOT_ENCRYPTION_SECRET
 pnpm dev
 ```
 
-See the [starkfi-telegram-bot](https://github.com/ahmetenesdur/starkfi-telegram-bot) repo for full setup and deployment (Docker support included).
+See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-bot) for full setup and deployment (Docker support included).
 
 ---
 
