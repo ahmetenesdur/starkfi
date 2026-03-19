@@ -1,45 +1,46 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { z } from "zod";
 import { DATA_DIR } from "../../lib/config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-export interface PrivySession {
-	type: "privy";
-	network: "mainnet" | "sepolia";
-	address: string;
-	userId: string;
-	walletId: string;
-	publicKey: string;
-	token: string;
-	serverUrl: string;
-}
+const sessionSchema = z.object({
+	type: z.literal("privy"),
+	network: z.enum(["mainnet", "sepolia"]),
+	address: z.string(),
+	userId: z.string(),
+	walletId: z.string(),
+	publicKey: z.string(),
+	token: z.string(),
+	serverUrl: z.string(),
+});
 
-export type Session = PrivySession;
+export type Session = z.infer<typeof sessionSchema>;
 
 const SESSION_FILE = join(DATA_DIR, "session.json");
 
 export function loadSession(): Session | null {
-	if (!existsSync(SESSION_FILE)) return null;
-
 	try {
 		const raw = readFileSync(SESSION_FILE, "utf-8");
-		return JSON.parse(raw) as Session;
+		const result = sessionSchema.safeParse(JSON.parse(raw));
+		return result.success ? result.data : null;
 	} catch {
 		return null;
 	}
 }
 
 export function saveSession(session: Session): void {
-	const dir = DATA_DIR;
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-	writeFileSync(SESSION_FILE, JSON.stringify(session, null, 2), "utf-8");
+	const filePath = SESSION_FILE;
+	mkdirSync(dirname(filePath), { recursive: true });
+	sessionSchema.parse(session);
+	writeFileSync(filePath, JSON.stringify(session, null, 2), "utf-8");
 }
 
 export function clearSession(): void {
-	if (existsSync(SESSION_FILE)) {
+	try {
 		unlinkSync(SESSION_FILE);
+	} catch {
+		// noop — file may not exist
 	}
 }
 
@@ -81,3 +82,4 @@ export function requireSession(): Session {
 
 	return session;
 }
+
