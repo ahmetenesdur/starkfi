@@ -2,7 +2,7 @@ import envPaths from "env-paths";
 
 const paths = envPaths("starkfi");
 
-export const STARKFI_API_URL_DEFAULT = "https://2c29jsb475.eu-central-1.awsapprunner.com";
+export const STARKFI_API_URL_DEFAULT = "https://starkfi.railway.internal";
 
 export const DATA_DIR = paths.data;
 export const CONFIG_DIR = paths.config;
