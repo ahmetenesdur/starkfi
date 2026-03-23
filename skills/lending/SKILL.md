@@ -1,10 +1,10 @@
 ---
 name: lending
-description: Manage Vesu V2 lending positions on Starknet — supply assets, borrow against collateral, repay debt, withdraw, and close positions. Use this skill when the user mentions lending, borrowing, supplying collateral, Vesu, interest, health factor, liquidation, or DeFi yield from lending protocols.
+description: Manage Vesu V2 lending positions on Starknet — supply assets, borrow against collateral, repay debt, withdraw, close positions, monitor health factors, and auto-rebalance risky positions. Use this skill when the user mentions lending, borrowing, supplying collateral, Vesu, interest, health factor, liquidation, monitoring positions, auto-rebalancing, protecting against liquidation, or DeFi yield from lending protocols.
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
-    version: 0.1.0
+    version: 0.2.0
     author: ahmetenesdur
     category: transaction
 allowed-tools:
@@ -16,6 +16,9 @@ allowed-tools:
     - Bash(npx starkfi@latest lend-borrow *)
     - Bash(npx starkfi@latest lend-repay *)
     - Bash(npx starkfi@latest lend-close *)
+    - Bash(npx starkfi@latest lend-monitor)
+    - Bash(npx starkfi@latest lend-monitor *)
+    - Bash(npx starkfi@latest lend-auto *)
     - Bash(npx starkfi@latest status)
     - Bash(npx starkfi@latest balance)
     - Bash(npx starkfi@latest balance *)
@@ -24,7 +27,7 @@ allowed-tools:
 
 # Lending (Vesu V2)
 
-Manage lending and borrowing positions on Vesu V2 protocol on Starknet. Supply assets to earn yield, borrow against collateral, repay debt, and close positions.
+Manage lending and borrowing positions on Vesu V2 protocol on Starknet. Supply assets to earn yield, borrow against collateral, repay debt, monitor health factors, auto-rebalance risky positions, and close positions.
 
 ## Prerequisites
 
@@ -42,6 +45,8 @@ Manage lending and borrowing positions on Vesu V2 protocol on Starknet. Supply a
     - Health Factor **< 1.1** → DO NOT proceed without explicit double-confirmation from the user.
 4. AFTER any transactional operation, verify with `tx-status`.
 5. When using `--use-supplied`, the borrow is backed by the user's existing vTokens (supplied positions) rather than transferring from wallet.
+6. When the user asks about health, risk, or liquidation — use `lend-monitor` first for a comprehensive overview with 4-level risk classification (SAFE/WARNING/DANGER/CRITICAL).
+7. When a position's health factor is low, suggest `lend-auto` to automatically rebalance. Always use `--simulate` first to preview the action before executing.
 
 ## Commands
 
@@ -90,6 +95,33 @@ npx starkfi@latest lend-repay <amount> --pool <name|address> --token <symbol> --
 ```bash
 # Atomically repay all debt and withdraw all collateral
 npx starkfi@latest lend-close --pool <name|address> --collateral-token <symbol> --borrow-token <symbol>
+```
+
+### Health Monitoring
+
+```bash
+# Scan all positions across all pools
+npx starkfi@latest lend-monitor [--json]
+
+# Monitor specific position
+npx starkfi@latest lend-monitor --pool <name|address> --collateral-token <symbol> --borrow-token <symbol>
+
+# Custom warning threshold
+npx starkfi@latest lend-monitor --warning-threshold 1.5
+```
+
+### Auto-Rebalance
+
+```bash
+# Auto-rebalance (picks best strategy — repay or add collateral)
+npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> --borrow-token <symbol>
+
+# With specific strategy
+npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> --borrow-token <symbol> --strategy repay
+npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> --borrow-token <symbol> --strategy add-collateral
+
+# Simulate first (always recommended)
+npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> --borrow-token <symbol> --simulate
 ```
 
 ## Parameters
@@ -141,6 +173,39 @@ Run without arguments to **auto-scan all pools**. Or specify `--pool` + `--colla
 | `--borrow-token`     | string | Borrow token (needed to see debt + HF) | No                    |
 
 > \* Required when `--pool` is specified.
+
+### lend-monitor
+
+Run without arguments to **scan all pools**. Or specify `--pool` + `--collateral-token` + `--borrow-token` for a single position.
+
+| Parameter              | Type   | Description                          | Required                  |
+| ---------------------- | ------ | ------------------------------------ | ------------------------- |
+| `--pool`               | string | Pool name or address                 | No (scans all if omitted) |
+| `--collateral-token`   | string | Collateral token symbol              | No*                       |
+| `--borrow-token`       | string | Debt token symbol                    | No*                       |
+| `--warning-threshold`  | number | Custom warning threshold (default: 1.3) | No                     |
+
+> \* Required when `--pool` is specified.
+
+**Risk Levels:**
+
+| Level        | Health Factor | Meaning                               |
+| ------------ | ------------- | ------------------------------------- |
+| **SAFE**     | > 1.3         | No action needed                      |
+| **WARNING**  | 1.1 – 1.3    | Monitor closely                       |
+| **DANGER**   | 1.05 – 1.1   | Repay debt or add collateral          |
+| **CRITICAL** | ≤ 1.05        | Imminent liquidation risk             |
+
+### lend-auto
+
+| Parameter              | Type   | Description                                    | Required |
+| ---------------------- | ------ | ---------------------------------------------- | -------- |
+| `--pool`               | string | Pool name or address                           | Yes      |
+| `--collateral-token`   | string | Collateral token symbol                        | Yes      |
+| `--borrow-token`       | string | Debt token symbol                              | Yes      |
+| `--strategy`           | string | `repay`, `add-collateral`, or `auto` (default) | No       |
+| `--target-hf`          | number | Target health factor (default: 1.3)            | No       |
+| `--simulate`           | flag   | Preview without executing                      | No       |
 
 ## Examples
 
@@ -194,11 +259,32 @@ npx starkfi@latest tx-status <hash>
 **User:** "How healthy is my position?"
 
 ```bash
-# Quick overview of all positions
-npx starkfi@latest lend-status
+# Comprehensive health monitoring with risk levels
+npx starkfi@latest lend-monitor
 
 # Detailed health factor for specific position
-npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-token USDC
+npx starkfi@latest lend-monitor --pool Prime --collateral-token ETH --borrow-token USDC
+```
+
+**User:** "My position is at risk, fix it"
+
+```bash
+# First, check current state
+npx starkfi@latest lend-monitor --pool Prime --collateral-token ETH --borrow-token USDC
+
+# Simulate the auto-rebalance action
+npx starkfi@latest lend-auto --pool Prime --collateral-token ETH --borrow-token USDC --simulate
+
+# Execute after user confirms
+npx starkfi@latest lend-auto --pool Prime --collateral-token ETH --borrow-token USDC
+npx starkfi@latest tx-status <hash>
+```
+
+**User:** "Protect my ETH/USDC position from liquidation"
+
+```bash
+# Choose a specific strategy — repay debt
+npx starkfi@latest lend-auto --pool Prime --collateral-token ETH --borrow-token USDC --strategy repay --simulate
 ```
 
 ## Error Handling
@@ -211,6 +297,8 @@ npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-toke
 | `Dust limit`              | Borrow amount is below the pool's minimum dollar value (~$10). Increase it. |
 | `Insufficient balance`    | Check `balance` — user may need to swap for the token.        |
 | `Not authenticated`       | Run `authenticate-wallet` skill first.                        |
+| `Monitor failed`          | Check pool/token params and retry.                            |
+| `Rebalance failed`        | Check balances, health factor, and retry.                     |
 
 ## Related Skills
 
@@ -218,3 +306,4 @@ npx starkfi@latest lend-status --pool Prime --collateral-token ETH --borrow-toke
 - Use `trade` to swap tokens if the user doesn't have the right asset.
 - Use `portfolio` for a full overview including lending positions with USD values.
 - Use `batch` to combine supply operations with swaps or staking.
+- Use `portfolio-rebalance` (within `portfolio` skill) to optimize overall portfolio allocation.
