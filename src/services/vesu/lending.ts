@@ -6,6 +6,7 @@ import type { TxResult } from "../../lib/types.js";
 import { POOL_FACTORY_ADDRESS, DENOMINATION_ASSETS } from "./config.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
 import { fetchPool } from "./api.js";
+import { classifyRisk, resolveConfig } from "./monitor.js";
 
 export interface LendingPosition {
 	collateralAsset: string;
@@ -13,7 +14,7 @@ export interface LendingPosition {
 	collateralAmount: string;
 	debtAmount: string;
 	healthFactor?: number;
-	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "UNKNOWN";
+	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "CRITICAL" | "UNKNOWN";
 }
 
 export function splitU256(value: bigint): [string, string] {
@@ -231,6 +232,41 @@ export async function closePosition(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+export async function addCollateral(
+	wallet: StarkZapWallet,
+	poolAddress: string,
+	collateralTokenSymbol: string,
+	debtTokenSymbol: string,
+	amount: string
+): Promise<TxResult> {
+	const collateralToken = resolveToken(collateralTokenSymbol);
+	const debtToken = resolveToken(debtTokenSymbol);
+	const parsedCollateral = Amount.parse(amount, collateralToken);
+	const userAddress = wallet.address.toString();
+
+	const calldata = [
+		collateralToken.address.toString(),
+		debtToken.address.toString(),
+		userAddress,
+		...encodeVesuAmount(DENOMINATION_ASSETS, parsedCollateral.toBase()),
+		...encodeZeroAmount(),
+	];
+
+	const tx = await wallet
+		.tx()
+		.approve(collateralToken, fromAddress(poolAddress), parsedCollateral)
+		.add({
+			contractAddress: fromAddress(poolAddress),
+			entrypoint: "modify_position",
+			calldata,
+		})
+		.send();
+
+	await tx.wait();
+
+	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
+}
+
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -284,18 +320,16 @@ export async function getPosition(
 
 					if (debtUsdValue > 0) {
 						healthFactor = maxBorrowUsd / debtUsdValue;
-						if (healthFactor > 1.5) riskLevel = "SAFE";
-						else if (healthFactor > 1.1) riskLevel = "WARNING";
-						else riskLevel = "DANGER";
+						const cfg = resolveConfig();
+						riskLevel = classifyRisk(healthFactor, cfg);
 					} else {
-						// No debt → treat as infinite health; cap at a sentinel for JSON safety
 						healthFactor = 9999;
 						riskLevel = "SAFE";
 					}
 				}
 			}
 		} catch {
-			// Ignore if API or pricing fails, return basic position
+			// non-critical — return basic position without health data
 		}
 
 		return {
