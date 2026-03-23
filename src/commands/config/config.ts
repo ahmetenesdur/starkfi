@@ -1,7 +1,10 @@
 import type { Command } from "commander";
 import { ConfigService } from "../../services/config/config.js";
 import { success, formatResult, warn } from "../../lib/format.js";
-import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
+import {
+	GASLESS_SUPPORTED_TOKENS,
+	GASLESS_SUPPORTED_TOKENS_SET,
+} from "../../services/starkzap/config.js";
 
 export function registerConfigCommand(program: Command): void {
 	const configService = ConfigService.getInstance();
@@ -42,7 +45,7 @@ export function registerConfigCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi config set-network mainnet\n  $ starkfi config set-network sepolia"
 		)
 		.action((network: string) => {
-			if (!["mainnet", "sepolia"].includes(network)) {
+			if (network !== "mainnet" && network !== "sepolia") {
 				console.log(warn("Network must be 'mainnet' or 'sepolia'"));
 				process.exit(1);
 			}
@@ -60,7 +63,7 @@ export function registerConfigCommand(program: Command): void {
 			"\nNote:\n  Gasfree and Gasless modes are mutually exclusive.\n  Enabling gasfree clears any gas token setting.\n\nExamples:\n  $ starkfi config set-gasfree on\n  $ starkfi config set-gasfree off"
 		)
 		.action((mode: string) => {
-			if (!["on", "off"].includes(mode)) {
+			if (mode !== "on" && mode !== "off") {
 				console.log(warn("Mode must be 'on' or 'off'"));
 				process.exit(1);
 			}
@@ -89,13 +92,14 @@ export function registerConfigCommand(program: Command): void {
 			`\nExamples:\n  $ starkfi config set-gas-token ETH\n  $ starkfi config set-gas-token USDC\n  $ starkfi config set-gas-token reset    # revert to STRK`
 		)
 		.action((token: string) => {
-			if (["off", "reset", "default"].includes(token.toLowerCase())) {
+			const lowerToken = token.toLowerCase();
+			if (lowerToken === "off" || lowerToken === "reset" || lowerToken === "default") {
 				configService.delete("gasToken");
 				console.log(success("Gas token reset to default: STRK"));
 				return;
 			}
 			const upper = token.toUpperCase();
-			if (!GASLESS_SUPPORTED_TOKENS.includes(upper)) {
+			if (!GASLESS_SUPPORTED_TOKENS_SET.has(upper)) {
 				console.log(
 					warn(
 						`Unsupported token '${token}'. Supported: ${GASLESS_SUPPORTED_TOKENS.join(", ")}`

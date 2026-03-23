@@ -13,3 +13,4 @@ export const GAS_TOKEN_ADDRESSES: Record<string, string> = {
 };
 
 export const GASLESS_SUPPORTED_TOKENS = Object.keys(GAS_TOKEN_ADDRESSES);
+export const GASLESS_SUPPORTED_TOKENS_SET = new Set(GASLESS_SUPPORTED_TOKENS);
