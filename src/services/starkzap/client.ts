@@ -32,7 +32,6 @@ export function resolveFeeModeConfig(
 		return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
 	}
 
-	// Fallback
 	return {
 		feeMode: "sponsored",
 		gasTokenAddress: GAS_TOKEN_ADDRESSES["STRK"],
@@ -40,11 +39,9 @@ export function resolveFeeModeConfig(
 	};
 }
 
-// Patch paymaster feeMode: 'sponsored' → 'default' with gasToken for gasless mode.
 function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
 	const account = wallet.getAccount();
 
-	// Guarded by runtime type check below
 	const accountInternal = account as unknown as Record<string, unknown>;
 
 	const exec = accountInternal.executePaymasterTransaction;

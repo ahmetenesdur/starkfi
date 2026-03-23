@@ -104,7 +104,6 @@ async function fetchStaking(
 	const overview = await getStakingOverview(sdk, wallet, session.network, session.address);
 	if (overview.positions.length === 0) return [];
 
-	// Collect unique token symbols and fetch their prices concurrently.
 	const uniqueSymbols = [...new Set(overview.positions.map((p) => p.token))];
 	const priceEntries = await Promise.allSettled(
 		uniqueSymbols.map(async (symbol) => {

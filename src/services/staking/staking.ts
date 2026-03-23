@@ -227,7 +227,6 @@ export async function getStakingOverview(
 		}
 	}
 
-	// Discover all pools across all validators concurrently.
 	const validatorPools = await Promise.all(
 		validators.map(async (v) => {
 			try {
@@ -242,7 +241,6 @@ export async function getStakingOverview(
 
 	const allPools = validatorPools.flat();
 
-	// Query positions for all discovered pools concurrently.
 	const results = await Promise.all(
 		allPools.map(async ({ validator, pool: p }) => {
 			let position;
