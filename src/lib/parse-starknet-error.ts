@@ -40,24 +40,19 @@ const ERROR_MAP: [pattern: RegExp, message: string][] = [
 
 // Extract the innermost meaningful error from a Starknet execution error.
 export function parseStarknetError(raw: string): string {
-	// Try to extract the execution_error JSON field from the raw dump.
 	const execMatch = raw.match(/execution_error["']?\s*:\s*["'](.+?)["']\s*\}/s);
 	const errorBody = execMatch?.[1] ?? raw;
 
-	// Decode any hex-encoded short-strings like 0x753235365f737562204f766572666c6f77
 	const decoded = decodeHexStrings(errorBody);
 
-	// Strip ENTRYPOINT_FAILED noise — it's just a wrapper, not the real error.
 	const cleaned = decoded.replace(/,?\s*ENTRYPOINT_FAILED/g, "").trim();
 
-	// Match against known error patterns.
 	for (const [pattern, message] of ERROR_MAP) {
 		if (pattern.test(cleaned)) {
 			return message;
 		}
 	}
 
-	// If it looks like a massive RPC dump (contains "params"), extract just the error part.
 	if (raw.includes("TRANSACTION_EXECUTION_ERROR") && cleaned.length < raw.length) {
 		return cleaned || raw;
 	}
@@ -67,19 +62,15 @@ export function parseStarknetError(raw: string): string {
 
 // Decode hex-encoded Cairo short-strings inline.
 function decodeHexStrings(input: string): string {
-	// Already-decoded strings in parenthesized comments: 0x... ('readable')
-	// Extract the readable parts and discard hex.
 	const withDecoded = input.replace(
 		/0x[0-9a-fA-F]+\s*\('([^']+)'\)/g,
 		(_, decoded: string) => decoded
 	);
 
-	// Any remaining bare hex strings that look like felt-encoded ASCII.
 	return withDecoded.replace(/0x([0-9a-fA-F]{2,})/g, (full, hex: string) => {
 		try {
 			const bytes = Buffer.from(hex, "hex");
 			const text = bytes.toString("utf8");
-			// Only replace if it produced printable ASCII (not garbage).
 			if (/^[\x20-\x7e]+$/.test(text)) {
 				return text;
 			}

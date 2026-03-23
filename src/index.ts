@@ -45,8 +45,11 @@ import {
 	registerLendRepayCommand,
 	registerLendCloseCommand,
 	registerLendStatusCommand,
+	registerLendMonitorCommand,
+	registerLendAutoCommand,
 } from "./commands/lending/lending.js";
 import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
+import { registerPortfolioRebalanceCommand } from "./commands/portfolio/portfolio-rebalance.js";
 import { registerBatchCommand } from "./commands/batch/batch.js";
 import { registerConfigCommand } from "./commands/config/config.js";
 
@@ -105,8 +108,10 @@ const COMMAND_GROUPS: Record<string, string[]> = {
 		"lend-repay",
 		"lend-close",
 		"lend-status",
+		"lend-monitor",
+		"lend-auto",
 	],
-	Portfolio: ["portfolio"],
+	Portfolio: ["portfolio", "portfolio-rebalance"],
 	Operations: ["batch"],
 	Configuration: ["config"],
 	System: ["status", "tx-status", "mcp-start", "help"],
@@ -124,7 +129,6 @@ program
 program.configureHelp({
 	formatHelp(cmd: Command, helper: Help): string {
 		if (cmd.name() !== "starkfi") {
-			// Sub-command pages: clean styled layout, no grouping
 			const lines: string[] = [];
 			const width = helper.padWidth(cmd, helper);
 
@@ -170,7 +174,6 @@ program.configureHelp({
 			return lines.join("\n");
 		}
 
-		// Root command: grouped layout + Quick Start footer
 		const lines: string[] = [];
 		const width = helper.padWidth(cmd, helper);
 
@@ -212,7 +215,6 @@ program.configureHelp({
 			}
 		}
 
-		// Catch-all for commands not listed in COMMAND_GROUPS
 		const ungrouped = allCmds.filter((c) => !rendered.has(c.name()));
 		if (ungrouped.length) {
 			lines.push(`\n  ${chalk.bold("Other")}`);
@@ -257,8 +259,11 @@ registerLendBorrowCommand(program);
 registerLendRepayCommand(program);
 registerLendCloseCommand(program);
 registerLendStatusCommand(program);
+registerLendMonitorCommand(program);
+registerLendAutoCommand(program);
 
 registerPortfolioCommand(program);
+registerPortfolioRebalanceCommand(program);
 registerBatchCommand(program);
 registerConfigCommand(program);
 

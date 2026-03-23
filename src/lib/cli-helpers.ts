@@ -3,7 +3,6 @@ import type { SimulationResult } from "../services/simulate/simulate.js";
 
 type Spinner = ReturnType<typeof createSpinner>;
 
-// Wraps the standard CLI spinner + try/catch + process.exit(1) pattern.
 export async function runCommand<T>(
 	spinnerText: string,
 	successText: string,
@@ -23,12 +22,10 @@ export async function runCommand<T>(
 	}
 }
 
-// Outputs a result object, respecting the --json flag.
 export function outputResult(data: Record<string, unknown>, opts: { json?: boolean }): void {
 	console.log(formatResult(data, { json: opts.json }));
 }
 
-// Handles spinner update, result construction, and output for --simulate runs.
 export function handleSimulationResult(
 	sim: SimulationResult,
 	spinner: Spinner,
@@ -41,7 +38,6 @@ export function handleSimulationResult(
 		spinner.fail("Simulation failed");
 	}
 
-	// Property order: mode → command-specific fields → fee fields → revert reason.
 	const simResult = {
 		mode: "SIMULATION (no TX sent)",
 		...extraFields,
