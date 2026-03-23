@@ -8,6 +8,8 @@ import {
 	handleBorrowAssets,
 	handleRepayDebt,
 	handleClosePosition,
+	handleMonitorLendingPosition,
+	handleAutoRebalanceLending,
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
@@ -129,5 +131,45 @@ export function registerLendingTools(server: McpServer): number {
 		withErrorHandling(handleClosePosition)
 	);
 
-	return 7;
+	server.tool(
+		"monitor_lending_position",
+		"Monitor health factors across lending positions. Returns alerts and recommendations when health factor drops below thresholds. Omit pool to scan all pools.",
+		{
+			pool: z.string().optional().describe("Pool name or address. Omit to scan all pools."),
+			collateral_token: z
+				.string()
+				.optional()
+				.describe("Collateral token symbol (required with pool)"),
+			borrow_token: z.string().optional().describe("Debt token symbol (required with pool)"),
+			warning_threshold: z
+				.number()
+				.optional()
+				.describe("Custom warning threshold (default: 1.3)"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleMonitorLendingPosition)
+	);
+
+	server.tool(
+		"auto_rebalance_lending",
+		"Automatically adjust a lending position's health factor via repay or add-collateral. Supports simulation mode.",
+		{
+			pool: z.string().describe("Pool name or address"),
+			collateral_token: z.string().describe("Collateral token symbol"),
+			borrow_token: z.string().describe("Debt token symbol"),
+			strategy: z
+				.enum(["repay", "add-collateral", "auto"])
+				.optional()
+				.describe("Adjustment strategy (default: auto)"),
+			target_health_factor: z
+				.number()
+				.optional()
+				.describe("Target health factor (default: 1.3)"),
+			simulate: z.boolean().optional().describe("Set true to simulate without executing"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleAutoRebalanceLending)
+	);
+
+	return 9;
 }

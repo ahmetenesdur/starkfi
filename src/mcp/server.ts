@@ -15,11 +15,14 @@ const pkg = {
 
 const MCP_INSTRUCTIONS = `StarkFi is a Starknet DeFi toolkit. You can:
 - Check auth status and configure settings (network, RPC, gas payment mode)
-- Query balances, deploy accounts, send tokens, and view full portfolio
+- Query balances, deploy accounts, send tokens, and view full portfolio with USD values
 - Get swap quotes and execute token swaps via Fibrous aggregation
 - Execute multi-swaps (2-3 pairs) and batch multiple DeFi operations in a single transaction
 - Stake/unstake tokens across validators, claim and compound rewards
 - Supply, borrow, repay, withdraw, and close positions on Vesu V2 lending pools
+- Monitor lending health factors with 4-level risk alerts (HEALTHY/WARNING/DANGER/CRITICAL)
+- Auto-rebalance lending positions via repay or add-collateral strategies
+- Rebalance portfolio to target allocation via optimized multi-swap
 
 Always call get_swap_quote before swap_tokens. Always call list_validators before staking. Always call list_lending_pools before lending operations. Use simulate=true on transactional tools to preview fees before execution.`;
 

@@ -6,6 +6,7 @@ import {
 	handleDeployAccount,
 	handleSendTokens,
 	handleGetPortfolio,
+	handleRebalancePortfolio,
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
@@ -69,5 +70,17 @@ export function registerWalletTools(server: McpServer): number {
 		withErrorHandling(handleGetPortfolio)
 	);
 
-	return 5;
+	server.tool(
+		"rebalance_portfolio",
+		"Rebalance portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction. Supports simulation.",
+		{
+			target: z.string().describe('Target allocation, e.g. "50 ETH, 30 USDC, 20 STRK"'),
+			slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
+			simulate: z.boolean().optional().describe("Set true to preview plan without executing"),
+		},
+		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+		withErrorHandling(handleRebalancePortfolio)
+	);
+
+	return 6;
 }

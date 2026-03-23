@@ -2,7 +2,6 @@ import { StarkfiError } from "../../lib/errors.js";
 import { parseStarknetError } from "../../lib/parse-starknet-error.js";
 import { jsonResult } from "../handlers/utils.js";
 
-// Wrap an MCP tool handler with standardised error handling.
 export function withErrorHandling<
 	T extends (...args: never[]) => Promise<{ content: { type: "text"; text: string }[] }>,
 >(fn: T) {

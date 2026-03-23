@@ -8,7 +8,6 @@ export interface WalletContext {
 	wallet: Wallet;
 }
 
-// Authenticate, init SDK + wallet, call ensureReady. For transactional handlers.
 export async function withWallet<T>(fn: (ctx: WalletContext) => Promise<T>): Promise<T> {
 	const session = requireSession();
 	const { sdk, wallet } = await initSDKAndWallet(session);
@@ -16,7 +15,6 @@ export async function withWallet<T>(fn: (ctx: WalletContext) => Promise<T>): Pro
 	return fn({ session, sdk, wallet });
 }
 
-// Authenticate and init SDK + wallet without ensureReady. For read-only handlers.
 export async function withReadonlyWallet<T>(fn: (ctx: WalletContext) => Promise<T>): Promise<T> {
 	const session = requireSession();
 	const { sdk, wallet } = await initSDKAndWallet(session);
