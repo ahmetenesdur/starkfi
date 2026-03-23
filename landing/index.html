@@ -17,13 +17,13 @@
 		<title>StarkFi | Starknet DeFi CLI + MCP Server + Agent Skills</title>
 		<meta
 			name="description"
-			content="StarkFi — Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster. Built with Starkzap SDK."
+			content="StarkFi — Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
 		/>
 
 		<!-- SEO Essentials -->
 		<meta
 			name="keywords"
-			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain"
+			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain, Telegram Bot"
 		/>
 		<meta name="author" content="ahmetenesdur" />
 		<meta name="robots" content="index, follow" />
@@ -42,7 +42,7 @@
 		/>
 		<meta
 			property="og:description"
-			content="Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster."
+			content="Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta property="og:image" content="https://starkfi.app/og-image.png" />
 		<meta property="og:image:width" content="1200" />
@@ -56,7 +56,7 @@
 		<meta name="twitter:title" content="StarkFi | Starknet DeFi from your Terminal & AI" />
 		<meta
 			name="twitter:description"
-			content="Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster."
+			content="Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta name="twitter:image" content="https://starkfi.app/og-image.png" />
 		<meta name="twitter:site" content="@starkfiapp" />
@@ -68,7 +68,7 @@
 				"@type": "SoftwareApplication",
 				"name": "StarkFi",
 				"url": "https://starkfi.app",
-				"description": "Swap, stake, lend and batch on Starknet from the CLI or through AI agents. 27 MCP tools, 10 Agent Skills, gas abstraction via Paymaster.",
+				"description": "Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction.",
 				"applicationCategory": "DeveloperApplication",
 				"operatingSystem": "Cross-platform",
 				"offers": {
@@ -275,22 +275,15 @@
 			<main class="relative z-10 mx-auto max-w-[1200px] px-6 pt-20 pb-32">
 				<!-- Hero Section -->
 				<div class="flex flex-col items-center text-center max-w-4xl mx-auto mb-28 reveal-on-scroll">
-					<a
-						href="https://starkzap.io"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="group inline-flex items-center gap-2 px-4 py-1.5 rounded-full frosted-glass hover:bg-white/5 border border-white/10 mb-8 transition-all cursor-pointer"
+					<div
+						class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full frosted-glass border border-white/10 mb-8"
 					>
 						<div class="size-2 rounded-full bg-pastel-mint animate-pulse"></div>
 						<span
-							class="text-zinc-600 group-hover:text-zinc-100 text-[12px] font-medium tracking-wide"
+							class="text-zinc-600 text-[12px] font-medium tracking-wide"
 							>Built with Starkzap SDK</span
 						>
-						<span
-							class="material-symbols-outlined text-sm text-zinc-600 group-hover:translate-x-0.5 transition-transform"
-							>arrow_forward</span
-						>
-					</a>
+					</div>
 					<h1
 						class="text-zinc-100 font-display text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8"
 					>
@@ -301,9 +294,9 @@
 					<p
 						class="text-zinc-600 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
 					>
-						Swap, stake, lend, batch &mdash; all from the CLI. Or let your AI agent
-						handle it through 27 MCP tools and 10 ready-made Skills. Powered by Starkzap
-						with built-in gas abstraction.
+						Swap, stake, lend, batch, simulate &mdash; all from the CLI or Telegram.
+						Or let your AI agent handle it through 30 MCP tools and 10 ready-made
+						Skills. Built-in gas abstraction via Paymaster.
 					</p>
 					<div class="flex flex-col items-center gap-6 w-full px-4 sm:px-0">
 						<div
@@ -484,13 +477,15 @@
 					>
 						<span
 							class="text-zinc-600 text-xs font-display font-bold uppercase tracking-widest"
-							>Gas Tokens</span
+							>Protocols</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-pastel-mint"
 							>5</span
 						>
 					</div>
 				</div>
+
+
 
 				<!-- Features Grid -->
 				<section class="mb-32 relative z-10">
@@ -521,7 +516,7 @@
 					</div>
 
 					<!-- Features Grid -->
-					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-32 z-10 relative reveal-on-scroll">
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 z-10 relative reveal-on-scroll">
 						<!-- Feature Card 1 -->
 						<div
 							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
@@ -578,8 +573,9 @@
 								Lending &amp; Borrowing
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Native Vesu V2 integration. Supply collateral, borrow assets, and
-								close positions with precise CLI control.
+								Vesu V2 integration with health factor monitoring, 4-level risk
+								alerts and auto-rebalance. Supply, borrow, repay, close &mdash;
+								all with position safety checks.
 							</p>
 						</div>
 
@@ -639,8 +635,62 @@
 								MCP Server + Skills
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								27 MCP tools + 10 Agent Skills. Let Claude, Cursor or any
+								30 MCP tools + 10 Agent Skills. Let Claude, Cursor or any
 								MCP-compatible agent trade autonomously.
+							</p>
+						</div>
+
+						<!-- Feature Card 7 — Portfolio -->
+						<div
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
+						>
+							<div
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
+							>
+								<span class="material-symbols-outlined text-pastel-blue text-2xl">pie_chart</span>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								Portfolio &amp; Rebalance
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								Full portfolio view with USD values. Set target allocations
+								and auto-rebalance via optimized multi-swap in one tx.
+							</p>
+						</div>
+
+						<!-- Feature Card 8 — Simulation -->
+						<div
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
+						>
+							<div
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
+							>
+								<span class="material-symbols-outlined text-pastel-mint text-2xl">science</span>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								Transaction Simulation
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								Preflight any operation before execution. See estimated
+								fees in STRK + USD, catch reverts before they cost gas.
+							</p>
+						</div>
+
+						<!-- Feature Card 9 — Telegram Bot -->
+						<div
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
+						>
+							<div
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
+							>
+								<span class="material-symbols-outlined text-pastel-lavender text-2xl">send</span>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								Telegram Bot
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								AI-powered DeFi on Telegram. Bring your own model &mdash;
+								OpenAI, Claude or Gemini. Chat to swap, stake and lend.
 							</p>
 						</div>
 					</div>
@@ -679,7 +729,7 @@
 										<h3
 											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
-											27 MCP Tools
+											30 MCP Tools
 										</h3>
 										<p class="text-zinc-600 text-sm leading-relaxed font-light">
 											Swap, stake, lend, send, batch, portfolio — all exposed
@@ -736,7 +786,7 @@
 										class="size-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 border border-white/10 flex items-center justify-center shrink-0 shadow-md"
 									>
 										<span
-											class="material-symbols-outlined text-zinc-600 text-sm"
+											class="material-symbols-outlined text-zinc-400 text-sm"
 											>person</span
 										>
 									</div>
@@ -751,10 +801,10 @@
 								<!-- Agent Message -->
 								<div class="flex gap-4 flex-row-reverse self-end max-w-[92%] mt-4">
 									<div
-										class="size-8 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shrink-0 shadow-md shadow-black/20"
+										class="size-8 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center shrink-0 shadow-md"
 									>
 										<span
-											class="material-symbols-outlined text-zinc-900 text-sm font-bold"
+											class="material-symbols-outlined text-pastel-lavender text-sm"
 											>memory</span
 										>
 									</div>
@@ -804,6 +854,106 @@
 									</div>
 								</div>
 							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Telegram Bot Section -->
+				<section class="mb-32 relative z-10 reveal-on-scroll">
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+						<!-- Telegram Chat Mockup -->
+						<div
+							class="frosted-glass rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 relative order-2 lg:order-1"
+						>
+							<div
+								class="relative p-5 bg-white/5 border-b border-white/10 flex items-center gap-3 backdrop-blur-md"
+							>
+								<div class="size-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+								<span class="text-[11px] font-bold text-zinc-600 uppercase tracking-widest font-display">StarkFi Bot &bull; Telegram</span>
+							</div>
+							<div class="relative p-5 md:p-8 h-[380px] flex flex-col gap-5 overflow-y-auto bg-black/20">
+								<!-- User Message -->
+								<div class="flex gap-4 max-w-[85%]">
+									<div class="size-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 border border-white/10 flex items-center justify-center shrink-0 shadow-md">
+										<span class="material-symbols-outlined text-zinc-400 text-sm">person</span>
+									</div>
+									<div class="bg-white/10 border border-white/5 backdrop-blur-sm rounded-2xl rounded-tl-sm p-4 text-[14px] text-zinc-200 leading-relaxed shadow-sm">
+										What's my portfolio looking like?
+									</div>
+								</div>
+
+								<!-- Bot Response -->
+								<div class="flex gap-4 flex-row-reverse self-end max-w-[92%] mt-2">
+									<div class="size-8 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center shrink-0 shadow-md">
+										<span class="material-symbols-outlined text-pastel-lavender text-sm">smart_toy</span>
+									</div>
+									<div class="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl rounded-tr-sm p-5 text-[14px] text-zinc-100 leading-relaxed shadow-lg shadow-black/10">
+										<p class="mb-3">Here's your portfolio summary:</p>
+										<div class="p-4 bg-black/40 rounded-xl border border-white/10 font-mono text-[12px] text-zinc-400 flex flex-col gap-2 shadow-inner">
+											<div class="flex justify-between items-center text-zinc-600 text-[10px] tracking-wider font-bold mb-1">
+												<span>PORTFOLIO</span>
+												<span class="text-zinc-500">$4,892.30</span>
+											</div>
+											<div class="flex items-center gap-2"><span class="text-zinc-500">ETH</span> 1.42 <span class="text-zinc-600 ml-auto">$3,544.80</span></div>
+											<div class="flex items-center gap-2"><span class="text-zinc-500">USDC</span> 1,247.50 <span class="text-zinc-600 ml-auto">$1,247.50</span></div>
+											<div class="flex items-center gap-2"><span class="text-zinc-500">STRK</span> 500.00 <span class="text-zinc-600 ml-auto">$100.00</span></div>
+										</div>
+										<p class="text-zinc-500 text-[12px] mt-3">Would you like to rebalance to a target allocation?</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="flex flex-col gap-10 order-1 lg:order-2">
+							<div class="space-y-6">
+								<h2 class="text-zinc-100 font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+									DeFi on <br />
+									<span class="text-gradient">Telegram</span>
+								</h2>
+								<p class="text-zinc-600 text-lg font-light">
+									The StarkFi Telegram Bot brings all DeFi features into a
+									chat interface. Powered by AI &mdash; pick your model,
+									each user gets an isolated MCP session with encrypted persistence.
+								</p>
+							</div>
+
+							<div class="grid grid-cols-1 gap-8">
+								<div class="flex items-start gap-5">
+									<div class="size-10 bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 rounded-xl flex items-center justify-center shrink-0">
+										<span class="material-symbols-outlined text-pastel-blue text-lg">psychology</span>
+									</div>
+									<div>
+										<h3 class="text-zinc-100 font-display text-lg font-semibold mb-2">Bring Your Own Model</h3>
+										<p class="text-zinc-600 text-sm leading-relaxed font-light">
+											OpenAI, Claude, or Gemini &mdash; swap providers
+											with a single env variable. Full Vercel AI SDK support.
+										</p>
+									</div>
+								</div>
+								<div class="flex items-start gap-5">
+									<div class="size-10 bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 rounded-xl flex items-center justify-center shrink-0">
+										<span class="material-symbols-outlined text-pastel-mint text-lg">shield</span>
+									</div>
+									<div>
+										<h3 class="text-zinc-100 font-display text-lg font-semibold mb-2">Per-User Isolation</h3>
+										<p class="text-zinc-600 text-sm leading-relaxed font-light">
+											Each user gets a dedicated MCP process. Sessions are
+											encrypted in SQLite with automatic idle cleanup.
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<a
+								href="https://t.me/starkfi_bot"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="group inline-flex items-center gap-3 frosted-glass frosted-hover border border-white/10 text-zinc-100 px-6 py-3 rounded-xl text-sm font-semibold tracking-wide transition-all w-fit"
+							>
+								<span class="material-symbols-outlined text-lg">send</span>
+								Try the Bot
+								<span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+							</a>
 						</div>
 					</div>
 				</section>
@@ -860,8 +1010,8 @@
 							</h2>
 						</div>
 						<p class="text-zinc-600 text-sm leading-relaxed mb-8 font-light max-w-sm">
-							Starknet DeFi from your terminal or your AI agent. CLI + MCP Server +
-							Agent Skills. Powered by Starkzap.
+							Starknet DeFi from your terminal or your AI agent. CLI, MCP Server,
+					Agent Skills and Telegram Bot.
 						</p>
 						<div class="flex gap-4">
 							<a
@@ -973,10 +1123,10 @@
 							<li>
 								<a
 									class="hover:text-zinc-100 transition-colors flex items-center gap-2 group"
-									href="https://github.com/keep-starknet-strange/awesome-starkzap"
+									href="https://starkzap.io"
 									target="_blank"
 									rel="noopener noreferrer"
-									>Awesome Starkzap</a
+									>Starkzap SDK</a
 								>
 							</li>
 							<li>
