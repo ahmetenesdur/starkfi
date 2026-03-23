@@ -66,7 +66,7 @@ npx starkfi@latest stake-status                       # View staking overview
 
 ### Lending (Vesu V2)
 
-Supply, borrow, repay, and manage lending positions:
+Supply, borrow, repay, monitor health, and auto-rebalance lending positions:
 
 ```bash
 npx starkfi@latest lend-pools                           # List pools
@@ -80,6 +80,9 @@ npx starkfi@latest lend-withdraw 100 -p Prime -t USDC   # Withdraw
 npx starkfi@latest lend-status                              # View all positions
 npx starkfi@latest lend-status -p Prime \                    # View specific position
   --collateral-token ETH
+npx starkfi@latest lend-monitor                               # Health monitoring (risk levels)
+npx starkfi@latest lend-auto -p Prime \                       # Auto-rebalance risky position
+  --collateral-token ETH --borrow-token USDC --simulate
 ```
 
 ### Send
@@ -105,11 +108,13 @@ npx starkfi@latest balance --json         # Machine-readable
 
 ### Portfolio
 
-View a comprehensive DeFi dashboard (balances + staking + lending with USD values):
+View a comprehensive DeFi dashboard and optimize portfolio allocation:
 
 ```bash
-npx starkfi@latest portfolio
-npx starkfi@latest portfolio --json
+npx starkfi@latest portfolio                                                          # Full dashboard
+npx starkfi@latest portfolio --json                                                   # Machine-readable
+npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --simulate # Preview rebalance
+npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"            # Execute rebalance
 ```
 
 ## Utility Skills
@@ -135,6 +140,8 @@ Every transaction skill supports `--simulate` for dry-run execution:
 npx starkfi@latest trade 100 USDC ETH --simulate
 npx starkfi@latest send 10 STRK 0x04a3... --simulate
 npx starkfi@latest batch --swap "0.1 ETH USDC" --stake "50 STRK karnot" --simulate
+npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate
+npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --simulate
 ```
 
 Simulation returns estimated fees and validates the transaction without spending gas.

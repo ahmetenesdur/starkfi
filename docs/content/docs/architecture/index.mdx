@@ -13,7 +13,7 @@ StarkFi follows a layered architecture with four entry points that share a commo
 │                                                                                     │
 │  ┌──────────┐  ┌───────────────-┐  ┌────────────────┐  ┌─────────────────────────┐  │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
-│  │  (30+    │  │  (27 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
+│  │  (30+    │  │  (30 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
 │  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
 │       │               │                  │             └───────────┬─────────────┘  │
@@ -55,7 +55,7 @@ src/
 │   ├── wallet/       # address, balance, send, deploy
 │   ├── trade/        # trade, multi-swap
 │   ├── staking/      # stake, unstake, rewards, pools, validators, stake-status
-│   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status
+│   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status, lend-monitor, lend-auto
 │   ├── batch/        # batch multicall
 │   ├── portfolio/    # portfolio dashboard
 │   ├── config/       # config subcommands

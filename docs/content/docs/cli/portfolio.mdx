@@ -49,3 +49,54 @@ starkfi portfolio --json
 ```
 
 Returns structured data with all balances, positions, and USD valuations.
+
+---
+
+## portfolio-rebalance
+
+Rebalances your portfolio to a target allocation by executing batch swaps via Fibrous DEX aggregator.
+
+```bash
+starkfi portfolio-rebalance --target "<allocation>"
+```
+
+Target allocations are expressed as percentages per token — they must sum to 100:
+
+```bash
+starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"
+```
+
+**Flags:**
+
+| Flag                       | Description                                                           | Required |
+| -------------------------- | --------------------------------------------------------------------- | -------- |
+| `--target <allocation>`    | Target allocation (e.g., `"50 ETH, 30 USDC, 20 STRK"`)              | Yes      |
+| `--slippage <number>`      | Slippage tolerance % (default: `1`)                                  | No       |
+| `--simulate`               | Preview plan without executing                                       | No       |
+| `--json`                   | Output raw JSON                                                      | No       |
+
+### What It Does
+
+1. **Analyzes** your current portfolio allocation (token balances with USD values)
+2. **Calculates** the difference between current and target percentages
+3. **Generates** sell/buy trades to rebalance overweight → underweight tokens
+4. **Executes** all swaps in a single atomic batch transaction via `TxBuilder`
+
+### Output
+
+Shows current allocation, target allocation, and required trades with USD amounts:
+
+- **Current Allocation** — each token's current percentage and USD value
+- **Target Allocation** — desired percentages
+- **Trades** — sell/buy actions with token, amount, and estimated USD value
+
+**Examples:**
+
+```bash
+starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"
+starkfi portfolio-rebalance --target "60 ETH, 40 STRK" --simulate
+starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --slippage 2 --json
+```
+
+> **Tip:** Use `--simulate` first to preview the plan before committing real funds.
+

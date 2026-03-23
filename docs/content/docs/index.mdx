@@ -32,9 +32,9 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 | ------------------- | ------------------------------------------------------------ | ----------------------------- |
 | **Token Swaps**     | Best-price routing via Fibrous DEX aggregator                | `trade`, `multi-swap`         |
 | **Staking**         | Delegate STRK, WBTC, tBTC, SolvBTC, LBTC to validators       | `stake`, `unstake`, `rewards` |
-| **Lending**         | Supply, borrow, repay on Vesu V2 pools                       | `lend-supply`, `lend-borrow`  |
+| **Lending**         | Supply, borrow, repay, monitor, auto-rebalance on Vesu V2     | `lend-supply`, `lend-borrow`, `lend-monitor`, `lend-auto` |
 | **Batch**           | Combine multiple operations into a single atomic transaction | `batch`                       |
-| **Portfolio**       | Full DeFi dashboard with USD valuations                      | `portfolio`                   |
+| **Portfolio**       | Full DeFi dashboard with USD valuations + rebalancing         | `portfolio`, `portfolio-rebalance` |
 | **Gas Abstraction** | Pay gas in USDC, USDT, DAI, ETH — or let the developer pay   | `config`                      |
 
 ## Four Ways to Use StarkFi
@@ -47,7 +47,7 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 
 ### MCP Server — For AI Agents
 
-27 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage lending positions, and execute batch operations.
+30 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage lending positions, monitor health factors, rebalance portfolios, and execute batch operations.
 
 → [MCP Server](/docs/mcp)
 

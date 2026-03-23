@@ -23,7 +23,7 @@ npx starkfi@latest --help
 
 Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
 
-- 🤖 **27 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- 🤖 **30 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
 - ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
 - 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
 - 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
@@ -40,7 +40,7 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │                                                                                     │
 │  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐  │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
-│  │  (30+    │  │  (27 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
+│  │  (30+    │  │  (30 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
 │  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
 │       │               │                  │             └───────────┬─────────────┘  │
@@ -136,6 +136,17 @@ npx starkfi@latest lend-status -p Prime --collateral-token STRK --borrow-token U
 npx starkfi@latest lend-close -p Prime --collateral-token STRK --borrow-token USDC
 ```
 
+### 🩺 Lending Agent (Health Monitoring)
+
+Real-time health factor monitoring with risk classification and automated position rebalancing.
+
+```bash
+npx starkfi@latest lend-monitor                                   # Scan all positions
+npx starkfi@latest lend-monitor -p Prime --collateral-token ETH --borrow-token USDC
+npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC
+npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate
+```
+
 ### 💸 Gas Abstraction
 
 Users pay gas fees in their preferred ERC-20 token via AVNU Paymaster — no native STRK or ETH required. Alternatively, developers can sponsor gas entirely.
@@ -171,11 +182,20 @@ npx starkfi@latest portfolio
 # → Token Balances (USD), Staking Positions, Lending Positions, Total Value
 ```
 
+### 📈 Portfolio Optimization
+
+Rebalance your portfolio to a target allocation via automated batch swaps.
+
+```bash
+npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"
+npx starkfi@latest portfolio-rebalance --target "60 ETH, 40 STRK" --simulate
+```
+
 ---
 
 ## AI Integration (MCP)
 
-StarkFi exposes **27 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
+StarkFi exposes **30 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
 
 ```bash
 # Start the MCP server
@@ -184,13 +204,13 @@ npx starkfi@latest mcp-start
 
 ### Tool Categories
 
-| Category          | Tools                                                                                                                                          | Count |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                             | 2     |
-| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`                                                               | 5     |
-| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                         | 5     |
-| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards` | 8     |
-| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`              | 7     |
+| Category          | Tools                                                                                                                                                                  | Count |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                                     | 2     |
+| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`, `rebalance_portfolio`                                                                | 6     |
+| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                 | 5     |
+| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                         | 8     |
+| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` | 9     |
 
 ### Example — AI Agent Workflow
 
@@ -328,6 +348,15 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                             |
 | `lend-status [-p <pool> --collateral-token <t> [--borrow-token <t>]]`                                                          | Position status (auto-scan if no args) |
 | `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically              |
+| `lend-monitor [-p <pool> --collateral-token <t> --borrow-token <t>]`                                                           | Monitor health factors                 |
+| `lend-auto -p <pool> --collateral-token <t> --borrow-token <t> [--strategy <type>]`                                            | Auto-rebalance position                |
+
+### Portfolio
+
+| Command                                                                                | Description                     |
+| -------------------------------------------------------------------------------------- | ------------------------------- |
+| `portfolio [--json]`                                                                   | Full DeFi dashboard             |
+| `portfolio-rebalance --target "<allocation>" [--slippage <%>] [--simulate] [--json]`   | Rebalance to target allocation  |
 
 ### Configuration
 
@@ -413,15 +442,15 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 
 ## Error Handling
 
-StarkFi implements a robust error handling system with a custom `StarkfiError` class and **25 specific error codes** organized by domain:
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **28 specific error codes** organized by domain:
 
 | Domain         | Error Codes                                                                                                                                         |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Auth**       | `AUTH_REQUIRED`, `AUTH_FAILED`, `SESSION_EXPIRED`                                                                                                   |
 | **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                   |
 | **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                     |
-| **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`                                                                                               |
-| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND` |
+| **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_ALLOCATION`                                                                                               |
+| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
 | **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                              |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.

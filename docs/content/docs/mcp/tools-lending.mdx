@@ -1,6 +1,6 @@
 ---
 title: Lending Tools
-description: 7 tools for Vesu V2 lending operations — supply, borrow, repay, withdraw, close
+description: 9 tools for Vesu V2 lending operations — supply, borrow, repay, withdraw, close, monitor, auto-rebalance
 ---
 
 > **Prerequisite:** All lending tools require an active authenticated session. Call `get_auth_status` first to verify.
@@ -18,11 +18,13 @@ description: 7 tools for Vesu V2 lending operations — supply, borrow, repay, w
 ### Borrow (leverage)
 
 ```
-1. list_lending_pools    →  Find pools and supported pairs
-2. borrow_assets         →  Deposit collateral + borrow in one call
-3. get_lending_position  →  Monitor Health Factor
-4. repay_debt            →  Repay when ready
-5. close_position        →  Or close everything atomically
+1. list_lending_pools            →  Find pools and supported pairs
+2. borrow_assets                 →  Deposit collateral + borrow in one call
+3. get_lending_position          →  Monitor Health Factor
+4. monitor_lending_position      →  Ongoing health monitoring with alerts
+5. auto_rebalance_lending        →  Auto-fix when HF drops
+6. repay_debt                    →  Repay when ready
+7. close_position                →  Or close everything atomically
 ```
 
 ---
@@ -53,9 +55,10 @@ This is a **read-only** tool. Use it to monitor Health Factor before and after o
 
 > **Health Factor Guide:**
 >
-> - **Above 1.5** — Safe
-> - **1.1 – 1.5** — Warning (monitor closely)
-> - **Below 1.1** — Danger (at risk of liquidation)
+> - **Above 1.3** — Safe
+> - **1.1 – 1.3** — Warning (monitor closely)
+> - **1.05 – 1.1** — Danger (liquidation risk)
+> - **≤ 1.05** — Critical (imminent liquidation)
 
 ---
 
@@ -98,7 +101,7 @@ Borrow tokens by supplying collateral. Atomically deposits collateral and borrow
 | `borrow_token`      | string  | Yes      | Token to borrow (e.g., `USDC`, `USDT`)                      |
 | `use_supplied`      | boolean | No       | Set `true` to use previously supplied vTokens as collateral |
 
-> **Important:** Monitor your Health Factor after borrowing. Use `get_lending_position` to check.
+> **Important:** Monitor your Health Factor after borrowing. Use `get_lending_position` or `monitor_lending_position` to check.
 
 ---
 
@@ -126,3 +129,45 @@ Atomically close an active lending position. Repays all outstanding debt and wit
 | `debt_token`       | string | Yes      | Borrowed token symbol (e.g., `USDC`, `USDT`)  |
 
 > **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction.
+
+---
+
+## monitor_lending_position
+
+Monitor health factors across lending positions with 4-level risk classification and actionable alerts. Scan all pools or check a specific position.
+
+| Param               | Type   | Required | Description                                              |
+| -------------------- | ------ | -------- | -------------------------------------------------------- |
+| `pool`               | string | No       | Pool name or address. Omit to scan all pools.            |
+| `collateral_token`   | string | No       | Collateral token (required with `pool`)                  |
+| `borrow_token`       | string | No       | Debt token (required with `pool`)                        |
+| `warning_threshold`  | number | No       | Custom warning threshold (default: `1.3`)                |
+
+This is a **read-only** tool — safe to call without user confirmation.
+
+Returns for each position:
+
+- Health factor value
+- Risk level (`SAFE`, `WARNING`, `DANGER`, `CRITICAL`)
+- Alert message (if risk is elevated)
+- Recommendation (repay amount or collateral to add)
+
+---
+
+## auto_rebalance_lending
+
+Automatically adjust a lending position to improve its health factor. Chooses the best strategy (repay debt or add collateral) based on wallet balances.
+
+| Param              | Type    | Required | Description                                          |
+| ------------------ | ------- | -------- | ---------------------------------------------------- |
+| `pool`             | string  | Yes      | Pool name or contract address                        |
+| `collateral_token` | string  | Yes      | Collateral token symbol                              |
+| `borrow_token`     | string  | Yes      | Debt token symbol                                    |
+| `strategy`         | string  | No       | `repay`, `add-collateral`, or `auto` (default)       |
+| `target_health_factor` | number  | No       | Target health factor (default: `1.3`)                |
+| `simulate`         | boolean | No       | Set `true` to preview without executing              |
+
+> **Important:** This is a **transactional** tool. Always confirm with the user and use `simulate: true` first to preview the action.
+
+Returns: action taken, amount, token, previous HF, estimated new HF, and transaction hash.
+

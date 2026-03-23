@@ -1,6 +1,6 @@
 ---
 title: Wallet Tools
-description: get_balance, send_tokens, deploy_account, get_portfolio, get_tx_status
+description: get_balance, send_tokens, deploy_account, get_portfolio, get_tx_status, rebalance_portfolio
 ---
 
 > **Prerequisite:** All wallet tools require an active authenticated session. Call `get_auth_status` first to verify.
@@ -63,3 +63,20 @@ Check the on-chain status of a transaction by its hash.
 | `hash` | string | Yes      | Transaction hash (`0x...`) |
 
 Returns the current status (pending, accepted, rejected), actual fee, block number, and explorer link. Useful for verifying transactions after execution.
+
+---
+
+## rebalance_portfolio
+
+Rebalance the portfolio to a target allocation by executing batch swaps. Calculates the optimal trades to move from current allocations to target percentages.
+
+| Param              | Type    | Required | Description                                                    |
+| ------------------ | ------- | -------- | -------------------------------------------------------------- |
+| `target`           | string  | Yes      | Target allocation (e.g., `"50 ETH, 30 USDC, 20 STRK"`)       |
+| `slippage`         | number  | No       | Slippage tolerance % (default: `1`)                            |
+| `simulate`         | boolean | No       | Set `true` to preview plan without executing                   |
+
+> **Important:** This is a **transactional** tool. Always confirm with the user and use `simulate: true` first to preview the rebalance plan.
+
+Returns: current allocations, target allocations, trades to execute, and transaction hash (or simulation results).
+

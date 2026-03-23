@@ -44,11 +44,12 @@ healthFactor = (collateralUSD × maxLTV) / debtUSD
 
 Risk levels:
 
-| Risk Level  | Health Factor | Meaning                |
-| ----------- | ------------- | ---------------------- |
-| **SAFE**    | Above 1.5     | Position is healthy    |
-| **WARNING** | 1.1 – 1.5     | Monitor closely        |
-| **DANGER**  | Below 1.1     | At risk of liquidation |
+| Risk Level   | Health Factor | Meaning                   |
+| ------------ | ------------- | ------------------------- |
+| **SAFE**     | > 1.3         | Position is healthy       |
+| **WARNING**  | 1.1 – 1.3    | Monitor closely           |
+| **DANGER**   | 1.05 – 1.1   | At risk of liquidation    |
+| **CRITICAL** | ≤ 1.05        | Imminent liquidation risk |
 
 > **Important:** Monitor your health factor regularly with `starkfi lend-status`. If it drops below 1.0, your position can be liquidated.
 

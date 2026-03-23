@@ -218,8 +218,96 @@ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC  # With 
 
 Shows supplied yield balance, collateral value, debt value, health factor, and risk level:
 
-| Risk Level  | Health Factor |
-| ----------- | ------------- |
-| **SAFE**    | Above 1.5     |
-| **WARNING** | 1.1 – 1.5     |
-| **DANGER**  | Below 1.1     |
+| Risk Level   | Health Factor |
+| ------------ | ------------- |
+| **SAFE**     | > 1.3         |
+| **WARNING**  | 1.1 – 1.3     |
+| **DANGER**   | 1.05 – 1.1    |
+| **CRITICAL** | ≤ 1.05        |
+
+---
+
+## lend-monitor
+
+Monitors lending positions and alerts on low health factors. Run without `--pool` to **scan all pools**, or specify a pool for a single position check.
+
+```bash
+# Scan all pools
+starkfi lend-monitor
+
+# Specific position
+starkfi lend-monitor -p <pool> --collateral-token <symbol> --borrow-token <symbol>
+```
+
+**Flags:**
+
+| Flag                          | Description                                             | Required |
+| ----------------------------- | ------------------------------------------------------- | -------- |
+| `-p, --pool <name>`           | Pool name or contract address                           | No       |
+| `--collateral-token <symbol>` | Collateral token symbol (required with `--pool`)        | No*      |
+| `--borrow-token <symbol>`     | Debt token symbol (required with `--pool`)              | No*      |
+| `--warning-threshold <n>`     | Custom warning threshold (default: `1.3`)               | No       |
+| `--json`                      | Output raw JSON                                         | No       |
+
+> \* Required when `-p` is specified.
+
+**Risk Levels:**
+
+| Risk Level   | Health Factor | Alert          |
+| ------------ | ------------- | -------------- |
+| **SAFE**     | > 1.3         | No             |
+| **WARNING**  | 1.1 – 1.3     | ⚠️ Attention    |
+| **DANGER**   | 1.05 – 1.1    | 🔴 Repay/add   |
+| **CRITICAL** | ≤ 1.05        | 🚨 Liquidation  |
+
+Shows collateral amount, debt amount, health factor, risk level, and actionable recommendations for each position.
+
+**Examples:**
+
+```bash
+starkfi lend-monitor
+starkfi lend-monitor -p Prime --collateral-token ETH --borrow-token USDC
+starkfi lend-monitor --warning-threshold 1.5 --json
+```
+
+---
+
+## lend-auto
+
+Automatically adjusts a lending position to improve the health factor. Supports three strategies.
+
+```bash
+starkfi lend-auto -p <pool> --collateral-token <symbol> --borrow-token <symbol>
+```
+
+**Flags:**
+
+| Flag                          | Description                                         | Required |
+| ----------------------------- | --------------------------------------------------- | -------- |
+| `-p, --pool <name>`           | Pool name or contract address                       | Yes      |
+| `--collateral-token <symbol>` | Collateral token symbol                             | Yes      |
+| `--borrow-token <symbol>`     | Debt token symbol                                   | Yes      |
+| `--strategy <type>`           | `repay`, `add-collateral`, or `auto` (default)      | No       |
+| `--target-hf <number>`        | Target health factor (default: `1.3`)               | No       |
+| `--simulate`                  | Preview without executing                           | No       |
+
+**Strategies:**
+
+| Strategy           | Action                                                |
+| ------------------ | ----------------------------------------------------- |
+| `repay`            | Repay part of the debt to improve HF                  |
+| `add-collateral`   | Add more collateral to improve HF                     |
+| `auto` (default)   | Automatically pick the best option based on balances   |
+
+Shows the action taken, amount, previous and estimated new health factor, and transaction hash.
+
+**Examples:**
+
+```bash
+starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC
+starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --strategy repay
+starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate
+```
+
+> **Tip:** Use `lend-monitor` first to identify positions that need rebalancing, then use `lend-auto` to fix them.
+

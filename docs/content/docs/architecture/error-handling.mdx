@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 25 typed error codes, retry logic, and error recovery patterns
+description: 28 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
@@ -34,7 +34,7 @@ The `toJSON()` method ensures errors are consistently serialized in MCP response
 
 ## Error Codes
 
-StarkFi defines 25 typed error codes organized by domain:
+StarkFi defines 28 typed error codes organized by domain:
 
 ### Authentication & Session
 
@@ -78,10 +78,12 @@ StarkFi defines 25 typed error codes organized by domain:
 
 ### Lending
 
-| Code             | When                         | Resolution                                      |
-| ---------------- | ---------------------------- | ----------------------------------------------- |
-| `LENDING_FAILED` | Lending operation error      | Check balance, allowance, and health factor     |
-| `POOL_NOT_FOUND` | Invalid pool name or address | Run `starkfi lend-pools` to see available pools |
+| Code              | When                              | Resolution                                      |
+| ----------------- | --------------------------------- | ----------------------------------------------- |
+| `LENDING_FAILED`  | Lending operation error           | Check balance, allowance, and health factor     |
+| `POOL_NOT_FOUND`  | Invalid pool name or address      | Run `starkfi lend-pools` to see available pools |
+| `MONITOR_FAILED`  | Health monitoring operation error | Check pool/token params and retry               |
+| `REBALANCE_FAILED`| Position rebalance error          | Check balances, health factor, and retry        |
 
 ### Infrastructure
 
@@ -94,11 +96,12 @@ StarkFi defines 25 typed error codes organized by domain:
 
 ### Validation
 
-| Code              | When                               | Resolution                                   |
-| ----------------- | ---------------------------------- | -------------------------------------------- |
-| `INVALID_CONFIG`  | Bad configuration value            | Check `starkfi config list`                  |
-| `INVALID_ADDRESS` | Malformed Starknet address         | Ensure address starts with `0x` and is valid |
-| `INVALID_AMOUNT`  | Non-positive or non-numeric amount | Use a positive number (e.g., `0.1`, `100`)   |
+| Code                 | When                               | Resolution                                          |
+| -------------------- | ---------------------------------- | --------------------------------------------------- |
+| `INVALID_CONFIG`     | Bad configuration value            | Check `starkfi config list`                         |
+| `INVALID_ADDRESS`    | Malformed Starknet address         | Ensure address starts with `0x` and is valid        |
+| `INVALID_AMOUNT`     | Non-positive or non-numeric amount | Use a positive number (e.g., `0.1`, `100`)          |
+| `INVALID_ALLOCATION` | Invalid target allocation          | Ensure percentages sum to 100 with valid symbols    |
 
 ### General
 

@@ -21,7 +21,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 
 ## Tool Registry
 
-Upon initialization, the StarkFi server dynamically provisions **27 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (5), **trade** (5), **staking** (8), and **lending** (7).
+Upon initialization, the StarkFi server dynamically provisions **30 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), and **lending** (9).
 
 ---
 
@@ -267,6 +267,40 @@ Atomically closes an active Vesu V2 lending position. Repays all outstanding deb
 | `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
 | `collateral_token` | string | **Yes**  | Collateral token symbol of the position (e.g. `STRK`, `ETH`)  |
 | `debt_token`       | string | **Yes**  | Borrowed token symbol of the position (e.g. `USDC`, `USDT`)   |
+
+#### `monitor_lending_position`
+
+Monitors health factors across lending positions. Returns alerts and actionable recommendations when health factor drops below configurable thresholds.
+
+| Parameter           | Type   | Required | Description                                                                      |
+| ------------------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `pool`              | string | No       | Pool name or address. Omit to scan all pools for active borrow positions.         |
+| `collateral_token`  | string | No       | Collateral token symbol. Required when specifying a pool.                         |
+| `borrow_token`      | string | No       | Debt token symbol. Required when specifying a pool.                               |
+| `warning_threshold` | number | No       | Custom warning threshold (default: `1.3`).                                        |
+
+#### `auto_rebalance_lending`
+
+Automatically adjusts a lending position to restore health factor via debt repayment or additional collateral. Supports simulation mode.
+
+| Parameter              | Type    | Required | Description                                                              |
+| ---------------------- | ------- | -------- | ------------------------------------------------------------------------ |
+| `pool`                 | string  | **Yes**  | Pool name or address                                                     |
+| `collateral_token`     | string  | **Yes**  | Collateral token symbol                                                  |
+| `borrow_token`         | string  | **Yes**  | Debt token symbol                                                        |
+| `strategy`             | enum    | No       | `repay`, `add-collateral`, or `auto` (default: `auto`)                   |
+| `target_health_factor` | number  | No       | Target health factor (default: `1.3`)                                    |
+| `simulate`             | boolean | No       | Set `true` to preview adjustment without executing                       |
+
+#### `rebalance_portfolio`
+
+Rebalances a portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction via Fibrous routing.
+
+| Parameter   | Type    | Required | Description                                                       |
+| ----------- | ------- | -------- | ----------------------------------------------------------------- |
+| `target`    | string  | **Yes**  | Target allocation, e.g. `"50 ETH, 30 USDC, 20 STRK"`             |
+| `slippage`  | number  | No       | Slippage tolerance % (default: `1`)                               |
+| `simulate`  | boolean | No       | Set `true` to preview plan without executing                      |
 
 ---
 
