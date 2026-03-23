@@ -423,7 +423,6 @@ export function registerLendStatusCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi lend-status\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC"
 		)
 		.action(async (opts) => {
-			// If no pool specified, auto-scan all pools
 			if (!opts.pool) {
 				const spinner = createSpinner("Scanning all lending positions...").start();
 
@@ -484,7 +483,6 @@ export function registerLendStatusCommand(program: Command): void {
 				return;
 			}
 
-			// Pool specified but no collateral-token — error
 			if (!opts.collateralToken) {
 				console.error(
 					formatError(
@@ -552,11 +550,14 @@ export function registerLendStatusCommand(program: Command): void {
 							riskStrFormatted = chalk.yellow("WARNING");
 						else if (position.riskLevel === "DANGER")
 							riskStrFormatted = chalk.red("DANGER");
+						else if (position.riskLevel === "CRITICAL")
+							riskStrFormatted = chalk.bgRed.white("CRITICAL");
 
 						if (position.healthFactor === Infinity) hfStr = chalk.green(hfStr);
-						else if (position.healthFactor > 1.5) hfStr = chalk.green(hfStr);
+						else if (position.healthFactor > 1.3) hfStr = chalk.green(hfStr);
 						else if (position.healthFactor > 1.1) hfStr = chalk.yellow(hfStr);
-						else hfStr = chalk.red(hfStr);
+						else if (position.healthFactor > 1.05) hfStr = chalk.red(hfStr);
+						else hfStr = chalk.bgRed.white(hfStr);
 
 						resultObj["healthFactor"] = hfStr;
 						resultObj["riskLevel"] = riskStrFormatted;
@@ -568,6 +569,165 @@ export function registerLendStatusCommand(program: Command): void {
 				spinner.fail("Failed to fetch position");
 				console.error(formatError(error));
 				process.exit(1);
+			}
+		});
+}
+
+export function registerLendMonitorCommand(program: Command): void {
+	program
+		.command("lend-monitor")
+		.description("Monitor lending positions and alert on low health factors")
+		.option("-p, --pool <pool>", "Pool name or address (omit to scan all)")
+		.option("--collateral-token <symbol>", "Collateral token symbol (required with --pool)")
+		.option("--borrow-token <symbol>", "Debt token symbol (required with --pool)")
+		.option("--warning-threshold <number>", "Custom warning threshold", "1.3")
+		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-monitor\n  $ starkfi lend-monitor -p Prime --collateral-token ETH --borrow-token USDC"
+		)
+		.action(async (opts) => {
+			const spinner = createSpinner("Monitoring lending positions...").start();
+
+			try {
+				const session = requireSession();
+				const { wallet } = await initSDKAndWallet(session);
+				const { monitorPosition, monitorAllPositions } =
+					await import("../../services/vesu/monitor.js");
+
+				const config = {
+					warningThreshold: parseFloat(opts.warningThreshold),
+				};
+
+				let results;
+
+				if (opts.pool) {
+					if (!opts.collateralToken || !opts.borrowToken) {
+						spinner.fail(
+							"--collateral-token and --borrow-token are required when using --pool"
+						);
+						process.exit(1);
+					}
+					const result = await monitorPosition(
+						wallet,
+						opts.pool,
+						opts.collateralToken,
+						opts.borrowToken,
+						config,
+						session.network
+					);
+					results = [result];
+				} else {
+					results = await monitorAllPositions(wallet, session.network, config);
+				}
+
+				spinner.stop();
+
+				if (results.length === 0) {
+					console.log(chalk.dim("  No active borrow positions found."));
+					return;
+				}
+
+				if (opts.json) {
+					console.log(JSON.stringify(results, null, 2));
+					return;
+				}
+
+				for (const r of results) {
+					let hfStr = r.healthFactor >= 9999 ? "∞" : r.healthFactor.toFixed(2);
+					let riskStr: string = r.riskLevel;
+
+					if (r.riskLevel === "SAFE") {
+						hfStr = chalk.green(hfStr);
+						riskStr = chalk.green(riskStr);
+					} else if (r.riskLevel === "WARNING") {
+						hfStr = chalk.yellow(hfStr);
+						riskStr = chalk.yellow(riskStr);
+					} else if (r.riskLevel === "DANGER") {
+						hfStr = chalk.red(hfStr);
+						riskStr = chalk.red(riskStr);
+					} else if (r.riskLevel === "CRITICAL") {
+						hfStr = chalk.bgRed.white(hfStr);
+						riskStr = chalk.bgRed.white(riskStr);
+					}
+
+					const resultObj: Record<string, unknown> = {
+						pool: r.poolName ?? r.pool,
+						pair: `${r.collateralToken} / ${r.debtToken}`,
+						collateral: r.collateralAmount,
+						debt: r.debtAmount,
+						healthFactor: hfStr,
+						riskLevel: riskStr,
+					};
+
+					if (r.alert) resultObj["alert"] = r.alert;
+					if (r.recommendation) resultObj["recommendation"] = r.recommendation;
+
+					console.log(formatResult(resultObj));
+					console.log();
+				}
+			} catch (error) {
+				spinner.fail("Failed to monitor positions");
+				handleLendingError(error);
+			}
+		});
+}
+
+export function registerLendAutoCommand(program: Command): void {
+	program
+		.command("lend-auto")
+		.description("Automatically adjust a lending position to improve health factor")
+		.requiredOption("-p, --pool <pool>", "Pool name or address")
+		.requiredOption("--collateral-token <symbol>", "Collateral token symbol")
+		.requiredOption("--borrow-token <symbol>", "Debt token symbol")
+		.option("--strategy <type>", "repay | add-collateral | auto", "auto")
+		.option("--target-hf <number>", "Target health factor", "1.3")
+		.option("--simulate", "Preview without executing")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --strategy repay\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate"
+		)
+		.action(async (opts) => {
+			const spinner = createSpinner(
+				opts.simulate ? "Simulating auto-rebalance..." : "Executing auto-rebalance..."
+			).start();
+
+			try {
+				const session = requireSession();
+				const { wallet } = await initSDKAndWallet(session);
+				await wallet.ensureReady({ deploy: "if_needed" });
+				const { autoRebalanceLending } =
+					await import("../../services/vesu/auto-rebalance.js");
+
+				const result = await autoRebalanceLending(wallet, session, {
+					pool: opts.pool,
+					collateralToken: opts.collateralToken,
+					debtToken: opts.borrowToken,
+					strategy: opts.strategy,
+					targetHealthFactor: parseFloat(opts.targetHf),
+					simulate: opts.simulate,
+				});
+
+				if (opts.simulate) {
+					spinner.succeed("Simulation complete");
+				} else {
+					spinner.succeed("Auto-rebalance executed");
+				}
+
+				console.log(
+					formatResult({
+						action: result.action,
+						amount: `${result.amount} ${result.token}`,
+						previousHF: result.previousHealthFactor.toFixed(2),
+						estimatedNewHF: result.estimatedNewHealthFactor.toFixed(2),
+						...(result.txHash ? { txHash: result.txHash } : {}),
+						...(result.explorerUrl ? { explorer: result.explorerUrl } : {}),
+						...(opts.simulate ? { mode: "🔍 SIMULATION — no transaction sent" } : {}),
+					})
+				);
+			} catch (error) {
+				spinner.fail("Auto-rebalance failed");
+				handleLendingError(error);
 			}
 		});
 }

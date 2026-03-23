@@ -50,7 +50,6 @@ export function registerConfigCommand(program: Command): void {
 			console.log(success(`Network set to: ${network}`));
 		});
 
-	// Gasfree mode: developer sponsors gas via Paymaster API key
 	configCmd
 		.command("set-gasfree")
 		.description("Enable/disable Gasfree mode — developer sponsors gas via Paymaster")
@@ -66,7 +65,6 @@ export function registerConfigCommand(program: Command): void {
 			}
 			configService.set("gasfreeMode", mode === "on");
 			if (mode === "on") {
-				// Gasfree and Gasless are mutually exclusive
 				configService.delete("gasToken");
 				console.log(success("Gasfree mode: on (developer sponsors gas via Paymaster)"));
 			} else {
@@ -74,7 +72,6 @@ export function registerConfigCommand(program: Command): void {
 			}
 		});
 
-	// Gas token selection: default is STRK, user can switch to any supported token
 	configCmd
 		.command("set-gas-token")
 		.description(
@@ -103,7 +100,6 @@ export function registerConfigCommand(program: Command): void {
 				);
 				process.exit(1);
 			}
-			// Gasless and Gasfree are mutually exclusive
 			configService.delete("gasfreeMode");
 			configService.set("gasToken", upper);
 			console.log(
@@ -123,7 +119,6 @@ export function registerConfigCommand(program: Command): void {
 				return;
 			}
 
-			// Human-readable fee mode summary
 			const gasfreeMode = all.gasfreeMode === true;
 			const gasToken = all.gasToken as string | undefined;
 			let feeModeSummary = "gasless (pays STRK via Paymaster)";
