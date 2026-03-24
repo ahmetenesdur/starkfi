@@ -9,6 +9,7 @@ import { validateAddress } from "../../lib/validation.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 
 export function registerStakeCommand(program: Command): void {
 	program
@@ -45,7 +46,7 @@ export function registerStakeCommand(program: Command): void {
 				let poolAddress = opts.pool;
 
 				if (!poolAddress) {
-					const validator = findValidator(opts.validator, session.network);
+					const validator = findValidator(opts.validator, resolveNetwork(session));
 					if (!validator) {
 						spinner.fail(`Validator '${opts.validator}' not found`);
 						process.exit(1);
@@ -62,10 +63,11 @@ export function registerStakeCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating stake...";
-					const token = resolveToken(tokenSymbol);
+					const chainId = resolveChainId(session);
+					const token = resolveToken(tokenSymbol, chainId);
 					const parsedAmount = Amount.parse(amount, token);
 					const builder = wallet.tx().stake(fromAddress(poolAddress), parsedAmount);
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, chainId);
 
 					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${tokenSymbol}`,
@@ -74,7 +76,7 @@ export function registerStakeCommand(program: Command): void {
 					return;
 				}
 
-				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol);
+				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol, resolveChainId(session));
 
 				spinner.succeed("Staking confirmed");
 				outputResult(
@@ -127,7 +129,7 @@ export function registerUnstakeCommand(program: Command): void {
 				if (opts.pool) {
 					poolAddress = validateAddress(opts.pool);
 				} else {
-					const validator = findValidator(opts.validator, session.network);
+					const validator = findValidator(opts.validator, resolveNetwork(session));
 					if (!validator) {
 						spinner.fail(`Validator '${opts.validator}' not found`);
 						process.exit(1);
@@ -150,7 +152,8 @@ export function registerUnstakeCommand(program: Command): void {
 						wallet,
 						poolAddress,
 						opts.amount,
-						tokenSymbol
+						tokenSymbol,
+						resolveChainId(session)
 					);
 
 					spinner.succeed("Exit intent declared");
@@ -224,7 +227,7 @@ export function registerRewardsCommand(program: Command): void {
 				if (opts.pool) {
 					poolAddress = validateAddress(opts.pool);
 				} else {
-					const validator = findValidator(opts.validator, session.network);
+					const validator = findValidator(opts.validator, resolveNetwork(session));
 					if (!validator) {
 						spinner.fail(`Validator '${opts.validator}' not found`);
 						process.exit(1);
@@ -292,7 +295,7 @@ export function registerPoolsCommand(program: Command): void {
 				const session = requireSession();
 				const { sdk, wallet } = await initSDKAndWallet(session);
 
-				const found = findValidator(validator, session.network);
+				const found = findValidator(validator, resolveNetwork(session));
 				const stakerAddress = found
 					? found.stakerAddress.toString()
 					: validateAddress(validator);
@@ -360,7 +363,8 @@ export function registerValidatorsCommand(program: Command): void {
 
 			try {
 				const session = requireSession();
-				const validators = getValidators(session.network);
+				const network = resolveNetwork(session);
+				const validators = getValidators(network);
 
 				spinner.stop();
 
@@ -368,7 +372,7 @@ export function registerValidatorsCommand(program: Command): void {
 					console.log(
 						JSON.stringify(
 							{
-								network: session.network,
+								network: network,
 								validators: validators.map((v) => ({
 									name: v.name,
 									stakerAddress: v.stakerAddress.toString(),
@@ -381,7 +385,7 @@ export function registerValidatorsCommand(program: Command): void {
 					return;
 				}
 
-				console.log(`\n  Validators on ${session.network} (${validators.length} total)\n`);
+				console.log(`\n  Validators on ${network} (${validators.length} total)\n`);
 
 				console.log(
 					formatTable(
@@ -414,7 +418,7 @@ export function registerStakeStatusCommand(program: Command): void {
 				const overview = await stakingService.getStakingOverview(
 					sdk,
 					wallet,
-					session.network,
+					resolveNetwork(session),
 					session.address,
 					validatorTarget
 				);
