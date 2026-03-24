@@ -1,9 +1,10 @@
 import type { Command } from "commander";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
+import { Amount } from "starkzap";
 import * as lendingService from "../../services/vesu/lending.js";
 import chalk from "chalk";
-import { getVesuPools, resolvePoolAddress } from "../../services/vesu/pools.js";
+import { getVesuPools, resolvePoolAddress, getPoolMarkets } from "../../services/vesu/pools.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 
 function handleLendingError(error: unknown): void {
@@ -45,11 +46,12 @@ export function registerLendPoolsCommand(program: Command): void {
 
 			try {
 				const session = requireSession();
-				let pools = await getVesuPools(session.network);
+				const { wallet } = await initSDKAndWallet(session);
+				let pools = await getVesuPools(wallet);
 
 				if (name) {
 					const lower = name.toLowerCase();
-					pools = pools.filter((p) => p.name.toLowerCase().includes(lower));
+					pools = pools.filter((p) => p.name?.toLowerCase().includes(lower));
 				}
 
 				if (pools.length === 0) {
@@ -62,63 +64,41 @@ export function registerLendPoolsCommand(program: Command): void {
 				if (opts.json) {
 					console.log(
 						JSON.stringify(
-							{
-								pools: pools.map((p) => ({
-									name: p.name,
-									version: p.protocolVersion,
-									address: p.address,
-									assets: p.assets,
-									pairs: p.pairs,
-								})),
-							},
+							{ pools: pools.map((p) => ({ name: p.name, address: p.address })) },
 							null,
 							2
 						)
 					);
 					return;
 				}
+
 				if (name && pools.length <= 2) {
 					for (const pool of pools) {
 						console.log("");
-						console.log(
-							chalk.bold.hex("#a5b4fc")(`  ${pool.name}`) +
-								chalk.dim(` (${pool.protocolVersion})`)
-						);
+						console.log(chalk.bold.hex("#a5b4fc")(`  ${pool.name ?? "Unnamed"}`));
 						console.log(chalk.gray(`  ${pool.address}`));
 
-						if (pool.assets.length > 0) {
+						const markets = await getPoolMarkets(wallet, pool.address);
+						if (markets.length > 0) {
 							console.log("");
 							console.log(chalk.bold("  Assets:"));
-							for (const a of pool.assets) {
-								const borrowLabel = a.canBeBorrowed
+							for (const m of markets) {
+								const borrowLabel = m.canBeBorrowed
 									? chalk.green("borrowable")
 									: chalk.dim("supply-only");
+								const supplyApy = m.stats?.supplyApy
+									? `${(Number(m.stats.supplyApy.toUnit()) * 100).toFixed(2)}%`
+									: "N/A";
+								const borrowApr = m.stats?.borrowApr
+									? `${(Number(m.stats.borrowApr.toUnit()) * 100).toFixed(2)}%`
+									: "N/A";
 								console.log(
-									`    ${chalk.white(a.symbol.padEnd(12))} ` +
-										`${chalk.gray("Supply APY")} ${chalk.yellow(a.supplyApy.padEnd(8))} ` +
-										`${chalk.gray("Borrow APR")} ${chalk.yellow(a.borrowApr.padEnd(8))} ` +
+									`    ${chalk.white(m.asset.symbol.padEnd(12))} ` +
+										`${chalk.gray("Supply APY")} ${chalk.yellow(supplyApy.padEnd(8))} ` +
+										`${chalk.gray("Borrow APR")} ${chalk.yellow(borrowApr.padEnd(8))} ` +
 										`${borrowLabel}`
 								);
 							}
-						}
-
-						if (pool.pairs.length > 0) {
-							console.log("");
-							console.log(chalk.bold(`  Pairs (${pool.pairs.length}):`));
-							const pairStrs = pool.pairs.map(
-								(p) => `${p.collateralSymbol}/${p.debtSymbol}`
-							);
-							const lines: string[] = [];
-							let current = "    ";
-							for (const pair of pairStrs) {
-								if (current.length + pair.length + 2 > 80 && current.trim()) {
-									lines.push(current);
-									current = "    ";
-								}
-								current += (current.trim() ? ", " : "") + pair;
-							}
-							if (current.trim()) lines.push(current);
-							console.log(chalk.white(lines.join("\n")));
 						}
 					}
 					console.log("");
@@ -127,12 +107,10 @@ export function registerLendPoolsCommand(program: Command): void {
 
 				console.log(
 					formatTable(
-						["Name", "Version", "Assets", "Pairs"],
+						["Name", "Address"],
 						pools.map((p) => [
-							p.name,
-							p.protocolVersion,
-							String(p.assets.length),
-							String(p.pairs.length),
+							p.name ?? "Unnamed",
+							p.address.slice(0, 12) + "...",
 						])
 					)
 				);
@@ -166,7 +144,7 @@ export function registerLendSupplyCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const result = await lendingService.supply(
 					wallet,
 					pool.address,
@@ -209,7 +187,7 @@ export function registerLendWithdrawCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const result = await lendingService.withdraw(
 					wallet,
 					pool.address,
@@ -263,7 +241,7 @@ export function registerLendBorrowCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 
 				let useSupplied = false;
 				if (opts.useSupplied) {
@@ -332,7 +310,7 @@ export function registerLendRepayCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const result = await lendingService.repay(
 					wallet,
 					pool.address,
@@ -381,7 +359,7 @@ export function registerLendCloseCommand(program: Command): void {
 				const { wallet } = await initSDKAndWallet(session);
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const result = await lendingService.closePosition(
 					wallet,
 					pool.address,
@@ -430,38 +408,15 @@ export function registerLendStatusCommand(program: Command): void {
 					const session = requireSession();
 					const { wallet } = await initSDKAndWallet(session);
 
-					const pools = await getVesuPools(session.network);
-
-					const tasks = pools.flatMap((pool) =>
-						pool.assets.map(async (asset) => {
-							try {
-								const supplied = await lendingService.getSuppliedBalance(
-									wallet,
-									pool.address,
-									asset.symbol
-								);
-								if (supplied && supplied !== "0") {
-									return { pool: pool.name, asset: asset.symbol, supplied };
-								}
-							} catch {
-								// skip assets that fail
-							}
-							return null;
-						})
-					);
-
-					const results = await Promise.allSettled(tasks);
-					const positions = results
-						.filter(
-							(
-								r
-							): r is PromiseFulfilledResult<{
-								pool: string;
-								asset: string;
-								supplied: string;
-							}> => r.status === "fulfilled" && r.value !== null
-						)
-						.map((r) => r.value);
+					const userPositions = await wallet.lending().getPositions();
+					const positions = userPositions
+						.filter((p) => p.collateral.amount > 0n)
+						.map((p) => ({
+							pool: p.pool.name ?? p.pool.id.toString().slice(0, 12) + "...",
+							asset: p.collateral.token.symbol,
+							supplied: Amount.fromRaw(p.collateral.amount, p.collateral.token).toFormatted(true),
+							type: p.type,
+						}));
 
 					if (positions.length === 0) {
 						spinner.info("No active lending positions found");
@@ -471,8 +426,8 @@ export function registerLendStatusCommand(program: Command): void {
 					spinner.succeed(`Found ${positions.length} lending position(s)`);
 					console.log(
 						formatTable(
-							["Pool", "Asset", "Supplied"],
-							positions.map((p) => [p.pool, p.asset, p.supplied])
+							["Pool", "Type", "Asset", "Amount"],
+							positions.map((p) => [p.pool, p.type, p.asset, p.supplied])
 						)
 					);
 				} catch (error) {
@@ -500,7 +455,7 @@ export function registerLendStatusCommand(program: Command): void {
 				const session = requireSession();
 				const { wallet } = await initSDKAndWallet(session);
 
-				const pool = resolvePoolAddress(opts.pool, session.network);
+				const pool = await resolvePoolAddress(wallet, opts.pool);
 
 				const suppliedBalance = await lendingService.getSuppliedBalance(
 					wallet,
@@ -529,8 +484,7 @@ export function registerLendStatusCommand(program: Command): void {
 				};
 
 				if (suppliedBalance && suppliedBalance !== "0.0") {
-					resultObj["suppliedYield"] =
-						`${suppliedBalance} ${opts.collateralToken.toUpperCase()}`;
+					resultObj["suppliedYield"] = suppliedBalance;
 				}
 
 				if (position) {
@@ -613,12 +567,11 @@ export function registerLendMonitorCommand(program: Command): void {
 						opts.pool,
 						opts.collateralToken,
 						opts.borrowToken,
-						config,
-						session.network
+						config
 					);
 					results = [result];
 				} else {
-					results = await monitorAllPositions(wallet, session.network, config);
+					results = await monitorAllPositions(wallet, config);
 				}
 
 				spinner.stop();
