@@ -1,7 +1,7 @@
 import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
-import type { Token } from "starkzap";
+import type { Token, ChainId } from "starkzap";
 
 interface RouteToken {
 	name: string;
@@ -212,7 +212,7 @@ export function clearPriceCache(): void {
 	priceCache.clear();
 }
 
-export async function getTokenUsdPrice(token: Token): Promise<number> {
+export async function getTokenUsdPrice(token: Token, chainId?: ChainId): Promise<number> {
 	const symbolUpper = token.symbol.toUpperCase();
 	if (symbolUpper === "USDC" || symbolUpper === "USDT") {
 		return 1.0;
@@ -231,7 +231,7 @@ export async function getTokenUsdPrice(token: Token): Promise<number> {
 		if (oldest) priceCache.delete(oldest);
 	}
 
-	const promise = fetchTokenPrice(token);
+	const promise = fetchTokenPrice(token, chainId);
 	priceCache.set(cacheKey, { promise, timestamp: Date.now() });
 
 	// Auto-evict on rejection so the next caller retries immediately
@@ -240,9 +240,9 @@ export async function getTokenUsdPrice(token: Token): Promise<number> {
 	return promise;
 }
 
-async function fetchTokenPrice(token: Token): Promise<number> {
+async function fetchTokenPrice(token: Token, chainId?: ChainId): Promise<number> {
 	try {
-		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC"));
+		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC", chainId));
 		const oneUnit = (10n ** BigInt(token.decimals)).toString();
 		const routeData = await getRoute(token, usdc, oneUnit);
 
