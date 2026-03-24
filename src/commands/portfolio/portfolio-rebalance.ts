@@ -10,6 +10,7 @@ import {
 } from "../../services/portfolio/rebalance.js";
 import { createSpinner, formatResult, formatTable } from "../../lib/format.js";
 import { formatError } from "../../lib/format.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export function registerPortfolioRebalanceCommand(program: Command): void {
 	program
@@ -34,12 +35,13 @@ export function registerPortfolioRebalanceCommand(program: Command): void {
 			try {
 				const session = requireSession();
 				const { sdk, wallet } = await initSDKAndWallet(session);
+				const chainId = resolveChainId(session);
 
-				const targets = parseTargetAllocation(opts.target);
+				const targets = parseTargetAllocation(opts.target, chainId);
 
 				const portfolio = await getPortfolio(sdk, wallet, session);
 
-				const plan = await calculateRebalancePlan(portfolio, targets);
+				const plan = await calculateRebalancePlan(portfolio, targets, chainId);
 
 				if (plan.trades.length === 0) {
 					spinner.succeed("Portfolio is already balanced — no trades needed");
