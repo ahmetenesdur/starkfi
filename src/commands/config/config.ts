@@ -2,6 +2,8 @@ import type { Command } from "commander";
 import { ConfigService } from "../../services/config/config.js";
 import { success, formatResult, warn } from "../../lib/format.js";
 import { GASLESS_SUPPORTED_TOKENS } from "../../services/starkzap/config.js";
+import { loadSession } from "../../services/auth/session.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerConfigCommand(program: Command): void {
 	const configService = ConfigService.getInstance();
@@ -47,7 +49,7 @@ export function registerConfigCommand(program: Command): void {
 				process.exit(1);
 			}
 			configService.set("network", network);
-			console.log(success(`Network set to: ${network}`));
+			console.log(success(`Network set to: ${network} (active immediately for all commands)`));
 		});
 
 	configCmd
@@ -125,12 +127,26 @@ export function registerConfigCommand(program: Command): void {
 			if (gasfreeMode) feeModeSummary = "gasfree (developer-sponsored via Paymaster)";
 			else if (gasToken) feeModeSummary = `gasless (pays ${gasToken} via Paymaster)`;
 
-			console.log(
-				formatResult({
-					...(all as Record<string, unknown>),
-					feeMode: feeModeSummary,
-				})
-			);
+			// Show effective network with source info
+			const session = loadSession();
+			const configNetwork = all.network as string | undefined;
+			let networkSummary: string;
+			if (session) {
+				const effective = resolveNetwork(session);
+				if (configNetwork) {
+					networkSummary = `${effective} (config override, session: ${session.network})`;
+				} else {
+					networkSummary = `${effective} (from session)`;
+				}
+			} else {
+				networkSummary = configNetwork ?? "not set (login required)";
+			}
+
+			const display: Record<string, unknown> = { ...all as Record<string, unknown> };
+			display.network = networkSummary;
+			display.feeMode = feeModeSummary;
+
+			console.log(formatResult(display));
 		});
 
 	configCmd
