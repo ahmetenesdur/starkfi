@@ -6,6 +6,7 @@ import { StarkfiError, ErrorCode } from "../../lib/errors.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export async function handleListLendingPools(args: { name?: string }) {
 	return withReadonlyWallet(async ({ wallet }) => {
@@ -31,13 +32,15 @@ export async function handleGetLendingPosition(args: {
 	collateral_token: string;
 	borrow_token?: string;
 }) {
-	return withReadonlyWallet(async ({ wallet }) => {
+	return withReadonlyWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
 
 		const suppliedBalance = await lendingService.getSuppliedBalance(
 			wallet,
 			pool.address,
-			args.collateral_token
+			args.collateral_token,
+			chainId
 		);
 
 		let position = null;
@@ -46,7 +49,8 @@ export async function handleGetLendingPosition(args: {
 				wallet,
 				pool.address,
 				args.collateral_token,
-				args.borrow_token
+				args.borrow_token,
+				chainId
 			);
 		}
 
@@ -76,9 +80,10 @@ export async function handleSupplyAssets(args: {
 	token: string;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const token = resolveToken(args.token);
+		const token = resolveToken(args.token, chainId);
 		const builder = wallet.tx().lendDeposit({
 			token,
 			amount: Amount.parse(args.amount, token),
@@ -86,7 +91,7 @@ export async function handleSupplyAssets(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "supply",
 				amount: `${args.amount} ${token.symbol}`,
@@ -115,9 +120,10 @@ export async function handleWithdrawAssets(args: {
 	token: string;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const token = resolveToken(args.token);
+		const token = resolveToken(args.token, chainId);
 		const builder = wallet.tx().lendWithdraw({
 			token,
 			amount: Amount.parse(args.amount, token),
@@ -125,7 +131,7 @@ export async function handleWithdrawAssets(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "withdraw",
 				amount: `${args.amount} ${token.symbol}`,
@@ -157,16 +163,18 @@ export async function handleBorrowAssets(args: {
 	use_supplied?: boolean;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const collateralToken = resolveToken(args.collateral_token);
-		const debtToken = resolveToken(args.borrow_token);
+		const collateralToken = resolveToken(args.collateral_token, chainId);
+		const debtToken = resolveToken(args.borrow_token, chainId);
 
 		if (args.use_supplied) {
 			const balance = await lendingService.getSuppliedBalance(
 				wallet,
 				pool.address,
-				args.collateral_token
+				args.collateral_token,
+				chainId
 			);
 			if (!balance || parseFloat(balance) < parseFloat(args.collateral_amount)) {
 				throw new StarkfiError(
@@ -186,7 +194,7 @@ export async function handleBorrowAssets(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "borrow",
 				collateral: `${args.collateral_amount} ${collateralToken.symbol}`,
@@ -218,10 +226,11 @@ export async function handleRepayDebt(args: {
 	collateral_token: string;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const collateralToken = resolveToken(args.collateral_token);
-		const debtToken = resolveToken(args.token);
+		const collateralToken = resolveToken(args.collateral_token, chainId);
+		const debtToken = resolveToken(args.token, chainId);
 		const builder = wallet.tx().lendRepay({
 			collateralToken,
 			debtToken,
@@ -230,7 +239,7 @@ export async function handleRepayDebt(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "repay",
 				repaid: `${args.amount} ${debtToken.symbol}`,
@@ -259,20 +268,22 @@ export async function handleClosePosition(args: {
 	debt_token: string;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
 		const position = await lendingService.getPosition(
 			wallet,
 			pool.address,
 			args.collateral_token,
-			args.debt_token
+			args.debt_token,
+			chainId
 		);
 		if (!position) {
 			throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
 		}
 
-		const collateralToken = resolveToken(args.collateral_token);
-		const debtToken = resolveToken(args.debt_token);
+		const collateralToken = resolveToken(args.collateral_token, chainId);
+		const debtToken = resolveToken(args.debt_token, chainId);
 		const builder = wallet.tx().lendRepay({
 			collateralToken,
 			debtToken,
@@ -282,7 +293,7 @@ export async function handleClosePosition(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "close_position",
 				pool: pool.name ?? pool.address,

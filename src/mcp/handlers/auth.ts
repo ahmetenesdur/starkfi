@@ -1,6 +1,7 @@
 import { loadSession } from "../../services/auth/session.js";
 import { checkFibrousHealth } from "../../services/fibrous/health.js";
 import { jsonResult } from "./utils.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export async function handleGetAuthStatus() {
 	const session = loadSession();
@@ -17,7 +18,7 @@ export async function handleGetAuthStatus() {
 	return jsonResult({
 		authenticated: true,
 		type: session.type,
-		network: session.network,
+		network: resolveNetwork(session),
 		address: session.address,
 		fibrous: health,
 	});

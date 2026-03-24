@@ -8,11 +8,13 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { formatActualFee } from "../../lib/format.js";
 import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 
 export async function handleGetBalance(args: { token?: string }) {
 	return withReadonlyWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
 		if (args.token) {
-			const tokenType = resolveToken(args.token);
+			const tokenType = resolveToken(args.token, chainId);
 			const balanceAmount = await wallet.balanceOf(tokenType);
 			return jsonResult({
 				symbol: tokenType.symbol,
@@ -21,9 +23,9 @@ export async function handleGetBalance(args: { token?: string }) {
 			});
 		}
 
-		const balances = await getBalances(wallet);
+		const balances = await getBalances(wallet, chainId);
 		return jsonResult({
-			network: session.network,
+			network: resolveNetwork(session),
 			address: session.address,
 			balances,
 		});
@@ -47,7 +49,7 @@ export async function handleDeployAccount() {
 			alreadyDeployed,
 			success: true,
 			address: session.address,
-			network: session.network,
+			network: resolveNetwork(session),
 			message: alreadyDeployed
 				? "Account is already deployed. No action needed."
 				: "Account deployed successfully. You can now send, swap, and stake.",
@@ -61,8 +63,9 @@ export async function handleSendTokens(args: {
 	recipient: string;
 	simulate?: boolean;
 }) {
-	return withWallet(async ({ wallet }) => {
-		const token = resolveToken(args.token);
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
+		const token = resolveToken(args.token, chainId);
 		const amount = Amount.parse(args.amount, token);
 
 		const balance = await wallet.balanceOf(token);
@@ -76,7 +79,7 @@ export async function handleSendTokens(args: {
 		const builder = wallet.tx().transfer(token, [{ to: fromAddress(args.recipient), amount }]);
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				amount: `${args.amount} ${args.token.toUpperCase()}`,
 				to: args.recipient,
@@ -101,7 +104,7 @@ export async function handleGetTxStatus(args: { hash: string }) {
 	const configService = ConfigService.getInstance();
 	const rpcUrl = configService.get("rpcUrl") as string | undefined;
 
-	const sdk = createSDK(session.network, rpcUrl);
+	const sdk = createSDK(resolveNetwork(session), rpcUrl);
 	const provider = sdk.getProvider();
 	const receipt = await provider.getTransactionReceipt(args.hash);
 

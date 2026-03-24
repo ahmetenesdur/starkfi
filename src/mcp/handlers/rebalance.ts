@@ -6,6 +6,7 @@ import {
 	calculateRebalancePlan,
 	executeRebalance,
 } from "../../services/portfolio/rebalance.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export async function handleRebalancePortfolio(args: {
 	target: string;
@@ -13,9 +14,10 @@ export async function handleRebalancePortfolio(args: {
 	simulate?: boolean;
 }) {
 	return withWallet(async ({ session, sdk, wallet }) => {
-		const targets = parseTargetAllocation(args.target);
+		const chainId = resolveChainId(session);
+		const targets = parseTargetAllocation(args.target, chainId);
 		const portfolio = await getPortfolio(sdk, wallet, session);
-		const plan = await calculateRebalancePlan(portfolio, targets);
+		const plan = await calculateRebalancePlan(portfolio, targets, chainId);
 
 		if (plan.trades.length === 0) {
 			return jsonResult({

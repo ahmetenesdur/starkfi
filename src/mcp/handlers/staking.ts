@@ -3,11 +3,12 @@ import * as stakingService from "../../services/staking/staking.js";
 import { getValidators, findValidator } from "../../services/staking/validators.js";
 import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, textResult } from "./utils.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 
 export async function handleStakeTokens(args: { amount: string; pool: string; token?: string }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
 		const tokenSymbol = (args.token ?? "STRK").toUpperCase();
-		const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol);
+		const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol, resolveChainId(session));
 
 		return jsonResult({
 			success: true,
@@ -25,7 +26,7 @@ export async function handleUnstakeTokens(args: {
 	amount?: string;
 	token?: string;
 }) {
-	return withWallet(async ({ wallet }) => {
+	return withWallet(async ({ session, wallet }) => {
 		if (args.action === "intent") {
 			if (!args.amount) {
 				return textResult("Amount is required for exit intent.");
@@ -35,7 +36,8 @@ export async function handleUnstakeTokens(args: {
 				wallet,
 				args.pool,
 				args.amount,
-				tokenSymbol
+				tokenSymbol,
+				resolveChainId(session)
 			);
 			return jsonResult({
 				success: true,
@@ -86,7 +88,7 @@ export async function handleGetStakingInfo(args: { pool: string }) {
 
 export async function handleListPools(args: { validator: string }) {
 	return withReadonlyWallet(async ({ session, sdk, wallet }) => {
-		const found = findValidator(args.validator, session.network);
+		const found = findValidator(args.validator, resolveNetwork(session));
 		const stakerAddress = found ? found.stakerAddress.toString() : args.validator;
 
 		const pools = await stakingService.getValidatorPools(sdk, stakerAddress, wallet);
@@ -101,10 +103,11 @@ export async function handleListPools(args: { validator: string }) {
 
 export async function handleListValidators() {
 	const session = requireSession();
-	const validators = getValidators(session.network);
+	const network = resolveNetwork(session);
+	const validators = getValidators(network);
 
 	return jsonResult({
-		network: session.network,
+		network: network,
 		count: validators.length,
 		validators: validators.map((v) => ({
 			name: v.name,
@@ -143,7 +146,7 @@ export async function handleGetStakeStatus({ validator }: { validator?: string }
 		const overview = await stakingService.getStakingOverview(
 			sdk,
 			wallet,
-			session.network,
+			resolveNetwork(session),
 			session.address,
 			validator
 		);

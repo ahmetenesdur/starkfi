@@ -5,14 +5,18 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
+import { requireSession } from "../../services/auth/session.js";
 
 export async function handleGetSwapQuote(args: {
 	amount: string;
 	from_token: string;
 	to_token: string;
 }) {
-	const tokenIn = resolveToken(args.from_token);
-	const tokenOut = resolveToken(args.to_token);
+	const session = requireSession();
+	const chainId = resolveChainId(session);
+	const tokenIn = resolveToken(args.from_token, chainId);
+	const tokenOut = resolveToken(args.to_token, chainId);
 
 	const parsedAmount = Amount.parse(args.amount, tokenIn);
 	const rawAmount = parsedAmount.toBase().toString();
@@ -42,8 +46,9 @@ export async function handleSwapTokens(args: {
 	simulate?: boolean;
 }) {
 	return withWallet(async ({ session, wallet }) => {
-		const tokenIn = resolveToken(args.from_token);
-		const tokenOut = resolveToken(args.to_token);
+		const chainId = resolveChainId(session);
+		const tokenIn = resolveToken(args.from_token, chainId);
+		const tokenOut = resolveToken(args.to_token, chainId);
 
 		const parsedAmount = Amount.parse(args.amount, tokenIn);
 		const rawAmount = parsedAmount.toBase().toString();
@@ -69,7 +74,7 @@ export async function handleSwapTokens(args: {
 		const outputFormatted = outputAmount.toUnit();
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				amountIn: `${args.amount} ${tokenIn.symbol}`,
 				expectedAmountOut: `~${outputFormatted} ${tokenOut.symbol}`,

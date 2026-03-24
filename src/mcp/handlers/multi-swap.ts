@@ -1,4 +1,4 @@
-import { Amount, fromAddress } from "starkzap";
+import { Amount, fromAddress, type ChainId } from "starkzap";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import {
 	getCalldataBatch,
@@ -9,14 +9,17 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
+import { requireSession } from "../../services/auth/session.js";
 
 async function resolvePairs(
-	swaps: { amount: string; from_token: string; to_token: string }[]
+	swaps: { amount: string; from_token: string; to_token: string }[],
+	chainId?: ChainId
 ): Promise<BatchSwapPair[]> {
 	return Promise.all(
 		swaps.map(async (s) => {
-			const tokenIn = resolveToken(s.from_token);
-			const tokenOut = resolveToken(s.to_token);
+			const tokenIn = resolveToken(s.from_token, chainId);
+			const tokenOut = resolveToken(s.to_token, chainId);
 			const parsedAmount = Amount.parse(s.amount, tokenIn);
 			return { tokenIn, tokenOut, amount: parsedAmount.toBase().toString() };
 		})
@@ -26,7 +29,9 @@ async function resolvePairs(
 export async function handleGetMultiSwapQuote(args: {
 	swaps: { amount: string; from_token: string; to_token: string }[];
 }) {
-	const pairs = await resolvePairs(args.swaps);
+	const session = requireSession();
+	const chainId = resolveChainId(session);
+	const pairs = await resolvePairs(args.swaps, chainId);
 	const routes = await getRouteBatch(pairs);
 
 	return jsonResult({
@@ -46,7 +51,8 @@ export async function handleMultiSwap(args: {
 	simulate?: boolean;
 }) {
 	return withWallet(async ({ session, wallet }) => {
-		const pairs = await resolvePairs(args.swaps);
+		const chainId = resolveChainId(session);
+		const pairs = await resolvePairs(args.swaps, chainId);
 		const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
 
 		const builder = wallet.tx();
@@ -68,7 +74,7 @@ export async function handleMultiSwap(args: {
 		});
 
 		if (args.simulate) {
-			const sim = await simulateTransaction(builder);
+			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				swaps: pairs.map((_, i) => formatSwap(i)),
 			});
