@@ -5,12 +5,12 @@ import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult } from "./utils.js";
 
 export async function handleListLendingPools(args: { name?: string }) {
-	return withReadonlyWallet(async ({ session }) => {
-		let pools = await getVesuPools(session.network);
+	return withReadonlyWallet(async ({ wallet }) => {
+		let pools = await getVesuPools(wallet);
 
 		if (args.name) {
 			const lower = args.name.toLowerCase();
-			pools = pools.filter((p) => p.name.toLowerCase().includes(lower));
+			pools = pools.filter((p) => p.name?.toLowerCase().includes(lower));
 		}
 
 		return jsonResult({
@@ -18,10 +18,6 @@ export async function handleListLendingPools(args: { name?: string }) {
 			pools: pools.map((p) => ({
 				name: p.name,
 				poolContract: p.address,
-				protocolVersion: p.protocolVersion,
-				isDeprecated: p.isDeprecated,
-				assets: p.assets.map((a) => a.symbol),
-				pairs: p.pairs.map((pair) => `${pair.collateralSymbol}/${pair.debtSymbol}`),
 			})),
 		});
 	});
@@ -32,8 +28,8 @@ export async function handleGetLendingPosition(args: {
 	collateral_token: string;
 	borrow_token?: string;
 }) {
-	return withReadonlyWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withReadonlyWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 
 		const suppliedBalance = await lendingService.getSuppliedBalance(
 			wallet,
@@ -72,8 +68,8 @@ export async function handleGetLendingPosition(args: {
 }
 
 export async function handleSupplyAssets(args: { pool: string; amount: string; token: string }) {
-	return withWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 		const result = await lendingService.supply(wallet, pool.address, args.token, args.amount);
 
 		return jsonResult({
@@ -89,8 +85,8 @@ export async function handleSupplyAssets(args: { pool: string; amount: string; t
 }
 
 export async function handleWithdrawAssets(args: { pool: string; amount: string; token: string }) {
-	return withWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 		const result = await lendingService.withdraw(wallet, pool.address, args.token, args.amount);
 
 		return jsonResult({
@@ -113,8 +109,8 @@ export async function handleBorrowAssets(args: {
 	borrow_token: string;
 	use_supplied?: boolean;
 }) {
-	return withWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 
 		let useSupplied = false;
 		if (args.use_supplied) {
@@ -161,8 +157,8 @@ export async function handleRepayDebt(args: {
 	token: string;
 	collateral_token: string;
 }) {
-	return withWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 		const result = await lendingService.repay(
 			wallet,
 			pool.address,
@@ -188,8 +184,8 @@ export async function handleClosePosition(args: {
 	collateral_token: string;
 	debt_token: string;
 }) {
-	return withWallet(async ({ session, wallet }) => {
-		const pool = resolvePoolAddress(args.pool, session.network);
+	return withWallet(async ({ wallet }) => {
+		const pool = await resolvePoolAddress(wallet, args.pool);
 		const result = await lendingService.closePosition(
 			wallet,
 			pool.address,

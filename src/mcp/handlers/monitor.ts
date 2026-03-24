@@ -12,7 +12,7 @@ export async function handleMonitorLendingPosition(args: {
 	borrow_token?: string;
 	warning_threshold?: number;
 }) {
-	return withReadonlyWallet(async ({ session, wallet }) => {
+	return withReadonlyWallet(async ({ wallet }) => {
 		const config = args.warning_threshold
 			? { warningThreshold: args.warning_threshold }
 			: undefined;
@@ -29,13 +29,12 @@ export async function handleMonitorLendingPosition(args: {
 				args.pool,
 				args.collateral_token,
 				args.borrow_token,
-				config,
-				session.network
+				config
 			);
 			return jsonResult({ success: true, positions: [result] });
 		}
 
-		const positions = await monitorAllPositions(wallet, session.network, config);
+		const positions = await monitorAllPositions(wallet, config);
 		const alerts = positions.filter((p) => p.alert !== null);
 		return jsonResult({ success: true, positions, alertCount: alerts.length });
 	});
