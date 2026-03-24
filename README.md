@@ -55,7 +55,7 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │  │       └─────────────┴────────────┴────────────┴───────────────┘              │   │
 │  │                       │                                                      │   │
 │  │       ┌───────────────┴───────────────────────────┐                          │   │
-│  │       │       Starkzap SDK (starkzap v1.0.0)      │                          │   │
+│  │       │       Starkzap SDK (starkzap v2.0.0)      │                          │   │
 │  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                          │   │
 │  │       └───────────────┬───────────────────────────┘                          │   │
 │  └───────────────────────┼──────────────────────────────────────────────────────┘   │
@@ -341,15 +341,15 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 | Command                                                                                                                        | Description                            |
 | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| `lend-pools [name]`                                                                                                            | List lending pools                     |
-| `lend-supply <amount> -p <pool> -t <token>`                                                                                    | Supply assets                          |
-| `lend-withdraw <amount> -p <pool> -t <token>`                                                                                  | Withdraw assets                        |
-| `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied]` | Borrow                                 |
-| `lend-repay <amount> -p <pool> -t <token> --collateral-token <t>`                                                              | Repay debt                             |
-| `lend-status [-p <pool> --collateral-token <t> [--borrow-token <t>]]`                                                          | Position status (auto-scan if no args) |
-| `lend-close -p <pool> --collateral-token <t> --borrow-token <t>`                                                               | Close position atomically              |
-| `lend-monitor [-p <pool> --collateral-token <t> --borrow-token <t>]`                                                           | Monitor health factors                 |
-| `lend-auto -p <pool> --collateral-token <t> --borrow-token <t> [--strategy <type>]`                                            | Auto-rebalance position                |
+| `lend-pools [name]`                                                                                                                        | List lending pools                     |
+| `lend-supply <amount> -p <pool> -t <token> [--simulate]`                                                                                    | Supply assets                          |
+| `lend-withdraw <amount> -p <pool> -t <token> [--simulate]`                                                                                  | Withdraw assets                        |
+| `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied] [--simulate]` | Borrow                                 |
+| `lend-repay <amount> -p <pool> -t <token> --collateral-token <t> [--simulate]`                                                              | Repay debt                             |
+| `lend-status [-p <pool> --collateral-token <t> [--borrow-token <t>]]`                                                                       | Position status (auto-scan if no args) |
+| `lend-close -p <pool> --collateral-token <t> --borrow-token <t> [--simulate]`                                                               | Close position atomically              |
+| `lend-monitor [-p <pool> --collateral-token <t> --borrow-token <t>]`                                                                        | Monitor health factors                 |
+| `lend-auto -p <pool> --collateral-token <t> --borrow-token <t> [--strategy <type>] [--simulate]`                                            | Auto-rebalance position                |
 
 ### Portfolio
 
@@ -429,7 +429,7 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 
 | Layer           | Technology                                                                       |
 | --------------- | -------------------------------------------------------------------------------- |
-| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/starkzap) v1.0.0             |
+| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/starkzap) v2.0.0             |
 | **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
 | **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
 | **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |

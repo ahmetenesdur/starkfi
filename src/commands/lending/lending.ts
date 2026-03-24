@@ -1,11 +1,14 @@
 import type { Command } from "commander";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
-import { Amount } from "starkzap";
+import { Amount, fromAddress } from "starkzap";
 import * as lendingService from "../../services/vesu/lending.js";
 import chalk from "chalk";
 import { getVesuPools, resolvePoolAddress, getPoolMarkets } from "../../services/vesu/pools.js";
+import { resolveToken } from "../../services/tokens/tokens.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
+import { handleSimulationResult, outputResult } from "../../lib/cli-helpers.js";
 
 function handleLendingError(error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
@@ -129,12 +132,13 @@ export function registerLendSupplyCommand(program: Command): void {
 		.argument("<amount>", "Amount to supply")
 		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.requiredOption("-t, --token <symbol>", "Token symbol (e.g. 'STRK', 'ETH', 'USDC')")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-supply 100 -p Prime -t USDC\n  $ starkfi lend-supply 0.5 -p Prime -t ETH"
+			"\nExamples:\n  $ starkfi lend-supply 100 -p Prime -t USDC\n  $ starkfi lend-supply 0.5 -p Prime -t ETH --simulate"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner(`Supplying ${amount} ${opts.token}...`).start();
+			const spinner = createSpinner("Preparing supply...").start();
 
 			try {
 				const session = requireSession();
@@ -142,22 +146,35 @@ export function registerLendSupplyCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const result = await lendingService.supply(
-					wallet,
-					pool.address,
-					opts.token,
-					amount
-				);
+				const token = resolveToken(opts.token);
+				const builder = wallet.tx().lendDeposit({
+					token,
+					amount: Amount.parse(amount, token),
+					poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+				});
 
-				spinner.succeed("Supply confirmed");
-				console.log(
-					formatResult({
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${opts.token.toUpperCase()}`,
 						pool: pool.name ?? pool.address,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+					});
+					return;
+				}
+
+				spinner.text = `Supplying ${amount} ${opts.token}...`;
+				const tx = await builder.send();
+				spinner.text = "Waiting for confirmation...";
+				await tx.wait();
+
+				spinner.succeed("Supply confirmed");
+				outputResult({
+					amount: `${amount} ${opts.token.toUpperCase()}`,
+					pool: pool.name ?? pool.address,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Supply failed");
 				handleLendingError(error);
@@ -172,12 +189,13 @@ export function registerLendWithdrawCommand(program: Command): void {
 		.argument("<amount>", "Amount to withdraw")
 		.requiredOption("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.requiredOption("-t, --token <symbol>", "Token symbol (e.g. 'STRK', 'ETH', 'USDC')")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-withdraw 50 -p Prime -t USDC\n  $ starkfi lend-withdraw 0.2 -p Prime -t ETH"
+			"\nExamples:\n  $ starkfi lend-withdraw 50 -p Prime -t USDC\n  $ starkfi lend-withdraw 0.2 -p Prime -t ETH --simulate"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner(`Withdrawing ${amount} ${opts.token}...`).start();
+			const spinner = createSpinner("Preparing withdrawal...").start();
 
 			try {
 				const session = requireSession();
@@ -185,22 +203,35 @@ export function registerLendWithdrawCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const result = await lendingService.withdraw(
-					wallet,
-					pool.address,
-					opts.token,
-					amount
-				);
+				const token = resolveToken(opts.token);
+				const builder = wallet.tx().lendWithdraw({
+					token,
+					amount: Amount.parse(amount, token),
+					poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+				});
 
-				spinner.succeed("Withdrawal confirmed");
-				console.log(
-					formatResult({
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${opts.token.toUpperCase()}`,
 						pool: pool.name ?? pool.address,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+					});
+					return;
+				}
+
+				spinner.text = `Withdrawing ${amount} ${opts.token}...`;
+				const tx = await builder.send();
+				spinner.text = "Waiting for confirmation...";
+				await tx.wait();
+
+				spinner.succeed("Withdrawal confirmed");
+				outputResult({
+					amount: `${amount} ${opts.token.toUpperCase()}`,
+					pool: pool.name ?? pool.address,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Withdrawal failed");
 				handleLendingError(error);
@@ -224,14 +255,13 @@ export function registerLendBorrowCommand(program: Command): void {
 			"--use-supplied",
 			"Use your previously supplied yield tokens as collateral instead of transferring from wallet"
 		)
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
 			"\nExamples:\n  $ starkfi lend-borrow -p Prime --collateral-amount 0.5 --collateral-token ETH --borrow-amount 500 --borrow-token USDC\n  $ starkfi lend-borrow -p Prime --collateral-amount 100 --collateral-token STRK --borrow-amount 50 --borrow-token USDT --use-supplied"
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner(
-				`Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`
-			).start();
+			const spinner = createSpinner("Preparing borrow...").start();
 
 			try {
 				const session = requireSession();
@@ -254,29 +284,43 @@ export function registerLendBorrowCommand(program: Command): void {
 						);
 					}
 					useSupplied = true;
-					spinner.text = `Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`;
 				}
 
-				const result = await lendingService.borrow(
-					wallet,
-					pool.address,
-					opts.collateralToken,
-					opts.collateralAmount,
-					opts.borrowToken,
-					opts.borrowAmount,
-					useSupplied
-				);
+				const collateralToken = resolveToken(opts.collateralToken);
+				const debtToken = resolveToken(opts.borrowToken);
+				const builder = wallet.tx().lendBorrow({
+					collateralToken,
+					debtToken,
+					amount: Amount.parse(opts.borrowAmount, debtToken),
+					collateralAmount: Amount.parse(opts.collateralAmount, collateralToken),
+					poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+					useEarnPosition: useSupplied || undefined,
+				});
+
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+					handleSimulationResult(sim, spinner, opts, {
+						collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
+						borrow: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+					});
+					return;
+				}
+
+				spinner.text = `Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`;
+				const tx = await builder.send();
+				spinner.text = "Waiting for confirmation...";
+				await tx.wait();
 
 				spinner.succeed("Borrow confirmed");
-				console.log(
-					formatResult({
-						collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
-						borrowed: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
-						pool: pool.name ?? pool.address,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+				outputResult({
+					collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
+					borrowed: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
+					pool: pool.name ?? pool.address,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Borrow failed");
 				handleLendingError(error);
@@ -295,12 +339,13 @@ export function registerLendRepayCommand(program: Command): void {
 			"--collateral-token <symbol>",
 			"Collateral token of the position (e.g. 'ETH', 'STRK')"
 		)
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-repay 500 -p Prime -t USDC --collateral-token ETH\n  $ starkfi lend-repay 50 -p Prime -t USDT --collateral-token STRK"
+			"\nExamples:\n  $ starkfi lend-repay 500 -p Prime -t USDC --collateral-token ETH\n  $ starkfi lend-repay 50 -p Prime -t USDT --collateral-token STRK --simulate"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner(`Repaying ${amount} ${opts.token}...`).start();
+			const spinner = createSpinner("Preparing repayment...").start();
 
 			try {
 				const session = requireSession();
@@ -308,23 +353,37 @@ export function registerLendRepayCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const result = await lendingService.repay(
-					wallet,
-					pool.address,
-					opts.collateralToken,
-					opts.token,
-					amount
-				);
+				const collateralToken = resolveToken(opts.collateralToken);
+				const debtToken = resolveToken(opts.token);
+				const builder = wallet.tx().lendRepay({
+					collateralToken,
+					debtToken,
+					amount: Amount.parse(amount, debtToken),
+					poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+				});
+
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+					handleSimulationResult(sim, spinner, opts, {
+						repay: `${amount} ${opts.token.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+					});
+					return;
+				}
+
+				spinner.text = `Repaying ${amount} ${opts.token}...`;
+				const tx = await builder.send();
+				spinner.text = "Waiting for confirmation...";
+				await tx.wait();
 
 				spinner.succeed("Repayment confirmed");
-				console.log(
-					formatResult({
-						repaid: `${amount} ${opts.token.toUpperCase()}`,
-						pool: pool.name ?? pool.address,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+				outputResult({
+					repaid: `${amount} ${opts.token.toUpperCase()}`,
+					pool: pool.name ?? pool.address,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Repayment failed");
 				handleLendingError(error);
@@ -344,12 +403,13 @@ export function registerLendCloseCommand(program: Command): void {
 			"Collateral token symbol (e.g. 'ETH', 'STRK')"
 		)
 		.requiredOption("--borrow-token <symbol>", "Borrowed token symbol (e.g. 'USDC', 'USDT')")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-close -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDT"
+			"\nExamples:\n  $ starkfi lend-close -p Prime --collateral-token ETH --borrow-token USDC --simulate\n  $ starkfi lend-close -p Prime --collateral-token STRK --borrow-token USDT"
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner("Closing position...").start();
+			const spinner = createSpinner("Preparing position close...").start();
 
 			try {
 				const session = requireSession();
@@ -357,22 +417,44 @@ export function registerLendCloseCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const result = await lendingService.closePosition(
-					wallet,
-					pool.address,
-					opts.collateralToken,
-					opts.borrowToken
+				const position = await lendingService.getPosition(
+					wallet, pool.address, opts.collateralToken, opts.borrowToken
 				);
+				if (!position) throw new Error("No active position found to close.");
+
+				const collateralToken = resolveToken(opts.collateralToken);
+				const debtToken = resolveToken(opts.borrowToken);
+				const builder = wallet.tx().lendRepay({
+					collateralToken,
+					debtToken,
+					amount: Amount.parse(position.debtAmount, debtToken),
+					withdrawCollateral: true,
+					poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+				});
+
+				if (opts.simulate) {
+					spinner.text = "Simulating transaction...";
+					const sim = await simulateTransaction(builder);
+					handleSimulationResult(sim, spinner, opts, {
+						pool: pool.name ?? pool.address,
+						debt: `${position.debtAmount} ${position.debtAsset}`,
+						collateral: `${position.collateralAmount} ${position.collateralAsset}`,
+					});
+					return;
+				}
+
+				spinner.text = "Closing position...";
+				const tx = await builder.send();
+				spinner.text = "Waiting for confirmation...";
+				await tx.wait();
 
 				spinner.succeed("Position closed successfully");
-				console.log(
-					formatResult({
-						status: "Closed",
-						pool: pool.name ?? pool.address,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					})
-				);
+				outputResult({
+					status: "Closed",
+					pool: pool.name ?? pool.address,
+					txHash: tx.hash,
+					explorer: tx.explorerUrl,
+				}, opts);
 			} catch (error) {
 				spinner.fail("Failed to close position");
 				handleLendingError(error);
@@ -387,7 +469,7 @@ export function registerLendStatusCommand(program: Command): void {
 		.option("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.option(
 			"--collateral-token <symbol>",
-			"Token supplied to vToken and/or Pool (e.g. 'ETH', 'STRK')"
+			"Token supplied as earn position (e.g. 'ETH', 'STRK')"
 		)
 		.option(
 			"--borrow-token <symbol>",
@@ -635,7 +717,7 @@ export function registerLendAutoCommand(program: Command): void {
 		.requiredOption("--borrow-token <symbol>", "Debt token symbol")
 		.option("--strategy <type>", "repay | add-collateral | auto", "auto")
 		.option("--target-hf <number>", "Target health factor", "1.3")
-		.option("--simulate", "Preview without executing")
+		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
 			"\nExamples:\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --strategy repay\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate"

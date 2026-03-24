@@ -220,9 +220,10 @@ Deposits specified assets into a Vesu V2 pool to generate yield.
 
 | Parameter | Type   | Required | Description                                                   |
 | --------- | ------ | -------- | ------------------------------------------------------------- |
-| `pool`    | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `amount`  | string | **Yes**  | Amount to supply (e.g. `100`, `0.5`)                          |
-| `token`   | string | **Yes**  | Token symbol to supply (e.g. `STRK`, `ETH`, `USDC`)           |
+| `pool`    | string  | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
+| `amount`  | string  | **Yes**  | Amount to supply (e.g. `100`, `0.5`)                          |
+| `token`   | string  | **Yes**  | Token symbol to supply (e.g. `STRK`, `ETH`, `USDC`)           |
+| `simulate`| boolean | No       | Set `true` to estimate fees without sending a transaction     |
 
 #### `withdraw_assets`
 
@@ -230,9 +231,10 @@ Redeems supplied assets from a Vesu V2 lending pool.
 
 | Parameter | Type   | Required | Description                                                   |
 | --------- | ------ | -------- | ------------------------------------------------------------- |
-| `pool`    | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `amount`  | string | **Yes**  | Amount to withdraw (e.g. `100`, `0.5`)                        |
-| `token`   | string | **Yes**  | Token symbol to withdraw (e.g. `STRK`, `ETH`, `USDC`)         |
+| `pool`    | string  | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
+| `amount`  | string  | **Yes**  | Amount to withdraw (e.g. `100`, `0.5`)                        |
+| `token`   | string  | **Yes**  | Token symbol to withdraw (e.g. `STRK`, `ETH`, `USDC`)         |
+| `simulate`| boolean | No       | Set `true` to estimate fees without sending a transaction     |
 
 #### `borrow_assets`
 
@@ -246,6 +248,7 @@ Executes an atomic collateral deposit and subsequent asset borrow against a Vesu
 | `borrow_amount`     | string  | **Yes**  | Amount to borrow (e.g. `100`)                                             |
 | `borrow_token`      | string  | **Yes**  | Token to borrow (e.g. `USDC`, `USDT`)                                     |
 | `use_supplied`      | boolean | No       | Set `true` to use previously supplied earn position as collateral via multicall |
+| `simulate`          | boolean | No       | Set `true` to estimate fees without sending a transaction                 |
 
 #### `repay_debt`
 
@@ -256,7 +259,8 @@ Processes the repayment of borrowed assets against an existing Vesu V2 position.
 | `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`)                           |
 | `amount`           | string | **Yes**  | Amount to repay (e.g. `50`, `100`)                                                      |
 | `token`            | string | **Yes**  | Token to repay (e.g. `USDC`, `USDT`)                                                    |
-| `collateral_token` | string | **Yes**  | Collateral token of the position (e.g. `ETH`, `STRK`). Needed to identify the position. |
+| `collateral_token` | string  | **Yes**  | Collateral token of the position (e.g. `ETH`, `STRK`). Needed to identify the position. |
+| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction                               |
 
 #### `close_position`
 
@@ -265,8 +269,9 @@ Atomically closes an active Vesu V2 lending position. Repays all outstanding deb
 | Parameter          | Type   | Required | Description                                                   |
 | ------------------ | ------ | -------- | ------------------------------------------------------------- |
 | `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `collateral_token` | string | **Yes**  | Collateral token symbol of the position (e.g. `STRK`, `ETH`)  |
-| `debt_token`       | string | **Yes**  | Borrowed token symbol of the position (e.g. `USDC`, `USDT`)   |
+| `collateral_token` | string  | **Yes**  | Collateral token symbol of the position (e.g. `STRK`, `ETH`)  |
+| `debt_token`       | string  | **Yes**  | Borrowed token symbol of the position (e.g. `USDC`, `USDT`)   |
+| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction     |
 
 #### `monitor_lending_position`
 

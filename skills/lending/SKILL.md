@@ -70,10 +70,10 @@ npx starkfi@latest lend-status --pool <name|address> --collateral-token <symbol>
 
 ```bash
 # Supply (deposit assets to earn yield)
-npx starkfi@latest lend-supply <amount> --pool <name|address> --token <symbol>
+npx starkfi@latest lend-supply <amount> --pool <name|address> --token <symbol> [--simulate]
 
 # Withdraw (remove supplied assets)
-npx starkfi@latest lend-withdraw <amount> --pool <name|address> --token <symbol>
+npx starkfi@latest lend-withdraw <amount> --pool <name|address> --token <symbol> [--simulate]
 ```
 
 ### Borrow & Repay
@@ -84,17 +84,17 @@ npx starkfi@latest lend-borrow \
   --pool <name|address> \
   --collateral-amount <n> --collateral-token <symbol> \
   --borrow-amount <n> --borrow-token <symbol> \
-  [--use-supplied]
+  [--use-supplied] [--simulate]
 
 # Repay (pay back borrowed amount)
-npx starkfi@latest lend-repay <amount> --pool <name|address> --token <symbol> --collateral-token <symbol>
+npx starkfi@latest lend-repay <amount> --pool <name|address> --token <symbol> --collateral-token <symbol> [--simulate]
 ```
 
 ### Close Position
 
 ```bash
 # Atomically repay all debt and withdraw all collateral
-npx starkfi@latest lend-close --pool <name|address> --collateral-token <symbol> --borrow-token <symbol>
+npx starkfi@latest lend-close --pool <name|address> --collateral-token <symbol> --borrow-token <symbol> [--simulate]
 ```
 
 ### Health Monitoring
@@ -130,9 +130,10 @@ npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> -
 
 | Parameter | Type   | Description                                | Required |
 | --------- | ------ | ------------------------------------------ | -------- |
-| `amount`  | number | Amount (positional)                        | Yes      |
-| `--pool`  | string | Pool name or address                       | Yes      |
-| `--token` | string | Token symbol (`USDC`, `ETH`, `STRK`, etc.) | Yes      |
+| `amount`     | number | Amount (positional)                        | Yes      |
+| `--pool`     | string | Pool name or address                       | Yes      |
+| `--token`    | string | Token symbol (`USDC`, `ETH`, `STRK`, etc.) | Yes      |
+| `--simulate` | flag   | Estimate fees and validate without executing | No     |
 
 ### lend-borrow
 
@@ -144,6 +145,7 @@ npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> -
 | `--borrow-amount`     | number | Amount to borrow                      | Yes      |
 | `--borrow-token`      | string | Token to borrow (e.g. `USDC`, `USDT`) | Yes      |
 | `--use-supplied`      | flag   | Use existing earn positions as collateral    | No       |
+| `--simulate`          | flag   | Estimate fees and validate without executing | No       |
 
 ### lend-repay
 
@@ -153,6 +155,7 @@ npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> -
 | `--pool`             | string | Pool name or address             | Yes      |
 | `--token`            | string | Token to repay (e.g. `USDC`)     | Yes      |
 | `--collateral-token` | string | Collateral token of the position | Yes      |
+| `--simulate`         | flag   | Estimate fees and validate without executing | No |
 
 ### lend-close
 
@@ -161,6 +164,7 @@ npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> -
 | `--pool`             | string | Pool name or address    | Yes      |
 | `--collateral-token` | string | Collateral token symbol | Yes      |
 | `--borrow-token`     | string | Borrow token symbol     | Yes      |
+| `--simulate`         | flag   | Estimate fees and validate without executing | No |
 
 ### lend-status
 
@@ -205,7 +209,7 @@ Run without arguments to **scan all pools**. Or specify `--pool` + `--collateral
 | `--borrow-token`       | string | Debt token symbol                              | Yes      |
 | `--strategy`           | string | `repay`, `add-collateral`, or `auto` (default) | No       |
 | `--target-hf`          | number | Target health factor (default: 1.3)            | No       |
-| `--simulate`           | flag   | Preview without executing                      | No       |
+| `--simulate`           | flag   | Estimate fees and validate without executing | No       |
 
 ## Examples
 
@@ -226,7 +230,8 @@ npx starkfi@latest lend-pools Prime
 ```bash
 npx starkfi@latest status
 npx starkfi@latest balance --token USDC
-npx starkfi@latest lend-supply 500 --pool Prime --token USDC
+npx starkfi@latest lend-supply 500 --pool Prime --token USDC --simulate  # Preview first
+npx starkfi@latest lend-supply 500 --pool Prime --token USDC             # Execute
 npx starkfi@latest tx-status <hash>
 ```
 

@@ -1,8 +1,11 @@
+import { Amount, fromAddress } from "starkzap";
 import * as lendingService from "../../services/vesu/lending.js";
 import { getVesuPools, resolvePoolAddress } from "../../services/vesu/pools.js";
+import { resolveToken } from "../../services/tokens/tokens.js";
 import { StarkfiError, ErrorCode } from "../../lib/errors.js";
+import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet, withReadonlyWallet } from "./context.js";
-import { jsonResult } from "./utils.js";
+import { jsonResult, simulationResult } from "./utils.js";
 
 export async function handleListLendingPools(args: { name?: string }) {
 	return withReadonlyWallet(async ({ wallet }) => {
@@ -67,36 +70,80 @@ export async function handleGetLendingPosition(args: {
 	});
 }
 
-export async function handleSupplyAssets(args: { pool: string; amount: string; token: string }) {
+export async function handleSupplyAssets(args: {
+	pool: string;
+	amount: string;
+	token: string;
+	simulate?: boolean;
+}) {
 	return withWallet(async ({ wallet }) => {
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const result = await lendingService.supply(wallet, pool.address, args.token, args.amount);
+		const token = resolveToken(args.token);
+		const builder = wallet.tx().lendDeposit({
+			token,
+			amount: Amount.parse(args.amount, token),
+			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+		});
+
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				action: "supply",
+				amount: `${args.amount} ${token.symbol}`,
+				pool: pool.name ?? pool.address,
+			});
+		}
+
+		const tx = await builder.send();
+		await tx.wait();
 
 		return jsonResult({
 			success: true,
 			action: "supply",
-			amount: `${args.amount} ${args.token.toUpperCase()}`,
+			amount: `${args.amount} ${token.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: result.hash,
-			explorerUrl: result.explorerUrl,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 		});
 	});
 }
 
-export async function handleWithdrawAssets(args: { pool: string; amount: string; token: string }) {
+export async function handleWithdrawAssets(args: {
+	pool: string;
+	amount: string;
+	token: string;
+	simulate?: boolean;
+}) {
 	return withWallet(async ({ wallet }) => {
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const result = await lendingService.withdraw(wallet, pool.address, args.token, args.amount);
+		const token = resolveToken(args.token);
+		const builder = wallet.tx().lendWithdraw({
+			token,
+			amount: Amount.parse(args.amount, token),
+			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+		});
+
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				action: "withdraw",
+				amount: `${args.amount} ${token.symbol}`,
+				pool: pool.name ?? pool.address,
+			});
+		}
+
+		const tx = await builder.send();
+		await tx.wait();
 
 		return jsonResult({
 			success: true,
 			action: "withdraw",
-			amount: `${args.amount} ${args.token.toUpperCase()}`,
+			amount: `${args.amount} ${token.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: result.hash,
-			explorerUrl: result.explorerUrl,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 		});
 	});
 }
@@ -108,11 +155,13 @@ export async function handleBorrowAssets(args: {
 	borrow_amount: string;
 	borrow_token: string;
 	use_supplied?: boolean;
+	simulate?: boolean;
 }) {
 	return withWallet(async ({ wallet }) => {
 		const pool = await resolvePoolAddress(wallet, args.pool);
+		const collateralToken = resolveToken(args.collateral_token);
+		const debtToken = resolveToken(args.borrow_token);
 
-		let useSupplied = false;
 		if (args.use_supplied) {
 			const balance = await lendingService.getSuppliedBalance(
 				wallet,
@@ -125,28 +174,39 @@ export async function handleBorrowAssets(args: {
 					`Insufficient supplied balance. You have ${balance || "0"} ${args.collateral_token} supplied, but want to use ${args.collateral_amount} as collateral.`
 				);
 			}
-			useSupplied = true;
 		}
 
-		const result = await lendingService.borrow(
-			wallet,
-			pool.address,
-			args.collateral_token,
-			args.collateral_amount,
-			args.borrow_token,
-			args.borrow_amount,
-			useSupplied
-		);
+		const builder = wallet.tx().lendBorrow({
+			collateralToken,
+			debtToken,
+			amount: Amount.parse(args.borrow_amount, debtToken),
+			collateralAmount: Amount.parse(args.collateral_amount, collateralToken),
+			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+			useEarnPosition: args.use_supplied || undefined,
+		});
+
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				action: "borrow",
+				collateral: `${args.collateral_amount} ${collateralToken.symbol}`,
+				borrowed: `${args.borrow_amount} ${debtToken.symbol}`,
+				pool: pool.name ?? pool.address,
+			});
+		}
+
+		const tx = await builder.send();
+		await tx.wait();
 
 		return jsonResult({
 			success: true,
 			action: "borrow",
-			collateral: `${args.collateral_amount} ${args.collateral_token.toUpperCase()}`,
-			borrowed: `${args.borrow_amount} ${args.borrow_token.toUpperCase()}`,
+			collateral: `${args.collateral_amount} ${collateralToken.symbol}`,
+			borrowed: `${args.borrow_amount} ${debtToken.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: result.hash,
-			explorerUrl: result.explorerUrl,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 		});
 	});
 }
@@ -156,25 +216,39 @@ export async function handleRepayDebt(args: {
 	amount: string;
 	token: string;
 	collateral_token: string;
+	simulate?: boolean;
 }) {
 	return withWallet(async ({ wallet }) => {
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const result = await lendingService.repay(
-			wallet,
-			pool.address,
-			args.collateral_token,
-			args.token,
-			args.amount
-		);
+		const collateralToken = resolveToken(args.collateral_token);
+		const debtToken = resolveToken(args.token);
+		const builder = wallet.tx().lendRepay({
+			collateralToken,
+			debtToken,
+			amount: Amount.parse(args.amount, debtToken),
+			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+		});
+
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				action: "repay",
+				repaid: `${args.amount} ${debtToken.symbol}`,
+				pool: pool.name ?? pool.address,
+			});
+		}
+
+		const tx = await builder.send();
+		await tx.wait();
 
 		return jsonResult({
 			success: true,
 			action: "repay",
-			repaid: `${args.amount} ${args.token.toUpperCase()}`,
+			repaid: `${args.amount} ${debtToken.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: result.hash,
-			explorerUrl: result.explorerUrl,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 		});
 	});
 }
@@ -183,23 +257,48 @@ export async function handleClosePosition(args: {
 	pool: string;
 	collateral_token: string;
 	debt_token: string;
+	simulate?: boolean;
 }) {
 	return withWallet(async ({ wallet }) => {
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const result = await lendingService.closePosition(
+		const position = await lendingService.getPosition(
 			wallet,
 			pool.address,
 			args.collateral_token,
 			args.debt_token
 		);
+		if (!position) {
+			throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
+		}
+
+		const collateralToken = resolveToken(args.collateral_token);
+		const debtToken = resolveToken(args.debt_token);
+		const builder = wallet.tx().lendRepay({
+			collateralToken,
+			debtToken,
+			amount: Amount.parse(position.debtAmount, debtToken),
+			withdrawCollateral: true,
+			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
+		});
+
+		if (args.simulate) {
+			const sim = await simulateTransaction(builder);
+			return simulationResult(sim, {
+				action: "close_position",
+				pool: pool.name ?? pool.address,
+			});
+		}
+
+		const tx = await builder.send();
+		await tx.wait();
 
 		return jsonResult({
 			success: true,
 			action: "close_position",
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: result.hash,
-			explorerUrl: result.explorerUrl,
+			txHash: tx.hash,
+			explorerUrl: tx.explorerUrl,
 		});
 	});
 }

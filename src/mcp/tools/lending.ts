@@ -46,13 +46,14 @@ export function registerLendingTools(server: McpServer): number {
 
 	server.tool(
 		"supply_assets",
-		"Supply (lend) tokens into a Vesu V2 pool to earn interest. The tokens are deposited into the pool's ERC-4626 vToken vault.",
+		"Supply (lend) tokens into a Vesu V2 pool to earn interest as an earn position.",
 		{
 			pool: z
 				.string()
 				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to supply (e.g. '100', '0.5')"),
 			token: z.string().describe("Token symbol to supply (e.g. 'STRK', 'ETH', 'USDC')"),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSupplyAssets)
@@ -67,6 +68,7 @@ export function registerLendingTools(server: McpServer): number {
 				.describe("Pool name (e.g. 'Prime', 'Re7') or contract address (0x...)"),
 			amount: z.string().describe("Amount to withdraw (e.g. '100', '0.5')"),
 			token: z.string().describe("Token symbol to withdraw (e.g. 'STRK', 'ETH', 'USDC')"),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleWithdrawAssets)
@@ -89,6 +91,7 @@ export function registerLendingTools(server: McpServer): number {
 				.describe(
 					"Set to true to use previously supplied yield tokens as collateral via Multicall instead of transferring fresh tokens from wallet."
 				),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleBorrowAssets)
@@ -108,6 +111,7 @@ export function registerLendingTools(server: McpServer): number {
 				.describe(
 					"Collateral token of the position (e.g. 'ETH', 'STRK'). Needed to identify the position."
 				),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleRepayDebt)
@@ -126,6 +130,7 @@ export function registerLendingTools(server: McpServer): number {
 			debt_token: z
 				.string()
 				.describe("Borrowed token symbol of the position (e.g. 'USDC', 'USDT')"),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleClosePosition)
@@ -165,7 +170,7 @@ export function registerLendingTools(server: McpServer): number {
 				.number()
 				.optional()
 				.describe("Target health factor (default: 1.3)"),
-			simulate: z.boolean().optional().describe("Set true to simulate without executing"),
+			simulate: z.boolean().optional().describe("Set true to estimate fees without executing"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleAutoRebalanceLending)
