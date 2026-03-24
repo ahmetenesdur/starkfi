@@ -5,6 +5,7 @@ import { ConfigService } from "../../services/config/config.js";
 import { formatActualFee } from "../../lib/format.js";
 import { explorerUrl } from "../../lib/config.js";
 import { runCommand, outputResult } from "../../lib/cli-helpers.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerTxStatusCommand(program: Command): void {
 	program
@@ -18,9 +19,10 @@ export function registerTxStatusCommand(program: Command): void {
 				"Failed to get transaction status",
 				async () => {
 					const session = requireSession();
+					const network = resolveNetwork(session);
 					const configService = ConfigService.getInstance();
 					const rpcUrl = configService.get("rpcUrl") as string | undefined;
-					const sdk = createSDK(session.network, rpcUrl);
+					const sdk = createSDK(network, rpcUrl);
 
 					const provider = sdk.getProvider();
 					const receipt = await provider.getTransactionReceipt(hash);
@@ -35,8 +37,8 @@ export function registerTxStatusCommand(program: Command): void {
 						status: JSON.stringify(receipt.statusReceipt),
 						actualFee,
 						blockNumber,
-						network: session.network,
-						explorer: explorerUrl(hash, session.network),
+						network: network,
+						explorer: explorerUrl(hash, network),
 					};
 				},
 				(result) => outputResult(result, {})
