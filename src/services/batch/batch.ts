@@ -5,7 +5,6 @@ import { initSDKAndWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { getCalldata } from "../fibrous/route.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../fibrous/config.js";
-import { getVTokenAddress, splitU256 } from "../vesu/lending.js";
 import { resolvePoolAddress } from "../vesu/pools.js";
 import { findValidator } from "../staking/validators.js";
 import { getValidatorPools, resolvePoolForToken } from "../staking/staking.js";
@@ -158,18 +157,16 @@ async function addSupplyCalls(
 	builder: TxBuilder,
 	params: BatchSupplyParams,
 	wallet: Wallet,
-	session: Session
+	_session: Session
 ): Promise<void> {
 	const token = resolveToken(params.token);
 	const parsedAmount = Amount.parse(params.amount, token);
-	const userAddress = wallet.address.toString();
-	const pool = resolvePoolAddress(params.pool, session.network);
-	const vTokenAddress = await getVTokenAddress(wallet, pool.address, token);
+	const pool = await resolvePoolAddress(wallet, params.pool);
 
-	builder.approve(token, fromAddress(vTokenAddress), parsedAmount).add({
-		contractAddress: fromAddress(vTokenAddress),
-		entrypoint: "deposit",
-		calldata: [...splitU256(parsedAmount.toBase()), userAddress],
+	builder.lendDeposit({
+		token,
+		amount: parsedAmount,
+		poolAddress: fromAddress(pool.address),
 	});
 }
 

@@ -5,7 +5,8 @@ import { getTokenUsdPrice } from "../fibrous/route.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { getStakingOverview } from "../staking/staking.js";
 import { getSuppliedBalance } from "../vesu/lending.js";
-import { getVesuPools } from "../vesu/pools.js";
+import { getVesuPools, getPoolMarkets } from "../vesu/pools.js";
+import type { StarkZapWallet } from "../starkzap/client.js";
 import { runConcurrent } from "../../lib/concurrency.js";
 
 export interface PortfolioBalance {
@@ -141,23 +142,22 @@ function parseNumericPart(formatted: string): number {
 }
 
 async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
-	const pools = await getVesuPools("mainnet");
+	const pools = await getVesuPools(wallet as StarkZapWallet);
+	const results: PortfolioLending[] = [];
 
-	const tasks = pools.flatMap((pool) =>
-		pool.assets.map(async (asset) => {
-			const supplied = await getSuppliedBalance(wallet, pool.address, asset.symbol);
+	for (const pool of pools) {
+		const markets = await getPoolMarkets(wallet as StarkZapWallet, pool.address);
+		const marketSymbols = [...new Set(markets.map((m) => m.asset.symbol))];
+
+		const tasks = marketSymbols.map(async (symbol) => {
+			const supplied = await getSuppliedBalance(wallet as StarkZapWallet, pool.address, symbol);
 			if (supplied && supplied !== "0") {
-				return { pool: pool.name, asset: asset.symbol, supplied } as PortfolioLending;
+				results.push({ pool: pool.name ?? pool.address, asset: symbol, supplied });
 			}
-			return null;
-		})
-	);
+		});
 
-	const results = await Promise.allSettled(tasks);
-	return results
-		.filter(
-			(r): r is PromiseFulfilledResult<PortfolioLending> =>
-				r.status === "fulfilled" && r.value !== null
-		)
-		.map((r) => r.value);
+		await Promise.allSettled(tasks);
+	}
+
+	return results;
 }

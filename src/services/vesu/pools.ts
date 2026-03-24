@@ -1,33 +1,59 @@
-import { V2_POOLS, type PoolEntry } from "./config.js";
-import { fetchAllPools, type VesuPoolData } from "./api.js";
-import type { Network } from "../../lib/types.js";
-import { validateAddress } from "../../lib/validation.js";
+import type { LendingMarket } from "starkzap";
+import type { StarkZapWallet } from "../starkzap/client.js";
+import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-export type { VesuPoolData } from "./api.js";
-
-export async function getVesuPools(network: Network): Promise<VesuPoolData[]> {
-	if (network !== "mainnet") return [];
-	return fetchAllPools();
+export interface PoolInfo {
+	name: string | null;
+	address: string;
 }
 
-// Resolve by display name (case-insensitive prefix) or contract address.
-export function findPoolEntry(query: string, network: Network): PoolEntry | null {
-	if (network !== "mainnet") return null;
+/** De-duplicated list of Vesu pools from SDK market data. */
+export async function getVesuPools(wallet: StarkZapWallet): Promise<PoolInfo[]> {
+	const markets = await wallet.lending().getMarkets();
+	const seen = new Map<string, PoolInfo>();
 
-	const lower = query.toLowerCase();
-	return (
-		V2_POOLS.find(
-			(p) => p.address.toLowerCase() === lower || p.name.toLowerCase().startsWith(lower)
-		) ?? null
+	for (const m of markets) {
+		const addr = m.poolAddress.toString();
+		if (!seen.has(addr)) {
+			seen.set(addr, { name: m.poolName ?? null, address: addr });
+		}
+	}
+
+	return [...seen.values()];
+}
+
+/** Full market data for a specific pool. */
+export async function getPoolMarkets(
+	wallet: StarkZapWallet,
+	poolAddress: string
+): Promise<LendingMarket[]> {
+	const markets = await wallet.lending().getMarkets();
+	return markets.filter((m) => m.poolAddress.toString() === poolAddress);
+}
+
+/** Resolve a pool name or hex address to a `PoolInfo`. Throws on ambiguous or missing match. */
+export async function resolvePoolAddress(
+	wallet: StarkZapWallet,
+	poolInput: string
+): Promise<PoolInfo> {
+	if (poolInput.startsWith("0x")) {
+		return { name: null, address: poolInput };
+	}
+
+	const pools = await getVesuPools(wallet);
+	const matches = pools.filter((p) => p.name?.toLowerCase() === poolInput.toLowerCase());
+
+	if (matches.length === 1) return matches[0]!;
+
+	if (matches.length === 0) {
+		throw new StarkfiError(
+			ErrorCode.LENDING_FAILED,
+			`Pool "${poolInput}" not found. Run 'starkfi lend-pools' to see available pools.`
+		);
+	}
+
+	throw new StarkfiError(
+		ErrorCode.LENDING_FAILED,
+		`Multiple pools match "${poolInput}". Please use the pool address instead.`
 	);
-}
-
-// Resolve a pool query (name or raw hex address) to a pool address + optional name.
-export function resolvePoolAddress(
-	poolQuery: string,
-	network: Network
-): { address: string; name: string | null } {
-	const found = findPoolEntry(poolQuery, network);
-	if (found) return { address: found.address, name: found.name };
-	return { address: validateAddress(poolQuery), name: null };
 }

@@ -1,5 +1,5 @@
 import type { Wallet } from "starkzap";
-import { StarkZap, PrivySigner, ArgentXV050Preset, type FeeMode } from "starkzap";
+import { StarkZap, PrivySigner, ArgentXV050Preset, VesuLendingProvider, type FeeMode } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
@@ -111,6 +111,9 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 	if (!gasfreeMode && gasTokenAddress) {
 		patchGaslessMode(wallet, gasTokenAddress);
 	}
+
+	// Register Vesu as the default lending provider.
+	wallet.lending().registerProvider(new VesuLendingProvider(), true);
 
 	return wallet;
 }

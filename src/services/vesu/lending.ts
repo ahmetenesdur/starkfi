@@ -1,12 +1,11 @@
-import { Amount, fromAddress, type Token } from "starkzap";
+import { Amount, fromAddress } from "starkzap";
+import type { LendingPosition as SdkLendingPosition } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { TxResult } from "../../lib/types.js";
-import { POOL_FACTORY_ADDRESS, DENOMINATION_ASSETS } from "./config.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
-import { fetchPool } from "./api.js";
-import { classifyRisk, resolveConfig } from "./monitor.js";
+import { classifyRisk, resolveConfig } from "./health.js";
 
 export interface LendingPosition {
 	collateralAsset: string;
@@ -17,77 +16,82 @@ export interface LendingPosition {
 	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "CRITICAL" | "UNKNOWN";
 }
 
-export function splitU256(value: bigint): [string, string] {
-	const low = value & ((1n << 128n) - 1n);
-	const high = value >> 128n;
-	return [`0x${low.toString(16)}`, `0x${high.toString(16)}`];
+const MIN_POSITION_USD = 10;
+
+function resolveOptionalPool(poolAddress?: string) {
+	return poolAddress ? fromAddress(poolAddress) : undefined;
 }
 
-function encodeVesuAmount(denomination: number, value: bigint): string[] {
-	const isNegative = value < 0n;
-	const mag = isNegative ? -value : value;
-	return [`0x${denomination.toString(16)}`, ...splitU256(mag), isNegative ? "0x1" : "0x0"];
+function assertMinimumValue(
+	label: string,
+	amount: string,
+	usdPrice: number
+): void {
+	if (usdPrice <= 0) return;
+	const usdValue = parseFloat(amount) * usdPrice;
+	if (usdValue < MIN_POSITION_USD) {
+		throw new StarkfiError(
+			ErrorCode.LENDING_FAILED,
+			`dusty-${label}: Amount too small (~$${usdValue.toFixed(2)}). Vesu requires ~$${MIN_POSITION_USD} minimum.`
+		);
+	}
 }
 
-function encodeZeroAmount(): string[] {
-	return encodeVesuAmount(DENOMINATION_ASSETS, 0n);
-}
+// -- Supply -------------------------------------------------------------------
 
 export async function supply(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	tokenSymbol: string,
 	amount: string
 ): Promise<TxResult> {
 	const token = resolveToken(tokenSymbol);
-	const parsedAmount = Amount.parse(amount, token);
-	const userAddress = wallet.address.toString();
-
-	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
-
-	const tx = await wallet
-		.tx()
-		.approve(token, fromAddress(vTokenAddress), parsedAmount)
-		.add({
-			contractAddress: fromAddress(vTokenAddress),
-			entrypoint: "deposit",
-			calldata: [...splitU256(parsedAmount.toBase()), userAddress],
-		})
-		.send();
-
+	const tx = await wallet.lending().deposit({
+		token,
+		amount: Amount.parse(amount, token),
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
+
+// -- Withdraw -----------------------------------------------------------------
 
 export async function withdraw(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	tokenSymbol: string,
 	amount: string
 ): Promise<TxResult> {
 	const token = resolveToken(tokenSymbol);
-	const parsedAmount = Amount.parse(amount, token);
-	const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
-	const userAddress = wallet.address.toString();
-
-	const tx = await wallet
-		.tx()
-		.add({
-			contractAddress: fromAddress(vTokenAddress),
-			entrypoint: "withdraw",
-			calldata: [...splitU256(parsedAmount.toBase()), userAddress, userAddress],
-		})
-		.send();
-
+	const tx = await wallet.lending().withdraw({
+		token,
+		amount: Amount.parse(amount, token),
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+export async function withdrawMax(
+	wallet: StarkZapWallet,
+	poolAddress: string | undefined,
+	tokenSymbol: string
+): Promise<TxResult> {
+	const token = resolveToken(tokenSymbol);
+	const tx = await wallet.lending().withdrawMax({
+		token,
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
+	await tx.wait();
+	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
+}
+
+// -- Borrow -------------------------------------------------------------------
+
 export async function borrow(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	collateralAmount: string,
 	debtTokenSymbol: string,
@@ -96,108 +100,52 @@ export async function borrow(
 ): Promise<TxResult> {
 	const collateralToken = resolveToken(collateralTokenSymbol);
 	const debtToken = resolveToken(debtTokenSymbol);
-	const parsedCollateral = Amount.parse(collateralAmount, collateralToken);
-	const parsedDebt = Amount.parse(debtAmount, debtToken);
-	const userAddress = wallet.address.toString();
 
-	const collateralUsdPrice = await getTokenUsdPrice(collateralToken);
-	if (collateralUsdPrice > 0) {
-		const collateralUsdValue = parseFloat(collateralAmount) * collateralUsdPrice;
-		if (collateralUsdValue < 10.0) {
-			throw new StarkfiError(
-				ErrorCode.LENDING_FAILED,
-				`dusty-collateral-balance: Collateral amount is too small. Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${collateralUsdValue.toFixed(2)}`
-			);
-		}
-	}
+	assertMinimumValue("collateral", collateralAmount, await getTokenUsdPrice(collateralToken));
+	assertMinimumValue("debt", debtAmount, await getTokenUsdPrice(debtToken));
 
-	const debtUsdPrice = await getTokenUsdPrice(debtToken);
-	if (debtUsdPrice > 0) {
-		const debtUsdValue = parseFloat(debtAmount) * debtUsdPrice;
-		if (debtUsdValue < 10.0) {
-			throw new StarkfiError(
-				ErrorCode.LENDING_FAILED,
-				`dusty-debt-balance: Borrow amount is too small. Minimum equivalent of ~$10 is required by Vesu. Current value: ~$${debtUsdValue.toFixed(2)}`
-			);
-		}
-	}
-
-	const calldata = [
-		collateralToken.address.toString(),
-		debtToken.address.toString(),
-		userAddress,
-		...encodeVesuAmount(DENOMINATION_ASSETS, parsedCollateral.toBase()),
-		...encodeVesuAmount(DENOMINATION_ASSETS, parsedDebt.toBase()),
-	];
-
-	let txBuilder = wallet.tx();
-
-	if (useSupplied) {
-		const vTokenAddress = await getVTokenAddress(wallet, poolAddress, collateralToken);
-		txBuilder = txBuilder.add({
-			contractAddress: fromAddress(vTokenAddress),
-			entrypoint: "withdraw",
-			calldata: [...splitU256(parsedCollateral.toBase()), userAddress, userAddress],
-		});
-	}
-
-	const tx = await txBuilder
-		.approve(collateralToken, fromAddress(poolAddress), parsedCollateral)
-		.add({
-			contractAddress: fromAddress(poolAddress),
-			entrypoint: "modify_position",
-			calldata,
-		})
-		.send();
-
+	const tx = await wallet.lending().borrow({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse(debtAmount, debtToken),
+		collateralAmount: Amount.parse(collateralAmount, collateralToken),
+		poolAddress: resolveOptionalPool(poolAddress),
+		useEarnPosition: useSupplied || undefined,
+	});
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+// -- Repay --------------------------------------------------------------------
+
 export async function repay(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string,
 	repayAmount: string
 ): Promise<TxResult> {
 	const collateralToken = resolveToken(collateralTokenSymbol);
 	const debtToken = resolveToken(debtTokenSymbol);
-	const parsedRepay = Amount.parse(repayAmount, debtToken);
-	const userAddress = wallet.address.toString();
-
-	const calldata = [
-		collateralToken.address.toString(),
-		debtToken.address.toString(),
-		userAddress,
-		...encodeZeroAmount(),
-		...encodeVesuAmount(DENOMINATION_ASSETS, -parsedRepay.toBase()),
-	];
-
-	const tx = await wallet
-		.tx()
-		.approve(debtToken, fromAddress(poolAddress), parsedRepay)
-		.add({
-			contractAddress: fromAddress(poolAddress),
-			entrypoint: "modify_position",
-			calldata,
-		})
-		.send();
-
+	const tx = await wallet.lending().repay({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse(repayAmount, debtToken),
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+// -- Close Position -----------------------------------------------------------
+
 export async function closePosition(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string
 ): Promise<TxResult> {
 	const position = await getPosition(wallet, poolAddress, collateralTokenSymbol, debtTokenSymbol);
-
 	if (!position) {
 		throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
 	}
@@ -205,131 +153,79 @@ export async function closePosition(
 	const collateralToken = resolveToken(collateralTokenSymbol);
 	const debtToken = resolveToken(debtTokenSymbol);
 
-	const parsedCollateral = Amount.parse(position.collateralAmount, collateralToken);
-	const parsedDebt = Amount.parse(position.debtAmount, debtToken);
-	const userAddress = wallet.address.toString();
-
-	const calldata = [
-		collateralToken.address.toString(),
-		debtToken.address.toString(),
-		userAddress,
-		...encodeVesuAmount(DENOMINATION_ASSETS, -parsedCollateral.toBase()),
-		...encodeVesuAmount(DENOMINATION_ASSETS, -parsedDebt.toBase()),
-	];
-
 	const tx = await wallet
 		.tx()
-		.approve(debtToken, fromAddress(poolAddress), parsedDebt)
-		.add({
-			contractAddress: fromAddress(poolAddress),
-			entrypoint: "modify_position",
-			calldata,
+		.lendRepay({
+			collateralToken,
+			debtToken,
+			amount: Amount.parse(position.debtAmount, debtToken),
+			withdrawCollateral: true,
+			poolAddress: resolveOptionalPool(poolAddress),
 		})
 		.send();
 
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+// -- Add Collateral -----------------------------------------------------------
+
 export async function addCollateral(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string,
 	amount: string
 ): Promise<TxResult> {
 	const collateralToken = resolveToken(collateralTokenSymbol);
 	const debtToken = resolveToken(debtTokenSymbol);
-	const parsedCollateral = Amount.parse(amount, collateralToken);
-	const userAddress = wallet.address.toString();
 
-	const calldata = [
-		collateralToken.address.toString(),
-		debtToken.address.toString(),
-		userAddress,
-		...encodeVesuAmount(DENOMINATION_ASSETS, parsedCollateral.toBase()),
-		...encodeZeroAmount(),
-	];
-
-	const tx = await wallet
-		.tx()
-		.approve(collateralToken, fromAddress(poolAddress), parsedCollateral)
-		.add({
-			contractAddress: fromAddress(poolAddress),
-			entrypoint: "modify_position",
-			calldata,
-		})
-		.send();
-
+	const tx = await wallet.lending().borrow({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse("0", debtToken),
+		collateralAmount: Amount.parse(amount, collateralToken),
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 	await tx.wait();
-
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+// -- Get Position -------------------------------------------------------------
+
 export async function getPosition(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string
 ): Promise<LendingPosition | null> {
 	const collateralToken = resolveToken(collateralTokenSymbol);
 	const debtToken = resolveToken(debtTokenSymbol);
-	const userAddress = wallet.address.toString();
 
 	try {
-		const result = await wallet.callContract({
-			contractAddress: poolAddress,
-			entrypoint: "position",
-			calldata: [
-				collateralToken.address.toString(),
-				debtToken.address.toString(),
-				userAddress,
-			],
+		const sdk: SdkLendingPosition = await wallet.lending().getPosition({
+			collateralToken,
+			debtToken,
+			poolAddress: resolveOptionalPool(poolAddress),
 		});
 
-		if (result.length < 8) return null;
+		if (sdk.collateralShares === 0n && sdk.nominalDebt === 0n) return null;
 
-		const collateralRaw = BigInt(result[4]!) + (BigInt(result[5]!) << 128n);
-		const debtRaw = BigInt(result[6]!) + (BigInt(result[7]!) << 128n);
-
-		if (collateralRaw === 0n && debtRaw === 0n) return null;
-
-		const collFormatted = Amount.fromRaw(collateralRaw, collateralToken).toFormatted(true);
-		const debtFormatted = Amount.fromRaw(debtRaw, debtToken).toFormatted(true);
+		const collFormatted = sdk.collateralAmount != null
+			? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
+			: "0";
+		const debtFormatted = sdk.debtAmount != null
+			? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true)
+			: "0";
 
 		let healthFactor: number | undefined;
 		let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
 
-		try {
-			const poolData = await fetchPool(poolAddress);
-			const pair = poolData.pairs.find(
-				(p) =>
-					p.collateralAddress === collateralToken.address.toString() &&
-					p.debtAddress === debtToken.address.toString()
-			);
-
-			if (pair) {
-				const collUsdPrice = await getTokenUsdPrice(collateralToken);
-				const debtUsdPrice = await getTokenUsdPrice(debtToken);
-
-				if (collUsdPrice > 0 && debtUsdPrice > 0) {
-					const collUsdValue = parseFloat(collFormatted) * collUsdPrice;
-					const debtUsdValue = parseFloat(debtFormatted) * debtUsdPrice;
-					const maxBorrowUsd = collUsdValue * pair.maxLTV;
-
-					if (debtUsdValue > 0) {
-						healthFactor = maxBorrowUsd / debtUsdValue;
-						const cfg = resolveConfig();
-						riskLevel = classifyRisk(healthFactor, cfg);
-					} else {
-						healthFactor = 9999;
-						riskLevel = "SAFE";
-					}
-				}
-			}
-		} catch {
-			// non-critical — return basic position without health data
+		if (sdk.collateralValue > 0n || sdk.debtValue > 0n) {
+			healthFactor = sdk.debtValue > 0n
+				? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
+				: 9999;
+			riskLevel = classifyRisk(healthFactor, resolveConfig());
 		}
 
 		return {
@@ -345,60 +241,29 @@ export async function getPosition(
 	}
 }
 
-export async function getVTokenAddress(
-	wallet: StarkZapWallet,
-	poolAddress: string,
-	token: Token
-): Promise<string> {
-	const result = await wallet.callContract({
-		contractAddress: POOL_FACTORY_ADDRESS,
-		entrypoint: "v_token_for_asset",
-		calldata: [poolAddress, token.address.toString()],
-	});
-
-	if (!result || result.length === 0 || result[0] === "0x0") {
-		throw new StarkfiError(
-			ErrorCode.LENDING_FAILED,
-			`No vToken found for ${token.symbol} in pool ${poolAddress}. ` +
-				`This asset may not be supported by this pool.`
-		);
-	}
-
-	return result[0]!;
-}
+// -- Get Supplied Balance -----------------------------------------------------
 
 export async function getSuppliedBalance(
 	wallet: StarkZapWallet,
-	poolAddress: string,
+	poolAddress: string | undefined,
 	tokenSymbol: string
 ): Promise<string | null> {
 	const token = resolveToken(tokenSymbol);
-	const userAddress = wallet.address.toString();
 
 	try {
-		const vTokenAddress = await getVTokenAddress(wallet, poolAddress, token);
+		const positions = await wallet.lending().getPositions();
+		const matched = positions
+			.filter((p) => p.type === "earn")
+			.find((p) => {
+				const symbolMatch = p.collateral.token.symbol.toUpperCase() === token.symbol.toUpperCase();
+				if (!symbolMatch) return false;
+				return !poolAddress || p.pool.id.toString() === poolAddress;
+			});
 
-		const balResult = await wallet.callContract({
-			contractAddress: vTokenAddress,
-			entrypoint: "balance_of",
-			calldata: [userAddress],
-		});
+		if (!matched) return null;
+		if (matched.collateral.amount === 0n) return "0";
 
-		if (!balResult || balResult.length === 0) return null;
-		const sharesRaw = BigInt(balResult[0]!) + (BigInt(balResult[1] || "0x0") << 128n);
-
-		if (sharesRaw === 0n) return "0";
-
-		const convertResult = await wallet.callContract({
-			contractAddress: vTokenAddress,
-			entrypoint: "convert_to_assets",
-			calldata: [...splitU256(sharesRaw)],
-		});
-
-		if (!convertResult || convertResult.length === 0) return null;
-		const assetsRaw = BigInt(convertResult[0]!) + (BigInt(convertResult[1] || "0x0") << 128n);
-
-		return Amount.fromRaw(assetsRaw, token).toFormatted(true);
+		return Amount.fromRaw(matched.collateral.amount, token).toFormatted(true);
 	} catch {
 		return null;
 	}
