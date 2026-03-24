@@ -84,11 +84,11 @@
 		"jiti": "^2.6.1",
 		"ora": "^9.3.0",
 		"prettier": "^3.8.1",
-		"starkzap": "^1.0.0",
+		"starkzap": "^2.0.0",
 		"tsup": "^8.5.1",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.57.1",
+		"typescript-eslint": "^8.57.2",
 		"zod": "^4.3.6"
 	}
 }
