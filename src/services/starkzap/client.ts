@@ -9,6 +9,7 @@ import {
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
@@ -138,6 +139,8 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 
 	const { gasTokenAddress, needsPaymaster } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
+	const network = resolveNetwork(session);
+
 	const paymasterUrl =
 		session.type === "privy" && session.serverUrl
 			? session.serverUrl.replace("/sign/hash", "/paymaster")
@@ -146,7 +149,7 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 	const paymasterHeaders =
 		paymasterUrl && session.token ? { Authorization: `Bearer ${session.token}` } : undefined;
 
-	const sdk = createSDK(session.network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
+	const sdk = createSDK(network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
 	const wallet = await connectWallet(sdk, session);
 
 	return { sdk, wallet, gasTokenAddress };
