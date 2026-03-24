@@ -5,6 +5,7 @@ import { buildBatch, type BatchOperation } from "../../services/batch/batch.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatError } from "../../lib/format.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 // Collect repeatable options into array.
@@ -127,7 +128,7 @@ Minimum 2 operations required. Each flag can be repeated.`
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				spinner.text = "Building batch transaction...";
-				const { builder, summary } = await buildBatch(wallet, session, operations);
+				const { builder, summary } = await buildBatch(wallet, session, operations, resolveChainId(session));
 
 				spinner.stop();
 				console.log("\n  Batch Operations:\n");
@@ -137,7 +138,7 @@ Minimum 2 operations required. Each flag can be repeated.`
 				if (opts.simulate) {
 					spinner.start();
 					spinner.text = "Simulating batch...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 
 					handleSimulationResult(sim, spinner, opts, {
 						operations: operations.length,
