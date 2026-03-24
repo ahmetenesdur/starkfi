@@ -22,7 +22,16 @@ starkfi config set-network mainnet    # Production (default)
 starkfi config set-network sepolia    # Testnet
 ```
 
-> **Note:** Switching networks does not affect your session — you stay authenticated. However, your wallet address and balances will differ per network.
+Network switching is **instant** — no re-login required. The config setting overrides the network that was active when you authenticated.
+
+`config list` shows the effective network with its source:
+
+```
+network    sepolia (config override, session: mainnet)
+feeMode    gasless (pays STRK via Paymaster)
+```
+
+> **How it works:** StarkFi resolves the network at runtime using a priority chain: `config.network` (user override) → `session.network` (login default). This means you can authenticate once on mainnet and freely switch to sepolia and back without re-authenticating.
 
 ---
 
@@ -91,7 +100,7 @@ Clear all custom configuration and revert to defaults:
 starkfi config reset
 ```
 
-This removes custom RPC URL, network, gas token, and gasfree mode settings in one command.
+This removes custom RPC URL, network override, gas token, and gasfree mode settings in one command. After reset, the network reverts to whatever was set during authentication.
 
 ---
 

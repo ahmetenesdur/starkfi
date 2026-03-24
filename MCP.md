@@ -313,12 +313,12 @@ Rebalances a portfolio to match a target allocation. Calculates optimal swaps an
 
 #### `config_action`
 
-Views and modifies global CLI behavior: RPC routing, network selection, and Gas Abstraction.
+Views and modifies global CLI behavior: RPC routing, network selection, and Gas Abstraction. Network changes take effect immediately — no re-authentication required.
 
 | Parameter | Type   | Required | Description                                                                                                                               |
 | --------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `action`  | enum   | **Yes**  | One of: `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`                                                 |
-| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`/`off`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia`. |
+| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`/`off`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia` (instant switch, overrides session). |
 
 ---
 
@@ -329,3 +329,4 @@ Views and modifies global CLI behavior: RPC routing, network selection, and Gas 
 3. **Confirm with the user** — Never execute a transactional tool without explicit user confirmation
 4. **Use `get_auth_status` first** — Verify the session is active before attempting any wallet operations
 5. **Check `get_stake_status` and `get_lending_position`** — Query existing positions before staking/lending to avoid duplicate operations
+6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only (Fibrous API)

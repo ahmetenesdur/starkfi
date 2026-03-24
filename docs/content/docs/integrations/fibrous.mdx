@@ -7,6 +7,8 @@ description: Optimal swap routing, batch routing, and USD pricing
 
 [Fibrous](https://fibrous.finance) is a DEX aggregator on Starknet that finds optimal swap routes across multiple liquidity sources. StarkFi uses Fibrous for all swap operations — single trades, multi-swaps, and batch operations.
 
+> **Mainnet only:** The Fibrous API operates exclusively on Starknet mainnet. Swap-related commands (`trade`, `multi-swap`, `batch --swap`, `portfolio-rebalance`) are not available on Sepolia testnet. All other StarkFi features (lending, staking, batch supply/stake/send, portfolio) are fully network-aware and work on both mainnet and Sepolia.
+
 ## How StarkFi Uses Fibrous
 
 | Feature      | Fibrous API                              | StarkFi Command        |

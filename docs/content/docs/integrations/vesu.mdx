@@ -7,6 +7,8 @@ description: Supply, borrow, and manage lending positions on Vesu pools
 
 [Vesu](https://vesu.xyz) provides V2 lending pools on Starknet. StarkFi integrates with Vesu through the [Starkzap SDK](https://docs.starknet.io/build/starkzap/lending)'s `wallet.lending()` API, which handles all on-chain interactions — supply, withdraw, borrow, repay, close, and position monitoring.
 
+> **Network-aware:** All Vesu lending operations work on both Starknet mainnet and Sepolia testnet. Token addresses resolve dynamically based on the configured network.
+
 ## How StarkFi Uses Vesu
 
 | Feature        | SDK Integration                   | StarkFi Command |

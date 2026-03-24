@@ -147,6 +147,26 @@ npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC
 npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate
 ```
 
+### 🌐 Network Support (Mainnet + Sepolia)
+
+Switch between Mainnet and Sepolia instantly — no re-login required. All token addresses resolve dynamically per-network.
+
+```bash
+npx starkfi@latest config set-network sepolia   # Switch to testnet
+npx starkfi@latest config set-network mainnet   # Switch back
+```
+
+| Module                  | Network-Aware | Notes                                          |
+| ----------------------- | ------------- | ---------------------------------------------- |
+| **Lending (Vesu V2)**   | ✅            | Pools, supply, borrow, monitor, auto-rebalance |
+| **Staking**             | ✅            | Multi-token — STRK, WBTC, tBTC, SolvBTC, LBTC  |
+| **Batch**               | ✅            | All batch operations (supply, stake, send)      |
+| **Portfolio**           | ✅            | Balances, staking positions, lending positions  |
+| **Wallet (Send)**       | ✅            | Token transfers and simulation                  |
+| **Swap (Fibrous)**      | Mainnet only  | Fibrous aggregator API is mainnet-only          |
+| **Multi-Swap (Fibrous)**| Mainnet only  | Fibrous aggregator API is mainnet-only          |
+| **Rebalance (Fibrous)** | Mainnet only  | Uses Fibrous for swap routing                   |
+
 ### 💸 Gas Abstraction
 
 Users pay gas fees in their preferred ERC-20 token via AVNU Paymaster — no native STRK or ETH required. Alternatively, developers can sponsor gas entirely.
@@ -362,11 +382,11 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 | Command                                 | Description                    |
 | --------------------------------------- | ------------------------------ |
-| `config list`                           | Show current configuration     |
+| `config list`                           | Show current configuration (with effective network source)    |
 | `config reset`                          | Reset all settings to defaults |
 | `config set-rpc <url>`                  | Set custom RPC endpoint        |
 | `config get-rpc`                        | Show current RPC               |
-| `config set-network <mainnet\|sepolia>` | Switch network                 |
+| `config set-network <mainnet\|sepolia>` | Switch network instantly (no re-login needed)                 |
 | `config set-gas-token <token\|reset>`   | Set gas payment token          |
 | `config set-gasfree <on\|off>`          | Toggle developer-sponsored gas |
 | `tx-status <hash>`                      | Check transaction status       |
