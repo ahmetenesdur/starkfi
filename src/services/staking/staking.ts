@@ -1,4 +1,4 @@
-import { Amount, fromAddress, type StarkZap } from "starkzap";
+import { Amount, fromAddress, type StarkZap, type ChainId } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { StarkfiError, ErrorCode } from "../../lib/errors.js";
@@ -82,9 +82,10 @@ export async function stake(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	amount: string,
-	tokenSymbol = "STRK"
+	tokenSymbol = "STRK",
+	chainId?: ChainId
 ): Promise<TxResult> {
-	const token = resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol, chainId);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.stake(fromAddress(poolAddress), parsedAmount);
 
@@ -142,9 +143,10 @@ export async function exitPoolIntent(
 	wallet: StarkZapWallet,
 	poolAddress: string,
 	amount: string,
-	tokenSymbol = "STRK"
+	tokenSymbol = "STRK",
+	chainId?: ChainId
 ): Promise<TxResult> {
-	const token = resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol, chainId);
 	const parsedAmount = Amount.parse(amount, token);
 	const tx = await wallet.exitPoolIntent(fromAddress(poolAddress), parsedAmount);
 
