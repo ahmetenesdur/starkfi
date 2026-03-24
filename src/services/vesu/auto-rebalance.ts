@@ -1,4 +1,4 @@
-import { Amount, fromAddress } from "starkzap";
+import { Amount, fromAddress, type ChainId } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import type { Session } from "../auth/session.js";
 import type { TxResult } from "../../lib/types.js";
@@ -34,7 +34,8 @@ export interface LendingRebalanceResult {
 export async function autoRebalanceLending(
 	wallet: StarkZapWallet,
 	_session: Session,
-	params: LendingRebalanceParams
+	params: LendingRebalanceParams,
+	chainId?: ChainId
 ): Promise<LendingRebalanceResult> {
 	const pool = await resolvePoolAddress(wallet, params.pool);
 	const targetHF = params.targetHealthFactor ?? DEFAULT_WARNING_THRESHOLD;
@@ -43,7 +44,8 @@ export async function autoRebalanceLending(
 		wallet,
 		pool.address,
 		params.collateralToken,
-		params.debtToken
+		params.debtToken,
+		chainId
 	);
 	if (!position) {
 		throw new StarkfiError(
@@ -60,8 +62,8 @@ export async function autoRebalanceLending(
 		);
 	}
 
-	const collateralToken = resolveToken(params.collateralToken);
-	const debtToken = resolveToken(params.debtToken);
+	const collateralToken = resolveToken(params.collateralToken, chainId);
+	const debtToken = resolveToken(params.debtToken, chainId);
 
 	const health = await wallet.lending().getHealth({
 		collateralToken,
@@ -84,8 +86,8 @@ export async function autoRebalanceLending(
 	const addCollUSD = targetHF * debtUSD - collUSD;
 
 	const { getTokenUsdPrice } = await import("../fibrous/route.js");
-	const collPrice = await getTokenUsdPrice(collateralToken);
-	const debtPrice = await getTokenUsdPrice(debtToken);
+	const collPrice = await getTokenUsdPrice(collateralToken, chainId);
+	const debtPrice = await getTokenUsdPrice(debtToken, chainId);
 
 	if (collPrice <= 0 || debtPrice <= 0) {
 		throw new StarkfiError(
@@ -148,13 +150,14 @@ export async function autoRebalanceLending(
 
 	const txResult: TxResult =
 		action === "repay"
-			? await repay(wallet, pool.address, params.collateralToken, params.debtToken, amountStr)
+			? await repay(wallet, pool.address, params.collateralToken, params.debtToken, amountStr, chainId)
 			: await addCollateral(
 					wallet,
 					pool.address,
 					params.collateralToken,
 					params.debtToken,
-					amountStr
+					amountStr,
+					chainId
 				);
 
 	return {

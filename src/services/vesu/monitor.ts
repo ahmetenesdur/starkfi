@@ -2,6 +2,7 @@ import type { StarkZapWallet } from "../starkzap/client.js";
 import { getPosition, type LendingPosition } from "./lending.js";
 import { resolvePoolAddress } from "./pools.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import type { ChainId } from "starkzap";
 import {
 	resolveConfig,
 	classifyRisk,
@@ -89,11 +90,12 @@ export async function monitorPosition(
 	poolInput: string,
 	collateralToken: string,
 	debtToken: string,
-	config?: Partial<MonitorConfig>
+	config?: Partial<MonitorConfig>,
+	chainId?: ChainId
 ): Promise<MonitorResult> {
 	const cfg = resolveConfig(config);
 	const pool = await resolvePoolAddress(wallet, poolInput);
-	const position = await getPosition(wallet, pool.address, collateralToken, debtToken);
+	const position = await getPosition(wallet, pool.address, collateralToken, debtToken, chainId);
 
 	if (!position) {
 		throw new StarkfiError(
@@ -109,7 +111,8 @@ export async function monitorPosition(
 
 export async function monitorAllPositions(
 	wallet: StarkZapWallet,
-	config?: Partial<MonitorConfig>
+	config?: Partial<MonitorConfig>,
+	chainId?: ChainId
 ): Promise<MonitorResult[]> {
 	const cfg = resolveConfig(config);
 	const userPositions = await wallet.lending().getPositions();
@@ -128,7 +131,8 @@ export async function monitorAllPositions(
 				wallet,
 				pos.pool.id.toString(),
 				pos.collateral.token.symbol,
-				debtSymbol
+				debtSymbol,
+				chainId
 			);
 			if (!position) continue;
 
