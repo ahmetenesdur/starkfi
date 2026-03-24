@@ -19,7 +19,7 @@ Manage local configuration for the StarkFi CLI and check transaction status on-c
 ## Prerequisites
 
 - None for configuration commands (`config list`, `config set-*`, `config get-rpc`).
-- Active session required for `tx-status` (it reads the network from the session).
+- Active session required for `tx-status` and for `config list` to show the effective network source.
 
 ## Configuration Commands
 
@@ -36,7 +36,7 @@ npx starkfi@latest config set-rpc <url>
 # Get current RPC URL
 npx starkfi@latest config get-rpc
 
-# Switch network
+# Switch network (takes effect immediately, no re-login needed)
 npx starkfi@latest config set-network <network>
 
 # Toggle developer-sponsored gas (Gasfree mode)
@@ -81,8 +81,9 @@ Gasfree and Gasless are mutually exclusive — enabling one disables the other.
 
 1. **Rate Limits**: If any skill fails with "rate limit" or "429" errors, use `config set-rpc` to set a custom RPC endpoint.
 2. **Persistence**: Settings are stored locally and persist across sessions.
-3. Use `tx-status` AFTER every `send`, `trade`, `multi-swap`, `batch`, and staking/lending transaction to verify success.
-4. Use `config get-rpc` to check the current RPC URL before changing it.
+3. **Network switching**: `set-network` takes effect instantly for all commands — no re-login required. The config setting overrides the session's login network. `config list` shows the effective network with its source (e.g. `sepolia (config override, session: mainnet)`).
+4. Use `tx-status` AFTER every `send`, `trade`, `multi-swap`, `batch`, and staking/lending transaction to verify success.
+5. Use `config get-rpc` to check the current RPC URL before changing it.
 
 ## Examples
 
@@ -103,6 +104,7 @@ npx starkfi@latest config list
 
 ```bash
 npx starkfi@latest config set-network sepolia
+npx starkfi@latest config list    # Verify: shows "sepolia (config override, session: mainnet)"
 ```
 
 **User:** "Enable free gas mode"
