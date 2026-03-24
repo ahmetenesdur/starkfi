@@ -3,6 +3,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet, resolveFeeModeConfig } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
 import { createSpinner, success, warn, formatResult, formatError } from "../../lib/format.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerDeployCommand(program: Command): void {
 	program
@@ -51,7 +52,7 @@ export function registerDeployCommand(program: Command): void {
 				console.log(
 					formatResult({
 						address: session.address,
-						network: session.network,
+						network: resolveNetwork(session),
 						status: "deployed",
 					})
 				);

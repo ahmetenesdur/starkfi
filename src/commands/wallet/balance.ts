@@ -5,6 +5,7 @@ import { resolveToken } from "../../services/tokens/tokens.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { createSpinner, formatTable, formatError } from "../../lib/format.js";
 import { outputResult } from "../../lib/cli-helpers.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 
 export function registerBalanceCommand(program: Command): void {
 	program
@@ -17,43 +18,33 @@ export function registerBalanceCommand(program: Command): void {
 
 			try {
 				const session = requireSession();
+				const network = resolveNetwork(session);
+				const chainId = resolveChainId(session);
 				const { wallet } = await initSDKAndWallet(session);
 
 				if (opts.token) {
-					const tokenType = resolveToken(opts.token);
+					const tokenType = resolveToken(opts.token, chainId);
 
 					const balanceAmount = await wallet.balanceOf(tokenType);
 					spinner.stop();
-
-					if (opts.json) {
-						outputResult(
-							{
-								token: tokenType.symbol,
-								balance: balanceAmount.toUnit(),
-								network: session.network,
-							},
-							opts
-						);
-						return;
-					}
 
 					outputResult(
 						{
 							token: tokenType.symbol,
 							balance: balanceAmount.toUnit(),
-							network: session.network,
+							network: network,
 						},
 						opts
 					);
 				} else {
-					const balances = await getBalances(wallet);
+					const balances = await getBalances(wallet, chainId);
 					spinner.stop();
 
 					if (opts.json) {
 						outputResult(
 							{
 								wallet: session.address,
-								network: session.network,
+								network: network,
 								tokens: balances,
 							},
 							opts
@@ -62,7 +53,7 @@ export function registerBalanceCommand(program: Command): void {
 					}
 
 					console.log(`\n  Wallet: ${session.address}`);
-					console.log(`  Network: ${session.network}\n`);
+					console.log(`  Network: ${network}\n`);
 
 					if (balances.length === 0) {
 						console.log("  No balances found.\n");

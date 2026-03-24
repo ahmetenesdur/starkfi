@@ -7,6 +7,7 @@ import { createSpinner, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export function registerSendCommand(program: Command): void {
 	program
@@ -24,11 +25,12 @@ export function registerSendCommand(program: Command): void {
 				const validatedTo = validateAddress(to);
 
 				const session = requireSession();
+				const chainId = resolveChainId(session);
 				const { wallet } = await initSDKAndWallet(session);
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const tokenObj = resolveToken(token);
+				const tokenObj = resolveToken(token, chainId);
 
 				const parsedAmount = Amount.parse(amount, tokenObj);
 
@@ -47,7 +49,7 @@ export function registerSendCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 
 					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${token.toUpperCase()}`,
