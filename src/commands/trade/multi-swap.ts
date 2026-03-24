@@ -13,6 +13,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatTable, formatError } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 // Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs.
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
@@ -64,14 +65,15 @@ export function registerMultiSwapCommand(program: Command): void {
 
 				const session = requireSession();
 				const { wallet } = await initSDKAndWallet(session);
+				const chainId = resolveChainId(session);
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				spinner.text = "Resolving tokens...";
 				const pairs: BatchSwapPair[] = await Promise.all(
 					parsed.map(async (p) => {
-						const tokenIn = resolveToken(p.fromToken);
-						const tokenOut = resolveToken(p.toToken);
+						const tokenIn = resolveToken(p.fromToken, chainId);
+						const tokenOut = resolveToken(p.toToken, chainId);
 						const parsedAmount = Amount.parse(p.amount, tokenIn);
 						return {
 							tokenIn,
@@ -132,7 +134,7 @@ export function registerMultiSwapCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, chainId);
 
 					handleSimulationResult(sim, spinner, opts, {
 						pairs: pairs.length,

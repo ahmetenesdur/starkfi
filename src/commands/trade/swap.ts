@@ -8,6 +8,7 @@ import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { Amount, fromAddress } from "starkzap";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export function registerSwapCommand(program: Command): void {
 	program
@@ -29,11 +30,12 @@ export function registerSwapCommand(program: Command): void {
 			try {
 				const session = requireSession();
 				const { wallet } = await initSDKAndWallet(session);
+				const chainId = resolveChainId(session);
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				const tokenIn = resolveToken(from);
-				const tokenOut = resolveToken(to);
+				const tokenIn = resolveToken(from, chainId);
+				const tokenOut = resolveToken(to, chainId);
 
 				const parsedAmount = Amount.parse(amount, tokenIn);
 				const rawAmount = parsedAmount.toBase().toString();
@@ -73,7 +75,7 @@ export function registerSwapCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, chainId);
 
 					handleSimulationResult(sim, spinner, opts, {
 						input: `${amount} ${tokenIn.symbol}`,
