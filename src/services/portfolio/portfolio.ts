@@ -1,4 +1,4 @@
-import type { StarkZap, Wallet } from "starkzap";
+import type { StarkZap, Wallet, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { getBalances } from "../tokens/balances.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
@@ -8,6 +8,7 @@ import { getSuppliedBalance } from "../vesu/lending.js";
 import { getVesuPools, getPoolMarkets } from "../vesu/pools.js";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { runConcurrent } from "../../lib/concurrency.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 
 export interface PortfolioBalance {
 	symbol: string;
@@ -48,10 +49,11 @@ export async function getPortfolio(
 	wallet: Wallet,
 	session: Session
 ): Promise<PortfolioData> {
+	const chainId = resolveChainId(session);
 	const [balancesResult, stakingResult, lendingResult] = await Promise.allSettled([
-		fetchBalancesWithUsd(wallet),
+		fetchBalancesWithUsd(wallet, chainId),
 		fetchStaking(sdk, wallet, session),
-		fetchLending(wallet),
+		fetchLending(wallet, chainId),
 	]);
 
 	const balances = balancesResult.status === "fulfilled" ? balancesResult.value : [];
@@ -63,7 +65,7 @@ export async function getPortfolio(
 
 	return {
 		address: session.address,
-		network: session.network,
+		network: resolveNetwork(session),
 		balances,
 		staking,
 		lending,
@@ -73,14 +75,14 @@ export async function getPortfolio(
 
 const USD_PRICE_CONCURRENCY = 5;
 
-async function fetchBalancesWithUsd(wallet: Wallet): Promise<PortfolioBalance[]> {
-	const rawBalances = await getBalances(wallet);
+async function fetchBalancesWithUsd(wallet: Wallet, chainId?: ChainId): Promise<PortfolioBalance[]> {
+	const rawBalances = await getBalances(wallet, chainId);
 
 	const results = await runConcurrent(rawBalances, USD_PRICE_CONCURRENCY, async (bal) => {
 		let usdValue = 0;
 		try {
-			const token = resolveToken(bal.symbol);
-			const price = await getTokenUsdPrice(token);
+			const token = resolveToken(bal.symbol, chainId);
+			const price = await getTokenUsdPrice(token, chainId);
 			usdValue = parseFloat(bal.balance) * price;
 		} catch {
 			// Price unavailable
@@ -102,15 +104,15 @@ async function fetchStaking(
 	wallet: Wallet,
 	session: Session
 ): Promise<PortfolioStaking[]> {
-	const overview = await getStakingOverview(sdk, wallet, session.network, session.address);
+	const overview = await getStakingOverview(sdk, wallet, resolveNetwork(session), session.address);
 	if (overview.positions.length === 0) return [];
 
 	const uniqueSymbols = [...new Set(overview.positions.map((p) => p.token))];
 	const priceEntries = await Promise.allSettled(
 		uniqueSymbols.map(async (symbol) => {
 			try {
-				const token = resolveToken(symbol);
-				return { symbol, price: await getTokenUsdPrice(token) };
+				const token = resolveToken(symbol, resolveChainId(session));
+				return { symbol, price: await getTokenUsdPrice(token, resolveChainId(session)) };
 			} catch {
 				return { symbol, price: 0 };
 			}
@@ -141,7 +143,7 @@ function parseNumericPart(formatted: string): number {
 	return match ? parseFloat(match[1]) : 0;
 }
 
-async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
+async function fetchLending(wallet: Wallet, chainId?: ChainId): Promise<PortfolioLending[]> {
 	const pools = await getVesuPools(wallet as StarkZapWallet);
 	const results: PortfolioLending[] = [];
 
@@ -153,7 +155,8 @@ async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
 			const supplied = await getSuppliedBalance(
 				wallet as StarkZapWallet,
 				pool.address,
-				symbol
+				symbol,
+				chainId
 			);
 			if (supplied && supplied !== "0") {
 				results.push({ pool: pool.name ?? pool.address, asset: symbol, supplied });

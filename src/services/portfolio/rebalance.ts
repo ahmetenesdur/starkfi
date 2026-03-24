@@ -1,5 +1,5 @@
 import { Amount, fromAddress } from "starkzap";
-import type { Wallet } from "starkzap";
+import type { Wallet, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import type { PortfolioData } from "./portfolio.js";
@@ -8,6 +8,7 @@ import { getCalldata } from "../fibrous/route.js";
 import { FIBROUS_ROUTER_ADDRESS } from "../fibrous/config.js";
 import { simulateTransaction } from "../simulate/simulate.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 export interface TargetAllocation {
 	symbol: string;
@@ -36,7 +37,7 @@ export interface RebalanceExecutionResult {
 	simulation?: SimulationResult;
 }
 
-export function parseTargetAllocation(input: string): TargetAllocation[] {
+export function parseTargetAllocation(input: string, chainId?: ChainId): TargetAllocation[] {
 	const parts = input
 		.split(",")
 		.map((s) => s.trim())
@@ -60,7 +61,7 @@ export function parseTargetAllocation(input: string): TargetAllocation[] {
 		const percentage = parseFloat(match[1]!);
 		const symbol = match[2]!.toUpperCase();
 
-		resolveToken(symbol);
+		resolveToken(symbol, chainId);
 
 		return { symbol, percentage };
 	});
@@ -78,7 +79,8 @@ export function parseTargetAllocation(input: string): TargetAllocation[] {
 
 export async function calculateRebalancePlan(
 	portfolio: PortfolioData,
-	targets: TargetAllocation[]
+	targets: TargetAllocation[],
+	chainId?: ChainId
 ): Promise<RebalancePlan> {
 	const tokenValues = new Map<string, number>();
 	let totalUsdValue = 0;
@@ -138,7 +140,7 @@ export async function calculateRebalancePlan(
 		const buy = buys[bIdx]!;
 		const tradeUSD = Math.min(sell.usdAmount, buy.usdAmount);
 
-		const sellToken = resolveToken(sell.symbol);
+		const sellToken = resolveToken(sell.symbol, chainId);
 		const sellBal = portfolio.balances.find((b) => b.symbol.toUpperCase() === sell.symbol);
 		const sellBalAmount = parseFloat(sellBal?.amount ?? "0");
 		const sellPrice = sellBalAmount > 0 ? (sellBal?.usdValue ?? 0) / sellBalAmount : 0;
@@ -179,12 +181,13 @@ export async function executeRebalance(
 		return { plan };
 	}
 
+	const chainId = resolveChainId(session);
 	const slippage = opts?.slippage ?? 1;
 	const builder = wallet.tx();
 
 	for (const trade of plan.trades) {
-		const tokenIn = resolveToken(trade.fromToken);
-		const tokenOut = resolveToken(trade.toToken);
+		const tokenIn = resolveToken(trade.fromToken, chainId);
+		const tokenOut = resolveToken(trade.toToken, chainId);
 		const parsedAmount = Amount.parse(trade.amount, tokenIn);
 		const rawAmount = parsedAmount.toBase().toString();
 
@@ -198,7 +201,7 @@ export async function executeRebalance(
 	}
 
 	if (opts?.simulate) {
-		const simulation = await simulateTransaction(builder);
+		const simulation = await simulateTransaction(builder, chainId);
 		return { plan, simulation };
 	}
 
