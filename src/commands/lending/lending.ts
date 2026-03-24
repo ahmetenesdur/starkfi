@@ -9,6 +9,7 @@ import { resolveToken } from "../../services/tokens/tokens.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { handleSimulationResult, outputResult } from "../../lib/cli-helpers.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
 
 function handleLendingError(error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
@@ -146,7 +147,8 @@ export function registerLendSupplyCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const token = resolveToken(opts.token);
+				const chainId = resolveChainId(session);
+				const token = resolveToken(opts.token, chainId);
 				const builder = wallet.tx().lendDeposit({
 					token,
 					amount: Amount.parse(amount, token),
@@ -155,7 +157,7 @@ export function registerLendSupplyCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${opts.token.toUpperCase()}`,
 						pool: pool.name ?? pool.address,
@@ -203,7 +205,8 @@ export function registerLendWithdrawCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const token = resolveToken(opts.token);
+				const chainId = resolveChainId(session);
+				const token = resolveToken(opts.token, chainId);
 				const builder = wallet.tx().lendWithdraw({
 					token,
 					amount: Amount.parse(amount, token),
@@ -212,7 +215,7 @@ export function registerLendWithdrawCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 					handleSimulationResult(sim, spinner, opts, {
 						amount: `${amount} ${opts.token.toUpperCase()}`,
 						pool: pool.name ?? pool.address,
@@ -276,7 +279,8 @@ export function registerLendBorrowCommand(program: Command): void {
 					const balance = await lendingService.getSuppliedBalance(
 						wallet,
 						pool.address,
-						opts.collateralToken
+						opts.collateralToken,
+						resolveChainId(session)
 					);
 					if (!balance || parseFloat(balance) < parseFloat(opts.collateralAmount)) {
 						throw new Error(
@@ -286,8 +290,8 @@ export function registerLendBorrowCommand(program: Command): void {
 					useSupplied = true;
 				}
 
-				const collateralToken = resolveToken(opts.collateralToken);
-				const debtToken = resolveToken(opts.borrowToken);
+				const collateralToken = resolveToken(opts.collateralToken, resolveChainId(session));
+				const debtToken = resolveToken(opts.borrowToken, resolveChainId(session));
 				const builder = wallet.tx().lendBorrow({
 					collateralToken,
 					debtToken,
@@ -299,7 +303,7 @@ export function registerLendBorrowCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 					handleSimulationResult(sim, spinner, opts, {
 						collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
 						borrow: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
@@ -353,8 +357,9 @@ export function registerLendRepayCommand(program: Command): void {
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
-				const collateralToken = resolveToken(opts.collateralToken);
-				const debtToken = resolveToken(opts.token);
+				const chainId = resolveChainId(session);
+				const collateralToken = resolveToken(opts.collateralToken, chainId);
+				const debtToken = resolveToken(opts.token, chainId);
 				const builder = wallet.tx().lendRepay({
 					collateralToken,
 					debtToken,
@@ -364,7 +369,7 @@ export function registerLendRepayCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 					handleSimulationResult(sim, spinner, opts, {
 						repay: `${amount} ${opts.token.toUpperCase()}`,
 						pool: pool.name ?? pool.address,
@@ -418,12 +423,12 @@ export function registerLendCloseCommand(program: Command): void {
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const position = await lendingService.getPosition(
-					wallet, pool.address, opts.collateralToken, opts.borrowToken
+					wallet, pool.address, opts.collateralToken, opts.borrowToken, resolveChainId(session)
 				);
 				if (!position) throw new Error("No active position found to close.");
 
-				const collateralToken = resolveToken(opts.collateralToken);
-				const debtToken = resolveToken(opts.borrowToken);
+				const collateralToken = resolveToken(opts.collateralToken, resolveChainId(session));
+				const debtToken = resolveToken(opts.borrowToken, resolveChainId(session));
 				const builder = wallet.tx().lendRepay({
 					collateralToken,
 					debtToken,
@@ -434,7 +439,7 @@ export function registerLendCloseCommand(program: Command): void {
 
 				if (opts.simulate) {
 					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder);
+					const sim = await simulateTransaction(builder, resolveChainId(session));
 					handleSimulationResult(sim, spinner, opts, {
 						pool: pool.name ?? pool.address,
 						debt: `${position.debtAmount} ${position.debtAsset}`,
@@ -537,12 +542,14 @@ export function registerLendStatusCommand(program: Command): void {
 				const session = requireSession();
 				const { wallet } = await initSDKAndWallet(session);
 
+				const chainId = resolveChainId(session);
 				const pool = await resolvePoolAddress(wallet, opts.pool);
 
 				const suppliedBalance = await lendingService.getSuppliedBalance(
 					wallet,
 					pool.address,
-					opts.collateralToken
+					opts.collateralToken,
+					chainId
 				);
 
 				let position = null;
@@ -551,7 +558,8 @@ export function registerLendStatusCommand(program: Command): void {
 						wallet,
 						pool.address,
 						opts.collateralToken,
-						opts.borrowToken
+						opts.borrowToken,
+						chainId
 					);
 				}
 
@@ -635,6 +643,8 @@ export function registerLendMonitorCommand(program: Command): void {
 					warningThreshold: parseFloat(opts.warningThreshold),
 				};
 
+				const chainId = resolveChainId(session);
+
 				let results;
 
 				if (opts.pool) {
@@ -649,11 +659,12 @@ export function registerLendMonitorCommand(program: Command): void {
 						opts.pool,
 						opts.collateralToken,
 						opts.borrowToken,
-						config
+						config,
+						chainId
 					);
 					results = [result];
 				} else {
-					results = await monitorAllPositions(wallet, config);
+					results = await monitorAllPositions(wallet, config, chainId);
 				}
 
 				spinner.stop();
@@ -741,7 +752,7 @@ export function registerLendAutoCommand(program: Command): void {
 					strategy: opts.strategy,
 					targetHealthFactor: parseFloat(opts.targetHf),
 					simulate: opts.simulate,
-				});
+				}, resolveChainId(session));
 
 				if (opts.simulate) {
 					spinner.succeed("Simulation complete");
