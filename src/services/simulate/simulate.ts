@@ -1,4 +1,4 @@
-import type { TxBuilder } from "starkzap";
+import type { TxBuilder, ChainId } from "starkzap";
 import { Amount } from "starkzap";
 import { resolveToken } from "../tokens/tokens.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
@@ -14,7 +14,7 @@ export interface SimulationResult {
 
 const FEE_TOKEN_SYMBOL = "STRK";
 
-export async function simulateTransaction(builder: TxBuilder): Promise<SimulationResult> {
+export async function simulateTransaction(builder: TxBuilder, chainId?: ChainId): Promise<SimulationResult> {
 	const calls = await builder.calls();
 	const callCount = calls.length;
 
@@ -41,13 +41,13 @@ export async function simulateTransaction(builder: TxBuilder): Promise<Simulatio
 		const feeEstimate = await builder.estimateFee();
 		const overallFee = BigInt(feeEstimate.overall_fee);
 
-		const feeToken = resolveToken(FEE_TOKEN_SYMBOL);
+		const feeToken = resolveToken(FEE_TOKEN_SYMBOL, chainId);
 		const feeAmount = Amount.fromRaw(overallFee, feeToken);
 		const feeFormatted = feeAmount.toUnit();
 
 		let feeUsd = "unknown";
 		try {
-			const tokenPrice = await getTokenUsdPrice(feeToken);
+			const tokenPrice = await getTokenUsdPrice(feeToken, chainId);
 			if (tokenPrice > 0) {
 				const usdValue = parseFloat(feeFormatted) * tokenPrice;
 				feeUsd = `$${usdValue.toFixed(4)}`;
