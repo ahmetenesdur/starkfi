@@ -107,7 +107,7 @@ Generates a consolidated staking dashboard across validators. Accepts an optiona
 
 #### `list_lending_pools`
 
-Enumerates active Vesu V2 lending pools with live data from the Vesu API — assets (with APY/APR), supported pairs, protocol version, and deprecation status.
+Enumerates active Vesu V2 lending pools — assets (with APY/APR), supported pairs, and pool addresses.
 
 | Parameter | Type   | Required | Description                                             |
 | --------- | ------ | -------- | ------------------------------------------------------- |
@@ -216,7 +216,7 @@ Atomically claims staking rewards and re-stakes them into the same pool in a sin
 
 #### `supply_assets`
 
-Deposits specified assets into a Vesu V2 pool to generate yield. The tokens are deposited into the pool's ERC-4626 vToken vault.
+Deposits specified assets into a Vesu V2 pool to generate yield.
 
 | Parameter | Type   | Required | Description                                                   |
 | --------- | ------ | -------- | ------------------------------------------------------------- |
@@ -236,7 +236,7 @@ Redeems supplied assets from a Vesu V2 lending pool.
 
 #### `borrow_assets`
 
-Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool. Supports using previously supplied vTokens as collateral.
+Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool. Supports using previously supplied earn positions as collateral.
 
 | Parameter           | Type    | Required | Description                                                               |
 | ------------------- | ------- | -------- | ------------------------------------------------------------------------- |
@@ -245,7 +245,7 @@ Executes an atomic collateral deposit and subsequent asset borrow against a Vesu
 | `collateral_token`  | string  | **Yes**  | Collateral token symbol (e.g. `STRK`, `ETH`)                              |
 | `borrow_amount`     | string  | **Yes**  | Amount to borrow (e.g. `100`)                                             |
 | `borrow_token`      | string  | **Yes**  | Token to borrow (e.g. `USDC`, `USDT`)                                     |
-| `use_supplied`      | boolean | No       | Set `true` to use previously supplied vTokens as collateral via multicall |
+| `use_supplied`      | boolean | No       | Set `true` to use previously supplied earn position as collateral via multicall |
 
 #### `repay_debt`
 

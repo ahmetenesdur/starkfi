@@ -64,7 +64,7 @@ This is a **read-only** tool. Use it to monitor Health Factor before and after o
 
 ## supply_assets
 
-Supply tokens into a Vesu V2 pool to earn interest. Tokens are deposited into the pool's ERC-4626 vToken vault.
+Supply tokens into a Vesu V2 pool to earn interest.
 
 | Param    | Type   | Required | Description                                          |
 | -------- | ------ | -------- | ---------------------------------------------------- |
@@ -72,7 +72,7 @@ Supply tokens into a Vesu V2 pool to earn interest. Tokens are deposited into th
 | `amount` | string | Yes      | Amount to supply (e.g., `100`, `0.5`)                |
 | `token`  | string | Yes      | Token symbol to supply (e.g., `STRK`, `ETH`, `USDC`) |
 
-> **Note:** Supply uses standard ERC-4626 vToken deposit — there is no minimum amount.
+> **Note:** There is no minimum amount for supply operations.
 
 ---
 
@@ -99,7 +99,7 @@ Borrow tokens by supplying collateral. Atomically deposits collateral and borrow
 | `collateral_token`  | string  | Yes      | Collateral token symbol (e.g., `ETH`, `STRK`)               |
 | `borrow_amount`     | string  | Yes      | Amount to borrow                                            |
 | `borrow_token`      | string  | Yes      | Token to borrow (e.g., `USDC`, `USDT`)                      |
-| `use_supplied`      | boolean | No       | Set `true` to use previously supplied vTokens as collateral |
+| `use_supplied`      | boolean | No       | Set `true` to use previously supplied earn position as collateral |
 
 > **Important:** Monitor your Health Factor after borrowing. Use `get_lending_position` or `monitor_lending_position` to check.
 

@@ -44,7 +44,7 @@ Manage lending and borrowing positions on Vesu V2 protocol on Starknet. Supply a
     - Health Factor **< 1.5** → STRONGLY advise against borrowing. Suggest repaying instead.
     - Health Factor **< 1.1** → DO NOT proceed without explicit double-confirmation from the user.
 4. AFTER any transactional operation, verify with `tx-status`.
-5. When using `--use-supplied`, the borrow is backed by the user's existing vTokens (supplied positions) rather than transferring from wallet.
+5. When using `--use-supplied`, the borrow is backed by the user's existing earn positions (supplied positions) rather than transferring from wallet.
 6. When the user asks about health, risk, or liquidation — use `lend-monitor` first for a comprehensive overview with 4-level risk classification (SAFE/WARNING/DANGER/CRITICAL).
 7. When a position's health factor is low, suggest `lend-auto` to automatically rebalance. Always use `--simulate` first to preview the action before executing.
 
@@ -143,7 +143,7 @@ npx starkfi@latest lend-auto --pool <name|address> --collateral-token <symbol> -
 | `--collateral-token`  | string | Collateral token (e.g. `ETH`, `STRK`) | Yes      |
 | `--borrow-amount`     | number | Amount to borrow                      | Yes      |
 | `--borrow-token`      | string | Token to borrow (e.g. `USDC`, `USDT`) | Yes      |
-| `--use-supplied`      | flag   | Use existing vTokens as collateral    | No       |
+| `--use-supplied`      | flag   | Use existing earn positions as collateral    | No       |
 
 ### lend-repay
 

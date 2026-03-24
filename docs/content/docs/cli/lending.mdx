@@ -73,7 +73,7 @@ starkfi lend-supply 100 -p Prime -t USDC
 starkfi lend-supply 0.5 -p "Genesis: Re7 Labs" -t ETH --simulate
 ```
 
-> **Note:** Supply uses standard ERC-4626 vToken deposit — there is no minimum amount.
+> **Note:** There is no minimum amount for supply operations.
 
 ---
 
@@ -119,7 +119,7 @@ starkfi lend-borrow -p <pool> --collateral-amount <n> --collateral-token <symbol
 | `--collateral-token <symbol>` | Collateral token symbol (e.g., `ETH`, `STRK`)      |
 | `--borrow-amount <n>`         | Amount to borrow                                   |
 | `--borrow-token <symbol>`     | Token to borrow (e.g., `USDC`, `USDT`)             |
-| `--use-supplied`              | Use previously supplied yield tokens as collateral |
+| `--use-supplied`              | Use previously supplied earn positions as collateral |
 | `--simulate`                  | Estimate fees without executing                    |
 | `--json`                      | Output raw JSON                                    |
 
