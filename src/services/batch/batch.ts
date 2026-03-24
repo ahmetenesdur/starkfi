@@ -1,5 +1,5 @@
 import { Amount, fromAddress } from "starkzap";
-import type { TxBuilder, Wallet } from "starkzap";
+import type { TxBuilder, Wallet, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { initSDKAndWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
@@ -10,6 +10,7 @@ import { findValidator } from "../staking/validators.js";
 import { getValidatorPools, resolvePoolForToken } from "../staking/staking.js";
 import { validateAddress } from "../../lib/validation.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export type BatchOperationType = "swap" | "stake" | "supply" | "send";
 
@@ -54,7 +55,8 @@ export interface BatchOperation {
 export async function buildBatch(
 	wallet: Wallet,
 	session: Session,
-	operations: BatchOperation[]
+	operations: BatchOperation[],
+	chainId?: ChainId
 ): Promise<{ builder: TxBuilder; summary: string[] }> {
 	if (operations.length < 2) {
 		throw new StarkfiError(
@@ -69,16 +71,16 @@ export async function buildBatch(
 	for (const op of operations) {
 		switch (op.type) {
 			case "swap":
-				await addSwapCalls(builder, op.params as BatchSwapParams, session);
+				await addSwapCalls(builder, op.params as BatchSwapParams, session, chainId);
 				break;
 			case "stake":
-				await addStakeCalls(builder, op.params as BatchStakeParams, wallet, session);
+				await addStakeCalls(builder, op.params as BatchStakeParams, wallet, session, chainId);
 				break;
 			case "supply":
-				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet, session);
+				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet, session, chainId);
 				break;
 			case "send":
-				await addSendCalls(builder, op.params as BatchSendParams);
+				await addSendCalls(builder, op.params as BatchSendParams, chainId);
 				break;
 			default:
 				throw new StarkfiError(
@@ -95,10 +97,11 @@ export async function buildBatch(
 async function addSwapCalls(
 	builder: TxBuilder,
 	params: BatchSwapParams,
-	session: Session
+	session: Session,
+	chainId?: ChainId
 ): Promise<void> {
-	const tokenIn = resolveToken(params.from_token);
-	const tokenOut = resolveToken(params.to_token);
+	const tokenIn = resolveToken(params.from_token, chainId);
+	const tokenOut = resolveToken(params.to_token, chainId);
 	const parsedAmount = Amount.parse(params.amount, tokenIn);
 	const rawAmount = parsedAmount.toBase().toString();
 
@@ -121,17 +124,18 @@ async function addStakeCalls(
 	builder: TxBuilder,
 	params: BatchStakeParams,
 	wallet: Wallet,
-	session: Session
+	session: Session,
+	chainId?: ChainId
 ): Promise<void> {
 	const tokenSymbol = (params.token ?? "STRK").toUpperCase();
-	const token = resolveToken(tokenSymbol);
+	const token = resolveToken(tokenSymbol, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
 
 	let poolAddress = params.pool;
 
 	if (!poolAddress && params.validator) {
 		const { sdk } = await initSDKAndWallet(session);
-		const validator = findValidator(params.validator, session.network);
+		const validator = findValidator(params.validator, resolveNetwork(session));
 		if (!validator) {
 			throw new StarkfiError(
 				ErrorCode.VALIDATOR_NOT_FOUND,
@@ -157,9 +161,10 @@ async function addSupplyCalls(
 	builder: TxBuilder,
 	params: BatchSupplyParams,
 	wallet: Wallet,
-	_session: Session
+	_session: Session,
+	chainId?: ChainId
 ): Promise<void> {
-	const token = resolveToken(params.token);
+	const token = resolveToken(params.token, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const pool = await resolvePoolAddress(wallet, params.pool);
 
@@ -170,8 +175,8 @@ async function addSupplyCalls(
 	});
 }
 
-async function addSendCalls(builder: TxBuilder, params: BatchSendParams): Promise<void> {
-	const token = resolveToken(params.token);
+async function addSendCalls(builder: TxBuilder, params: BatchSendParams, chainId?: ChainId): Promise<void> {
+	const token = resolveToken(params.token, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const validatedTo = validateAddress(params.to);
 
