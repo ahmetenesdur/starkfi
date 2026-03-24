@@ -150,7 +150,11 @@ async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
 		const marketSymbols = [...new Set(markets.map((m) => m.asset.symbol))];
 
 		const tasks = marketSymbols.map(async (symbol) => {
-			const supplied = await getSuppliedBalance(wallet as StarkZapWallet, pool.address, symbol);
+			const supplied = await getSuppliedBalance(
+				wallet as StarkZapWallet,
+				pool.address,
+				symbol
+			);
 			if (supplied && supplied !== "0") {
 				results.push({ pool: pool.name ?? pool.address, asset: symbol, supplied });
 			}

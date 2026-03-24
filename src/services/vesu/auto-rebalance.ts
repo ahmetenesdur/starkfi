@@ -39,7 +39,12 @@ export async function autoRebalanceLending(
 	const pool = await resolvePoolAddress(wallet, params.pool);
 	const targetHF = params.targetHealthFactor ?? DEFAULT_WARNING_THRESHOLD;
 
-	const position = await getPosition(wallet, pool.address, params.collateralToken, params.debtToken);
+	const position = await getPosition(
+		wallet,
+		pool.address,
+		params.collateralToken,
+		params.debtToken
+	);
 	if (!position) {
 		throw new StarkfiError(
 			ErrorCode.REBALANCE_FAILED,
@@ -68,7 +73,10 @@ export async function autoRebalanceLending(
 	const debtUSD = Number(health.debtValue) / 1e18;
 
 	if (collUSD <= 0 || debtUSD <= 0) {
-		throw new StarkfiError(ErrorCode.REBALANCE_FAILED, "Unable to determine USD values for position tokens");
+		throw new StarkfiError(
+			ErrorCode.REBALANCE_FAILED,
+			"Unable to determine USD values for position tokens"
+		);
 	}
 
 	// HF ≈ collUSD / debtUSD
@@ -80,7 +88,10 @@ export async function autoRebalanceLending(
 	const debtPrice = await getTokenUsdPrice(debtToken);
 
 	if (collPrice <= 0 || debtPrice <= 0) {
-		throw new StarkfiError(ErrorCode.REBALANCE_FAILED, "Unable to fetch USD prices for position tokens");
+		throw new StarkfiError(
+			ErrorCode.REBALANCE_FAILED,
+			"Unable to fetch USD prices for position tokens"
+		);
 	}
 
 	const repayAmount = repayUSD > 0 ? repayUSD / debtPrice : 0;
@@ -116,9 +127,14 @@ export async function autoRebalanceLending(
 		.toUnit()
 		.toString();
 
-	const estimatedNewHF = action === "repay"
-		? (debtUSD - repayUSD > 0 ? collUSD / (debtUSD - repayUSD) : 9999)
-		: (debtUSD > 0 ? (collUSD + addCollUSD) / debtUSD : 9999);
+	const estimatedNewHF =
+		action === "repay"
+			? debtUSD - repayUSD > 0
+				? collUSD / (debtUSD - repayUSD)
+				: 9999
+			: debtUSD > 0
+				? (collUSD + addCollUSD) / debtUSD
+				: 9999;
 
 	if (params.simulate) {
 		return {
@@ -130,9 +146,16 @@ export async function autoRebalanceLending(
 		};
 	}
 
-	const txResult: TxResult = action === "repay"
-		? await repay(wallet, pool.address, params.collateralToken, params.debtToken, amountStr)
-		: await addCollateral(wallet, pool.address, params.collateralToken, params.debtToken, amountStr);
+	const txResult: TxResult =
+		action === "repay"
+			? await repay(wallet, pool.address, params.collateralToken, params.debtToken, amountStr)
+			: await addCollateral(
+					wallet,
+					pool.address,
+					params.collateralToken,
+					params.debtToken,
+					amountStr
+				);
 
 	return {
 		action,

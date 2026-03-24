@@ -108,10 +108,7 @@ export function registerLendPoolsCommand(program: Command): void {
 				console.log(
 					formatTable(
 						["Name", "Address"],
-						pools.map((p) => [
-							p.name ?? "Unnamed",
-							p.address.slice(0, 12) + "...",
-						])
+						pools.map((p) => [p.name ?? "Unnamed", p.address.slice(0, 12) + "..."])
 					)
 				);
 				console.log(
@@ -414,7 +411,10 @@ export function registerLendStatusCommand(program: Command): void {
 						.map((p) => ({
 							pool: p.pool.name ?? p.pool.id.toString().slice(0, 12) + "...",
 							asset: p.collateral.token.symbol,
-							supplied: Amount.fromRaw(p.collateral.amount, p.collateral.token).toFormatted(true),
+							supplied: Amount.fromRaw(
+								p.collateral.amount,
+								p.collateral.token
+							).toFormatted(true),
 							type: p.type,
 						}));
 

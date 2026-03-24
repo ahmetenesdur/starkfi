@@ -1,5 +1,11 @@
 import type { Wallet } from "starkzap";
-import { StarkZap, PrivySigner, ArgentXV050Preset, VesuLendingProvider, type FeeMode } from "starkzap";
+import {
+	StarkZap,
+	PrivySigner,
+	ArgentXV050Preset,
+	VesuLendingProvider,
+	type FeeMode,
+} from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";

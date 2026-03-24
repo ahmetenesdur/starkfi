@@ -53,7 +53,8 @@ function buildRecommendation(position: LendingPosition, targetHF: number): strin
 
 	const parts: string[] = [];
 	if (parseFloat(position.debtAmount) > 0) parts.push(`Repay some ${position.debtAsset}`);
-	if (parseFloat(position.collateralAmount) > 0) parts.push(`add more ${position.collateralAsset} collateral`);
+	if (parseFloat(position.collateralAmount) > 0)
+		parts.push(`add more ${position.collateralAsset} collateral`);
 
 	if (parts.length === 0) return null;
 	return `${parts.join(" or ")} to reach safe level (${targetHF})`;

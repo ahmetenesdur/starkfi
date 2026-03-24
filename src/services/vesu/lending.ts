@@ -22,11 +22,7 @@ function resolveOptionalPool(poolAddress?: string) {
 	return poolAddress ? fromAddress(poolAddress) : undefined;
 }
 
-function assertMinimumValue(
-	label: string,
-	amount: string,
-	usdPrice: number
-): void {
+function assertMinimumValue(label: string, amount: string, usdPrice: number): void {
 	if (usdPrice <= 0) return;
 	const usdValue = parseFloat(amount) * usdPrice;
 	if (usdValue < MIN_POSITION_USD) {
@@ -211,20 +207,23 @@ export async function getPosition(
 
 		if (sdk.collateralShares === 0n && sdk.nominalDebt === 0n) return null;
 
-		const collFormatted = sdk.collateralAmount != null
-			? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
-			: "0";
-		const debtFormatted = sdk.debtAmount != null
-			? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true)
-			: "0";
+		const collFormatted =
+			sdk.collateralAmount != null
+				? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
+				: "0";
+		const debtFormatted =
+			sdk.debtAmount != null
+				? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true)
+				: "0";
 
 		let healthFactor: number | undefined;
 		let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
 
 		if (sdk.collateralValue > 0n || sdk.debtValue > 0n) {
-			healthFactor = sdk.debtValue > 0n
-				? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
-				: 9999;
+			healthFactor =
+				sdk.debtValue > 0n
+					? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
+					: 9999;
 			riskLevel = classifyRisk(healthFactor, resolveConfig());
 		}
 
@@ -255,7 +254,8 @@ export async function getSuppliedBalance(
 		const matched = positions
 			.filter((p) => p.type === "earn")
 			.find((p) => {
-				const symbolMatch = p.collateral.token.symbol.toUpperCase() === token.symbol.toUpperCase();
+				const symbolMatch =
+					p.collateral.token.symbol.toUpperCase() === token.symbol.toUpperCase();
 				if (!symbolMatch) return false;
 				return !poolAddress || p.pool.id.toString() === poolAddress;
 			});
