@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { loadSession } from "../../services/auth/session.js";
 import { checkFibrousHealth } from "../../services/fibrous/health.js";
 import { createSpinner, formatResult, success, warn, formatError } from "../../lib/format.js";
+import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerStatusCommand(program: Command): void {
 	program
@@ -24,7 +25,7 @@ export function registerStatusCommand(program: Command): void {
 					console.log(
 						formatResult({
 							type: session.type,
-							network: session.network,
+							network: resolveNetwork(session),
 							address: session.address,
 						})
 					);
