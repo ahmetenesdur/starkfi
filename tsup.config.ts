@@ -4,29 +4,40 @@ import { readFileSync } from "node:fs";
 const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 
 /**
- * esbuild plugin: stub out @cartridge/controller
+ * esbuild plugin: stub out optional starkzap peer dependencies.
  *
- * starkzap ships a Cartridge wallet adapter that statically imports
- * @cartridge/controller. StarkFi never uses this code path (it uses
- * PrivySigner), but esbuild would otherwise try to resolve and bundle
- * the entire Cartridge SDK — which drags in deprecated @telegram-apps/*,
- * browser WASM, and a duplicate starknet@8.x.
+ * StarkZap v2 ships modules (confidential/tongo, bridge/solana) that
+ * statically import optional peer dependencies StarkFi doesn't use.
+ * Without stubs, esbuild fails to resolve them at bundle time.
  *
- * This plugin intercepts the import and returns an empty ESM stub,
- * keeping the bundle lean and eliminating all deprecated-package warnings.
+ * Note: @cartridge/controller is NOT stubbed because starkzap uses
+ * dynamic import() for it, which esbuild handles gracefully.
  */
-const stubCartridgeController = {
-	name: "stub-cartridge-controller",
+const stubOptionalPeers = {
+	name: "stub-optional-peers",
 	setup(build) {
-		build.onResolve({ filter: /^@cartridge\/controller$/ }, (args) => ({
-			path: args.path,
-			namespace: "cartridge-stub",
-		}));
+		const stubPackages = [
+			/^@fatsolutions\/tongo-sdk$/,
+			/^@hyperlane-xyz\/sdk$/,
+			/^@hyperlane-xyz\/registry$/,
+			/^@hyperlane-xyz\/utils$/,
+		];
+
+		for (const filter of stubPackages) {
+			build.onResolve({ filter }, (args) => ({
+				path: args.path,
+				namespace: "optional-peer-stub",
+			}));
+		}
 
 		build.onLoad(
-			{ filter: /.*/, namespace: "cartridge-stub" },
+			{ filter: /.*/, namespace: "optional-peer-stub" },
 			() => ({
-				contents: "export default undefined; export const toSessionPolicies = () => ({});",
+				contents: [
+					"const noop = () => ({});",
+					"export default undefined;",
+					"export const Account = noop;",
+				].join("\n"),
 				loader: "js",
 			})
 		);
@@ -52,7 +63,7 @@ export default defineConfig({
 	// making `npx starkfi` near-instant.
 	noExternal: [/.*/],
 
-	esbuildPlugins: [stubCartridgeController],
+	esbuildPlugins: [stubOptionalPeers],
 
 	// Inject version at build time so the bundle doesn't need package.json.
 	esbuildOptions(options) {
