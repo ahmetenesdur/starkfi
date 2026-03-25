@@ -1,43 +1,14 @@
 /**
- * Node.js custom module-resolution hook that stubs optional peer
- * dependencies of starkzap during development (`pnpm dev`).
+ * Dev-mode module loader entry point.
+ *
+ * Node.js v24 requires module customization hooks to run in a separate
+ * thread via module.register(). This file is loaded by --import and
+ * registers the resolve/load hooks from stub-peers-hooks.mjs.
  *
  * Build-time stubbing is handled separately by the esbuild plugin
- * in tsup.config.ts.  This loader covers the `tsx` dev path.
+ * in tsup.config.ts — this file only affects `pnpm dev`.
  */
 
-const STUBBED = new Set([
-	"@fatsolutions/tongo-sdk",
-	"@hyperlane-xyz/sdk",
-	"@hyperlane-xyz/registry",
-	"@hyperlane-xyz/utils",
-	"@solana/web3.js",
-]);
+import { register } from "node:module";
 
-/**
- * resolve hook – redirect stubbed packages to our virtual namespace.
- */
-export async function resolve(specifier, context, nextResolve) {
-	if (STUBBED.has(specifier)) {
-		return { shortCircuit: true, url: `stub-peer:///${specifier}` };
-	}
-	return nextResolve(specifier, context);
-}
-
-/**
- * load hook – return a minimal ESM module for stubbed packages.
- */
-export async function load(url, context, nextLoad) {
-	if (url.startsWith("stub-peer:///")) {
-		return {
-			shortCircuit: true,
-			format: "module",
-			source: [
-				"const noop = () => ({});",
-				"export default undefined;",
-				"export const Account = noop;",
-			].join("\n"),
-		};
-	}
-	return nextLoad(url, context);
-}
+register("./stub-peers-hooks.mjs", import.meta.url);

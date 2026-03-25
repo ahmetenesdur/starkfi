@@ -19,7 +19,7 @@
 	],
 	"scripts": {
 		"build": "tsup",
-		"dev": "node --import ./scripts/stub-peers-loader.mjs --import tsx/esm src/index.ts",
+		"dev": "tsx --import ./scripts/stub-peers-loader.mjs src/index.ts",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint src/",
 		"lint:fix": "eslint src/ --fix",
