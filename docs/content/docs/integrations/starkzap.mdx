@@ -37,23 +37,28 @@ const sdk = new Starkzap({
 
 ## Wallet Connection
 
-StarkFi uses the **Privy** onboarding strategy with the **ArgentX v0.5.0** account preset:
+StarkFi uses the `onboard()` API with `OnboardStrategy.Privy` and the `argentXV050` account preset:
 
 ```typescript
-import { PrivySigner, ArgentXV050Preset } from "starkzap";
+import { OnboardStrategy, type WalletInterface } from "starkzap";
 
-const wallet = await sdk.connectWallet({
-	account: {
-		signer: new PrivySigner({
+const { wallet } = await sdk.onboard({
+	strategy: OnboardStrategy.Privy,
+	privy: {
+		resolve: async () => ({
 			walletId: session.walletId,
 			publicKey: session.publicKey,
 			serverUrl: session.serverUrl,
+			headers: { Authorization: `Bearer ${session.token}` },
 		}),
-		accountClass: ArgentXV050Preset,
 	},
-	feeMode: "sponsored", // gasfree mode
+	accountPreset: "argentXV050",
+	feeMode: "sponsored",
+	deploy: "never",
 });
 ```
+
+The `onboard()` API handles signer creation, account class resolution, and fee mode configuration automatically — replacing the manual `PrivySigner` + `connectWallet()` pattern from v1.
 
 ## Key APIs
 

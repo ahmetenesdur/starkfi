@@ -52,6 +52,16 @@ Under the hood, the SDK patches the wallet's `executePaymasterTransaction` to in
 
 StarkFi selects the correct URL automatically based on the configured network.
 
+## API Key (Optional)
+
+If you have an AVNU Paymaster API key for authenticated access, set it as an environment variable:
+
+```bash
+export AVNU_PAYMASTER_API_KEY=your-api-key-here
+```
+
+StarkFi automatically includes this key in all paymaster requests when set.
+
 ## Supported Gas Tokens
 
 | Token    | Address (Mainnet)                 |

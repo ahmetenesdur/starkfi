@@ -80,7 +80,7 @@ StarkFi leverages **all core Starkzap modules**:
 
 | Module                               | Usage in StarkFi                                                                                           |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| **Wallets**                          | `PrivySigner` + `ArgentXV050Preset` for email-based wallet management via Privy TEE                        |
+| **Wallets**                          | `OnboardStrategy.Privy` + `argentXV050` preset for automated email-based wallet onboarding via Privy TEE   |
 | **Gasless Transactions (Paymaster)** | Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode    |
 | **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step) |
 | **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send in one transaction                        |
