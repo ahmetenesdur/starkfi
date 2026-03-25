@@ -83,8 +83,6 @@ function toMonitorResult(
 	};
 }
 
-// -- Monitor single position --------------------------------------------------
-
 export async function monitorPosition(
 	wallet: StarkZapWallet,
 	poolInput: string,
@@ -106,8 +104,6 @@ export async function monitorPosition(
 
 	return toMonitorResult(pool, position, cfg);
 }
-
-// -- Monitor all positions ----------------------------------------------------
 
 export async function monitorAllPositions(
 	wallet: StarkZapWallet,

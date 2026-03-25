@@ -76,7 +76,13 @@ export function registerStakeCommand(program: Command): void {
 					return;
 				}
 
-				const result = await stakingService.stake(wallet, poolAddress, amount, tokenSymbol, resolveChainId(session));
+				const result = await stakingService.stake(
+					wallet,
+					poolAddress,
+					amount,
+					tokenSymbol,
+					resolveChainId(session)
+				);
 
 				spinner.succeed("Staking confirmed");
 				outputResult(

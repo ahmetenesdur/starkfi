@@ -1,7 +1,7 @@
 import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
-import type { Token, ChainId } from "starkzap";
+import type { Token } from "starkzap";
 
 interface RouteToken {
 	name: string;
@@ -197,60 +197,4 @@ export async function getCalldataBatch(
 			getCalldata(pair.tokenIn, pair.tokenOut, pair.amount, slippage, destination)
 		)
 	);
-}
-
-interface PriceCacheEntry {
-	promise: Promise<number>;
-	timestamp: number;
-}
-
-const priceCache = new Map<string, PriceCacheEntry>();
-const PRICE_CACHE_TTL_MS = 60_000;
-const MAX_PRICE_CACHE_SIZE = 50;
-
-export function clearPriceCache(): void {
-	priceCache.clear();
-}
-
-export async function getTokenUsdPrice(token: Token, chainId?: ChainId): Promise<number> {
-	const symbolUpper = token.symbol.toUpperCase();
-	if (symbolUpper === "USDC" || symbolUpper === "USDT") {
-		return 1.0;
-	}
-
-	const cacheKey = token.address.toLowerCase();
-	const cached = priceCache.get(cacheKey);
-
-	if (cached && Date.now() - cached.timestamp < PRICE_CACHE_TTL_MS) {
-		return cached.promise;
-	}
-
-	// Evict oldest entry when at capacity (Map preserves insertion order)
-	if (priceCache.size >= MAX_PRICE_CACHE_SIZE) {
-		const oldest = priceCache.keys().next().value;
-		if (oldest) priceCache.delete(oldest);
-	}
-
-	const promise = fetchTokenPrice(token, chainId);
-	priceCache.set(cacheKey, { promise, timestamp: Date.now() });
-
-	// Auto-evict on rejection so the next caller retries immediately
-	promise.catch(() => priceCache.delete(cacheKey));
-
-	return promise;
-}
-
-async function fetchTokenPrice(token: Token, chainId?: ChainId): Promise<number> {
-	try {
-		const usdc = await import("../tokens/tokens.js").then((m) => m.resolveToken("USDC", chainId));
-		const oneUnit = (10n ** BigInt(token.decimals)).toString();
-		const routeData = await getRoute(token, usdc, oneUnit);
-
-		if (routeData.success && routeData.inputToken?.price) {
-			return parseFloat(routeData.inputToken.price);
-		}
-	} catch {
-		// Best-effort pricing
-	}
-	return 0;
 }

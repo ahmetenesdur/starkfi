@@ -4,7 +4,7 @@ import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { TxResult } from "../../lib/types.js";
-import { getTokenUsdPrice } from "../fibrous/route.js";
+import { getTokenUsdPrice } from "../price/price.js";
 import { classifyRisk, resolveConfig } from "./health.js";
 
 export interface LendingPosition {
@@ -33,8 +33,6 @@ function assertMinimumValue(label: string, amount: string, usdPrice: number): vo
 	}
 }
 
-// -- Supply -------------------------------------------------------------------
-
 export async function supply(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
@@ -51,8 +49,6 @@ export async function supply(
 	await tx.wait();
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
-
-// -- Withdraw -----------------------------------------------------------------
 
 export async function withdraw(
 	wallet: StarkZapWallet,
@@ -86,8 +82,6 @@ export async function withdrawMax(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// -- Borrow -------------------------------------------------------------------
-
 export async function borrow(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
@@ -101,7 +95,11 @@ export async function borrow(
 	const collateralToken = resolveToken(collateralTokenSymbol, chainId);
 	const debtToken = resolveToken(debtTokenSymbol, chainId);
 
-	assertMinimumValue("collateral", collateralAmount, await getTokenUsdPrice(collateralToken, chainId));
+	assertMinimumValue(
+		"collateral",
+		collateralAmount,
+		await getTokenUsdPrice(collateralToken, chainId)
+	);
 	assertMinimumValue("debt", debtAmount, await getTokenUsdPrice(debtToken, chainId));
 
 	const tx = await wallet.lending().borrow({
@@ -115,8 +113,6 @@ export async function borrow(
 	await tx.wait();
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
-
-// -- Repay --------------------------------------------------------------------
 
 export async function repay(
 	wallet: StarkZapWallet,
@@ -138,8 +134,6 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// -- Close Position -----------------------------------------------------------
-
 export async function closePosition(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
@@ -147,7 +141,13 @@ export async function closePosition(
 	debtTokenSymbol: string,
 	chainId?: ChainId
 ): Promise<TxResult> {
-	const position = await getPosition(wallet, poolAddress, collateralTokenSymbol, debtTokenSymbol, chainId);
+	const position = await getPosition(
+		wallet,
+		poolAddress,
+		collateralTokenSymbol,
+		debtTokenSymbol,
+		chainId
+	);
 	if (!position) {
 		throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
 	}
@@ -170,8 +170,6 @@ export async function closePosition(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-// -- Add Collateral -----------------------------------------------------------
-
 export async function addCollateral(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
@@ -193,8 +191,6 @@ export async function addCollateral(
 	await tx.wait();
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
-
-// -- Get Position -------------------------------------------------------------
 
 export async function getPosition(
 	wallet: StarkZapWallet,
@@ -247,8 +243,6 @@ export async function getPosition(
 		return null;
 	}
 }
-
-// -- Get Supplied Balance -----------------------------------------------------
 
 export async function getSuppliedBalance(
 	wallet: StarkZapWallet,

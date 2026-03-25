@@ -49,7 +49,9 @@ export function registerConfigCommand(program: Command): void {
 				process.exit(1);
 			}
 			configService.set("network", network);
-			console.log(success(`Network set to: ${network} (active immediately for all commands)`));
+			console.log(
+				success(`Network set to: ${network} (active immediately for all commands)`)
+			);
 		});
 
 	configCmd
@@ -142,7 +144,7 @@ export function registerConfigCommand(program: Command): void {
 				networkSummary = configNetwork ?? "not set (login required)";
 			}
 
-			const display: Record<string, unknown> = { ...all as Record<string, unknown> };
+			const display: Record<string, unknown> = { ...(all as Record<string, unknown>) };
 			display.network = networkSummary;
 			display.feeMode = feeModeSummary;
 

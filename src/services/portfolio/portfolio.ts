@@ -1,7 +1,7 @@
 import type { StarkZap, WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { getBalances } from "../tokens/balances.js";
-import { getTokenUsdPrice } from "../fibrous/route.js";
+import { getTokenUsdPrice } from "../price/price.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { getStakingOverview } from "../staking/staking.js";
 import { getSuppliedBalance } from "../vesu/lending.js";
@@ -75,7 +75,10 @@ export async function getPortfolio(
 
 const USD_PRICE_CONCURRENCY = 5;
 
-async function fetchBalancesWithUsd(wallet: WalletInterface, chainId?: ChainId): Promise<PortfolioBalance[]> {
+async function fetchBalancesWithUsd(
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<PortfolioBalance[]> {
 	const rawBalances = await getBalances(wallet, chainId);
 
 	const results = await runConcurrent(rawBalances, USD_PRICE_CONCURRENCY, async (bal) => {
@@ -104,7 +107,12 @@ async function fetchStaking(
 	wallet: WalletInterface,
 	session: Session
 ): Promise<PortfolioStaking[]> {
-	const overview = await getStakingOverview(sdk, wallet, resolveNetwork(session), session.address);
+	const overview = await getStakingOverview(
+		sdk,
+		wallet,
+		resolveNetwork(session),
+		session.address
+	);
 	if (overview.positions.length === 0) return [];
 
 	const uniqueSymbols = [...new Set(overview.positions.map((p) => p.token))];
@@ -143,7 +151,10 @@ function parseNumericPart(formatted: string): number {
 	return match ? parseFloat(match[1]) : 0;
 }
 
-async function fetchLending(wallet: WalletInterface, chainId?: ChainId): Promise<PortfolioLending[]> {
+async function fetchLending(
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<PortfolioLending[]> {
 	const pools = await getVesuPools(wallet as StarkZapWallet);
 	const results: PortfolioLending[] = [];
 

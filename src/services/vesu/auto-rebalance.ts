@@ -8,6 +8,7 @@ import { resolvePoolAddress } from "./pools.js";
 import { getPosition, repay, addCollateral } from "./lending.js";
 import { DEFAULT_WARNING_THRESHOLD } from "./health.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { getTokenUsdPrice } from "../price/price.js";
 
 export type RebalanceStrategy = "repay" | "add-collateral" | "auto";
 
@@ -85,7 +86,6 @@ export async function autoRebalanceLending(
 	const repayUSD = debtUSD - collUSD / targetHF;
 	const addCollUSD = targetHF * debtUSD - collUSD;
 
-	const { getTokenUsdPrice } = await import("../fibrous/route.js");
 	const collPrice = await getTokenUsdPrice(collateralToken, chainId);
 	const debtPrice = await getTokenUsdPrice(debtToken, chainId);
 
@@ -150,7 +150,14 @@ export async function autoRebalanceLending(
 
 	const txResult: TxResult =
 		action === "repay"
-			? await repay(wallet, pool.address, params.collateralToken, params.debtToken, amountStr, chainId)
+			? await repay(
+					wallet,
+					pool.address,
+					params.collateralToken,
+					params.debtToken,
+					amountStr,
+					chainId
+				)
 			: await addCollateral(
 					wallet,
 					pool.address,

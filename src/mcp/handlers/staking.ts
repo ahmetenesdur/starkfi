@@ -8,7 +8,13 @@ import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 export async function handleStakeTokens(args: { amount: string; pool: string; token?: string }) {
 	return withWallet(async ({ session, wallet }) => {
 		const tokenSymbol = (args.token ?? "STRK").toUpperCase();
-		const result = await stakingService.stake(wallet, args.pool, args.amount, tokenSymbol, resolveChainId(session));
+		const result = await stakingService.stake(
+			wallet,
+			args.pool,
+			args.amount,
+			tokenSymbol,
+			resolveChainId(session)
+		);
 
 		return jsonResult({
 			success: true,

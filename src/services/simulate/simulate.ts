@@ -1,7 +1,7 @@
 import type { TxBuilder, ChainId } from "starkzap";
 import { Amount } from "starkzap";
 import { resolveToken } from "../tokens/tokens.js";
-import { getTokenUsdPrice } from "../fibrous/route.js";
+import { getTokenUsdPrice } from "../price/price.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 export interface SimulationResult {
@@ -14,7 +14,10 @@ export interface SimulationResult {
 
 const FEE_TOKEN_SYMBOL = "STRK";
 
-export async function simulateTransaction(builder: TxBuilder, chainId?: ChainId): Promise<SimulationResult> {
+export async function simulateTransaction(
+	builder: TxBuilder,
+	chainId?: ChainId
+): Promise<SimulationResult> {
 	const calls = await builder.calls();
 	const callCount = calls.length;
 

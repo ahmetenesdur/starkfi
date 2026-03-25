@@ -36,4 +36,3 @@ export function resolveToken(symbol: string, chainId?: ChainId): Token {
 
 	return token;
 }
-

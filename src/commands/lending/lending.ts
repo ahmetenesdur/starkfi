@@ -171,12 +171,15 @@ export function registerLendSupplyCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Supply confirmed");
-				outputResult({
-					amount: `${amount} ${opts.token.toUpperCase()}`,
-					pool: pool.name ?? pool.address,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						amount: `${amount} ${opts.token.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Supply failed");
 				handleLendingError(error);
@@ -229,12 +232,15 @@ export function registerLendWithdrawCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Withdrawal confirmed");
-				outputResult({
-					amount: `${amount} ${opts.token.toUpperCase()}`,
-					pool: pool.name ?? pool.address,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						amount: `${amount} ${opts.token.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Withdrawal failed");
 				handleLendingError(error);
@@ -318,13 +324,16 @@ export function registerLendBorrowCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Borrow confirmed");
-				outputResult({
-					collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
-					borrowed: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
-					pool: pool.name ?? pool.address,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						collateral: `${opts.collateralAmount} ${opts.collateralToken.toUpperCase()}`,
+						borrowed: `${opts.borrowAmount} ${opts.borrowToken.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Borrow failed");
 				handleLendingError(error);
@@ -383,12 +392,15 @@ export function registerLendRepayCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Repayment confirmed");
-				outputResult({
-					repaid: `${amount} ${opts.token.toUpperCase()}`,
-					pool: pool.name ?? pool.address,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						repaid: `${amount} ${opts.token.toUpperCase()}`,
+						pool: pool.name ?? pool.address,
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Repayment failed");
 				handleLendingError(error);
@@ -423,7 +435,11 @@ export function registerLendCloseCommand(program: Command): void {
 
 				const pool = await resolvePoolAddress(wallet, opts.pool);
 				const position = await lendingService.getPosition(
-					wallet, pool.address, opts.collateralToken, opts.borrowToken, resolveChainId(session)
+					wallet,
+					pool.address,
+					opts.collateralToken,
+					opts.borrowToken,
+					resolveChainId(session)
 				);
 				if (!position) throw new Error("No active position found to close.");
 
@@ -454,12 +470,15 @@ export function registerLendCloseCommand(program: Command): void {
 				await tx.wait();
 
 				spinner.succeed("Position closed successfully");
-				outputResult({
-					status: "Closed",
-					pool: pool.name ?? pool.address,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				}, opts);
+				outputResult(
+					{
+						status: "Closed",
+						pool: pool.name ?? pool.address,
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Failed to close position");
 				handleLendingError(error);
@@ -745,14 +764,19 @@ export function registerLendAutoCommand(program: Command): void {
 				const { autoRebalanceLending } =
 					await import("../../services/vesu/auto-rebalance.js");
 
-				const result = await autoRebalanceLending(wallet, session, {
-					pool: opts.pool,
-					collateralToken: opts.collateralToken,
-					debtToken: opts.borrowToken,
-					strategy: opts.strategy,
-					targetHealthFactor: parseFloat(opts.targetHf),
-					simulate: opts.simulate,
-				}, resolveChainId(session));
+				const result = await autoRebalanceLending(
+					wallet,
+					session,
+					{
+						pool: opts.pool,
+						collateralToken: opts.collateralToken,
+						debtToken: opts.borrowToken,
+						strategy: opts.strategy,
+						targetHealthFactor: parseFloat(opts.targetHf),
+						simulate: opts.simulate,
+					},
+					resolveChainId(session)
+				);
 
 				if (opts.simulate) {
 					spinner.succeed("Simulation complete");

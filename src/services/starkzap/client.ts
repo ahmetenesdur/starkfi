@@ -1,14 +1,11 @@
 import type { WalletInterface } from "starkzap";
-import {
-	StarkZap,
-	OnboardStrategy,
-	VesuLendingProvider,
-	type FeeMode,
-} from "starkzap";
+import { StarkZap, OnboardStrategy, VesuLendingProvider, type FeeMode } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
 import { resolveNetwork } from "../../lib/resolve-network.js";
+import { resolveChainId } from "../../lib/resolve-network.js";
+import { initPriceService } from "../price/price.js";
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
@@ -155,6 +152,9 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 
 	const sdk = createSDK(network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
 	const wallet = await connectWallet(sdk, session);
+
+	// Initialise the price service so any module can call getTokenUsdPrice().
+	initPriceService(wallet, resolveChainId(session));
 
 	return { sdk, wallet, gasTokenAddress };
 }

@@ -74,10 +74,22 @@ export async function buildBatch(
 				await addSwapCalls(builder, op.params as BatchSwapParams, session, chainId);
 				break;
 			case "stake":
-				await addStakeCalls(builder, op.params as BatchStakeParams, wallet, session, chainId);
+				await addStakeCalls(
+					builder,
+					op.params as BatchStakeParams,
+					wallet,
+					session,
+					chainId
+				);
 				break;
 			case "supply":
-				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet, session, chainId);
+				await addSupplyCalls(
+					builder,
+					op.params as BatchSupplyParams,
+					wallet,
+					session,
+					chainId
+				);
 				break;
 			case "send":
 				await addSendCalls(builder, op.params as BatchSendParams, chainId);
@@ -175,7 +187,11 @@ async function addSupplyCalls(
 	});
 }
 
-async function addSendCalls(builder: TxBuilder, params: BatchSendParams, chainId?: ChainId): Promise<void> {
+async function addSendCalls(
+	builder: TxBuilder,
+	params: BatchSendParams,
+	chainId?: ChainId
+): Promise<void> {
 	const token = resolveToken(params.token, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
 	const validatedTo = validateAddress(params.to);

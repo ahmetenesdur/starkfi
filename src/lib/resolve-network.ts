@@ -25,4 +25,3 @@ export function resolveNetwork(session: Session): Network {
 export function resolveChainId(session: Session): ChainId {
 	return networkToChainId(resolveNetwork(session));
 }
-

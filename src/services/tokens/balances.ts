@@ -10,7 +10,10 @@ export interface TokenBalance {
 
 const RPC_CONCURRENCY_LIMIT = 10;
 
-export async function getBalances(wallet: WalletInterface, chainId?: ChainId): Promise<TokenBalance[]> {
+export async function getBalances(
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<TokenBalance[]> {
 	const tokens = fetchTokens(chainId);
 
 	return runConcurrent(tokens, RPC_CONCURRENCY_LIMIT, async (token) => {

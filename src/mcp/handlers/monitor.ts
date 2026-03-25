@@ -52,14 +52,19 @@ export async function handleAutoRebalanceLending(args: {
 	simulate?: boolean;
 }) {
 	return withWallet(async ({ session, wallet }) => {
-		const result = await autoRebalanceLending(wallet, session, {
-			pool: args.pool,
-			collateralToken: args.collateral_token,
-			debtToken: args.borrow_token,
-			strategy: (args.strategy ?? "auto") as RebalanceStrategy,
-			targetHealthFactor: args.target_health_factor,
-			simulate: args.simulate,
-		}, resolveChainId(session));
+		const result = await autoRebalanceLending(
+			wallet,
+			session,
+			{
+				pool: args.pool,
+				collateralToken: args.collateral_token,
+				debtToken: args.borrow_token,
+				strategy: (args.strategy ?? "auto") as RebalanceStrategy,
+				targetHealthFactor: args.target_health_factor,
+				simulate: args.simulate,
+			},
+			resolveChainId(session)
+		);
 
 		return jsonResult({ success: true, ...result });
 	});

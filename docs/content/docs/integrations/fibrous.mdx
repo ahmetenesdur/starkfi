@@ -16,7 +16,6 @@ description: Optimal swap routing, batch routing, and USD pricing
 | Single Swap  | `getRoute()` → `getCalldata()`           | `trade`                |
 | Multi-Swap   | `getRouteBatch()` → `getCalldataBatch()` | `multi-swap`           |
 | Batch Swap   | `getRoute()` per pair                    | `batch --swap`         |
-| USD Pricing  | `getRoute()` price field                 | `balance`, `portfolio` |
 | Health Check | `checkFibrousHealth()`                   | `status`               |
 
 ## API Endpoints
@@ -59,13 +58,6 @@ When all pairs share the same output token, Fibrous uses the native `routeBatch`
 3. Execute via TxBuilder:  approve₁ → swap₁ → approve₂ → swap₂ → ...
 ```
 
-## USD Pricing
-
-StarkFi uses Fibrous route data for real-time USD price estimation. This powers the `balance`, `portfolio`, and `lend-status` commands:
-
-1. Route 1 unit of the target token → USDC
-2. Read the `inputToken.price` from the route response
-3. USDC and USDT short-circuit to $1.00 (no API call needed)
 
 ## Error Handling
 

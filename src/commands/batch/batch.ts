@@ -128,7 +128,12 @@ Minimum 2 operations required. Each flag can be repeated.`
 				await wallet.ensureReady({ deploy: "if_needed" });
 
 				spinner.text = "Building batch transaction...";
-				const { builder, summary } = await buildBatch(wallet, session, operations, resolveChainId(session));
+				const { builder, summary } = await buildBatch(
+					wallet,
+					session,
+					operations,
+					resolveChainId(session)
+				);
 
 				spinner.stop();
 				console.log("\n  Batch Operations:\n");
