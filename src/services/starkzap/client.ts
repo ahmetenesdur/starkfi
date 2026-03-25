@@ -1,8 +1,7 @@
-import type { Wallet } from "starkzap";
+import type { WalletInterface } from "starkzap";
 import {
 	StarkZap,
-	PrivySigner,
-	ArgentXV050Preset,
+	OnboardStrategy,
 	VesuLendingProvider,
 	type FeeMode,
 } from "starkzap";
@@ -13,11 +12,12 @@ import { resolveNetwork } from "../../lib/resolve-network.js";
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
+	AVNU_PAYMASTER_API_KEY,
 	GAS_TOKEN_ADDRESSES,
 	DEFAULT_GAS_TOKEN,
 } from "./config.js";
 
-export type StarkZapWallet = Wallet;
+export type StarkZapWallet = WalletInterface;
 
 // Resolve fee mode: gasfree (developer pays) vs gasless (user pays in ERC-20).
 export function resolveFeeModeConfig(
@@ -46,7 +46,7 @@ export function resolveFeeModeConfig(
 	};
 }
 
-function patchGaslessMode(wallet: Wallet, gasTokenAddress: string): void {
+function patchGaslessMode(wallet: WalletInterface, gasTokenAddress: string): void {
 	const account = wallet.getAccount();
 
 	const accountInternal = account as unknown as Record<string, unknown>;
@@ -90,6 +90,7 @@ export function createSDK(
 		const defaultUrl = network === "sepolia" ? AVNU_PAYMASTER_SEPOLIA_URL : AVNU_PAYMASTER_URL;
 		config.paymaster = {
 			nodeUrl: paymasterUrl ?? defaultUrl,
+			...(AVNU_PAYMASTER_API_KEY ? { apiKey: AVNU_PAYMASTER_API_KEY } : {}),
 			...(paymasterHeaders ? { headers: paymasterHeaders } : {}),
 		};
 	}
@@ -97,22 +98,25 @@ export function createSDK(
 	return new StarkZap(config);
 }
 
-export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wallet> {
+export async function connectWallet(sdk: StarkZap, session: Session): Promise<WalletInterface> {
 	const configService = ConfigService.getInstance();
 	const gasfreeMode = configService.get("gasfreeMode") === true;
 	const gasToken = configService.get("gasToken") as string | undefined;
 	const { feeMode, gasTokenAddress } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
-	const signer = new PrivySigner({
-		walletId: session.walletId,
-		publicKey: session.publicKey,
-		serverUrl: session.serverUrl,
-		headers: { Authorization: `Bearer ${session.token}` },
-	});
-
-	const wallet = await sdk.connectWallet({
-		account: { signer, accountClass: ArgentXV050Preset },
+	const { wallet } = await sdk.onboard({
+		strategy: OnboardStrategy.Privy,
+		privy: {
+			resolve: async () => ({
+				walletId: session.walletId,
+				publicKey: session.publicKey,
+				serverUrl: session.serverUrl,
+				headers: { Authorization: `Bearer ${session.token}` },
+			}),
+		},
+		accountPreset: "argentXV050",
 		feeMode,
+		deploy: "never",
 	});
 
 	if (!gasfreeMode && gasTokenAddress) {
@@ -127,7 +131,7 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 
 export interface SDKAndWallet {
 	sdk: StarkZap;
-	wallet: Wallet;
+	wallet: WalletInterface;
 	gasTokenAddress: string | undefined;
 }
 

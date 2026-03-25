@@ -1,11 +1,11 @@
-import type { StarkZap, Wallet } from "starkzap";
+import type { StarkZap, WalletInterface } from "starkzap";
 import { requireSession, type Session } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 
 export interface WalletContext {
 	session: Session;
 	sdk: StarkZap;
-	wallet: Wallet;
+	wallet: WalletInterface;
 }
 
 export async function withWallet<T>(fn: (ctx: WalletContext) => Promise<T>): Promise<T> {

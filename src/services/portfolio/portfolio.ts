@@ -1,4 +1,4 @@
-import type { StarkZap, Wallet, ChainId } from "starkzap";
+import type { StarkZap, WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { getBalances } from "../tokens/balances.js";
 import { getTokenUsdPrice } from "../fibrous/route.js";
@@ -46,7 +46,7 @@ export interface PortfolioData {
 // Fetch complete DeFi portfolio: balances (with USD), staking, and lending.
 export async function getPortfolio(
 	sdk: StarkZap,
-	wallet: Wallet,
+	wallet: WalletInterface,
 	session: Session
 ): Promise<PortfolioData> {
 	const chainId = resolveChainId(session);
@@ -75,7 +75,7 @@ export async function getPortfolio(
 
 const USD_PRICE_CONCURRENCY = 5;
 
-async function fetchBalancesWithUsd(wallet: Wallet, chainId?: ChainId): Promise<PortfolioBalance[]> {
+async function fetchBalancesWithUsd(wallet: WalletInterface, chainId?: ChainId): Promise<PortfolioBalance[]> {
 	const rawBalances = await getBalances(wallet, chainId);
 
 	const results = await runConcurrent(rawBalances, USD_PRICE_CONCURRENCY, async (bal) => {
@@ -101,7 +101,7 @@ async function fetchBalancesWithUsd(wallet: Wallet, chainId?: ChainId): Promise<
 
 async function fetchStaking(
 	sdk: StarkZap,
-	wallet: Wallet,
+	wallet: WalletInterface,
 	session: Session
 ): Promise<PortfolioStaking[]> {
 	const overview = await getStakingOverview(sdk, wallet, resolveNetwork(session), session.address);
@@ -143,7 +143,7 @@ function parseNumericPart(formatted: string): number {
 	return match ? parseFloat(match[1]) : 0;
 }
 
-async function fetchLending(wallet: Wallet, chainId?: ChainId): Promise<PortfolioLending[]> {
+async function fetchLending(wallet: WalletInterface, chainId?: ChainId): Promise<PortfolioLending[]> {
 	const pools = await getVesuPools(wallet as StarkZapWallet);
 	const results: PortfolioLending[] = [];
 

@@ -13,3 +13,5 @@ export const GAS_TOKEN_ADDRESSES: Record<string, string> = {
 };
 
 export const GASLESS_SUPPORTED_TOKENS = Object.keys(GAS_TOKEN_ADDRESSES);
+
+export const AVNU_PAYMASTER_API_KEY = process.env.AVNU_PAYMASTER_API_KEY;

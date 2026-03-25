@@ -1,5 +1,5 @@
 import { Amount, fromAddress } from "starkzap";
-import type { TxBuilder, Wallet, ChainId } from "starkzap";
+import type { TxBuilder, WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { initSDKAndWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
@@ -53,7 +53,7 @@ export interface BatchOperation {
 }
 
 export async function buildBatch(
-	wallet: Wallet,
+	wallet: WalletInterface,
 	session: Session,
 	operations: BatchOperation[],
 	chainId?: ChainId
@@ -123,7 +123,7 @@ async function addSwapCalls(
 async function addStakeCalls(
 	builder: TxBuilder,
 	params: BatchStakeParams,
-	wallet: Wallet,
+	wallet: WalletInterface,
 	session: Session,
 	chainId?: ChainId
 ): Promise<void> {
@@ -160,7 +160,7 @@ async function addStakeCalls(
 async function addSupplyCalls(
 	builder: TxBuilder,
 	params: BatchSupplyParams,
-	wallet: Wallet,
+	wallet: WalletInterface,
 	_session: Session,
 	chainId?: ChainId
 ): Promise<void> {

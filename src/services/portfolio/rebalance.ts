@@ -1,5 +1,5 @@
 import { Amount, fromAddress } from "starkzap";
-import type { Wallet, ChainId } from "starkzap";
+import type { WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import type { PortfolioData } from "./portfolio.js";
@@ -172,7 +172,7 @@ export async function calculateRebalancePlan(
 }
 
 export async function executeRebalance(
-	wallet: Wallet,
+	wallet: WalletInterface,
 	session: Session,
 	plan: RebalancePlan,
 	opts?: { slippage?: number; simulate?: boolean }

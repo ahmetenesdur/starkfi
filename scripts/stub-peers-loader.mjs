@@ -11,6 +11,7 @@ const STUBBED = new Set([
 	"@hyperlane-xyz/sdk",
 	"@hyperlane-xyz/registry",
 	"@hyperlane-xyz/utils",
+	"@solana/web3.js",
 ]);
 
 /**

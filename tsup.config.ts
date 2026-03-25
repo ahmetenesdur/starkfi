@@ -21,6 +21,7 @@ const stubOptionalPeers = {
 			/^@hyperlane-xyz\/sdk$/,
 			/^@hyperlane-xyz\/registry$/,
 			/^@hyperlane-xyz\/utils$/,
+			/^@solana\/web3\.js$/,
 		];
 
 		for (const filter of stubPackages) {
