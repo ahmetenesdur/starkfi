@@ -1,19 +1,21 @@
 import type { Command } from "commander";
-import { Amount, fromAddress } from "starkzap";
+import { Amount } from "starkzap";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import {
-	getCalldataBatch,
-	getRouteBatch,
-	type BatchSwapPair,
-} from "../../services/fibrous/route.js";
-import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { createSpinner, formatTable, formatError } from "../../lib/format.js";
+import { createSpinner, formatError, formatTable } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import {
+	resolveProviders,
+	getAllQuotes,
+	getBestQuote,
+	resolveProvider,
+	toSlippageBps,
+	type SwapProviderId,
+} from "../../services/swap/index.js";
 
 // Parse "100 USDC>ETH, 50 USDC>STRK" into structured pairs.
 function parsePairs(input: string): { amount: string; fromToken: string; toToken: string }[] {
@@ -48,114 +50,107 @@ function parsePairs(input: string): { amount: string; fromToken: string; toToken
 export function registerMultiSwapCommand(program: Command): void {
 	program
 		.command("multi-swap")
-		.description("Swap multiple token pairs in one transaction (max 3, via Fibrous batch)")
+		.description("Swap multiple token pairs in one transaction")
 		.argument("<pairs>", 'Swap pairs (e.g. "100 USDC>ETH, 50 USDC>STRK")')
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
+		.option(
+			"-p, --provider <name>",
+			"Swap provider (defaults to Fibrous). Valid: fibrous, avnu, ekubo, auto"
+		)
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
-			'\nExamples:\n  $ starkfi multi-swap "100 USDC>ETH, 50 USDC>STRK"\n  $ starkfi multi-swap "0.1 ETH>USDC, 0.05 ETH>STRK" --slippage 0.5\n  $ starkfi multi-swap "100 USDC>ETH, 50 STRK>ETH" --simulate\n\nPair format: "<amount> <from>><to>" — separate pairs with commas.'
+			'\nExamples:\n  $ starkfi multi-swap "100 USDC>ETH, 50 USDC>STRK"\n  $ starkfi multi-swap "0.1 ETH>USDC, 0.05 ETH>STRK" --provider avnu\n  $ starkfi multi-swap "100 USDC>ETH, 50 STRK>ETH" --simulate\n\nPair format: "<amount> <from>><to>" — separate pairs with commas.'
 		)
 		.action(async (pairsInput: string, opts) => {
 			const spinner = createSpinner("Parsing swap pairs...").start();
 
 			try {
 				const parsed = parsePairs(pairsInput);
-
 				const session = requireSession();
 				const { wallet } = await initSDKAndWallet(session);
 				const chainId = resolveChainId(session);
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
-				spinner.text = "Resolving tokens...";
-				const pairs: BatchSwapPair[] = await Promise.all(
+				const slippage = parseFloat(opts.slippage);
+				const providerChoice = opts.provider as SwapProviderId | "auto" | undefined;
+				const providers = resolveProviders(wallet, providerChoice);
+
+				spinner.text = "Fetching quotes for each pair...";
+
+				const pairResults = await Promise.all(
 					parsed.map(async (p) => {
 						const tokenIn = resolveToken(p.fromToken, chainId);
 						const tokenOut = resolveToken(p.toToken, chainId);
-						const parsedAmount = Amount.parse(p.amount, tokenIn);
-						return {
+						const amountInRaw = Amount.parse(p.amount, tokenIn).toBase();
+
+						const quotes = await getAllQuotes(providers, {
 							tokenIn,
 							tokenOut,
-							amount: parsedAmount.toBase().toString(),
-						};
+							amountInRaw,
+							slippageBps: toSlippageBps(slippage),
+						});
+
+						return { tokenIn, tokenOut, amountInRaw, best: getBestQuote(quotes) };
 					})
 				);
 
-				spinner.text = "Finding optimal routes...";
-				const routes = await getRouteBatch(pairs);
-
 				spinner.stop();
-				console.log();
 				console.log(
-					formatTable(
-						["#", "Input", "Output", "Route"],
-						routes.map((r, i) => {
-							const outDec = r.outputToken?.decimals ?? pairs[i].tokenOut.decimals;
-							const outSym = r.outputToken?.symbol ?? pairs[i].tokenOut.symbol;
-							const outAmount = Amount.fromRaw(BigInt(r.outputAmount), {
-								...pairs[i].tokenOut,
-								decimals: outDec,
-							}).toUnit();
-							return [
+					"\n" +
+						formatTable(
+							["#", "Input", "Output", "Provider"],
+							pairResults.map((r, i) => [
 								`${i + 1}`,
 								`${parsed[i].amount} ${parsed[i].fromToken}`,
-								`~${outAmount} ${outSym}`,
-								`${r.route?.length ?? 0} step(s)`,
-							];
-						})
-					)
+								`~${r.best.amountOutFormatted} ${r.tokenOut.symbol}`,
+								r.best.provider.toUpperCase(),
+							])
+						)
 				);
 				console.log();
 
-				spinner.start();
-				spinner.text = "Generating calldata...";
-				const calldataResults = await getCalldataBatch(
-					pairs,
-					parseFloat(opts.slippage),
-					session.address
-				);
-
+				const execSpinner = createSpinner("Building multi-swap transaction...").start();
 				const builder = wallet.tx();
-				for (let i = 0; i < pairs.length; i++) {
-					const pair = pairs[i];
-					const cd = calldataResults[i];
-					const parsedAmount = Amount.parse(parsed[i].amount, pair.tokenIn);
 
-					builder
-						.approve(pair.tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount)
-						.add({
-							contractAddress: FIBROUS_ROUTER_ADDRESS,
-							entrypoint: "swap",
-							calldata: cd.calldata,
-						});
+				for (const result of pairResults) {
+					const provider = resolveProvider(providers, result.best.provider);
+					await provider.buildSwapTx(builder, {
+						tokenIn: result.tokenIn,
+						tokenOut: result.tokenOut,
+						amountInRaw: result.amountInRaw,
+						walletAddress: session.address,
+						slippage,
+					});
 				}
 
 				if (opts.simulate) {
-					spinner.text = "Simulating transaction...";
+					execSpinner.text = "Simulating transaction...";
 					const sim = await simulateTransaction(builder, chainId);
-
-					handleSimulationResult(sim, spinner, opts, {
-						pairs: pairs.length,
-					});
+					handleSimulationResult(sim, execSpinner, opts, { pairs: parsed.length });
 					return;
 				}
 
-				spinner.text = "Executing multi-swap...";
+				execSpinner.text = "Executing multi-swap...";
 				const tx = await builder.send();
 
-				spinner.text = "Waiting for confirmation...";
+				execSpinner.text = "Waiting for confirmation...";
 				await tx.wait();
 
-				spinner.succeed("Multi-swap confirmed");
-				const txResult = {
-					pairs: pairs.length,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				};
-
-				outputResult(txResult, opts);
+				execSpinner.succeed("Multi-swap confirmed");
+				outputResult(
+					{
+						pairs: parsed.length,
+						providers: [
+							...new Set(pairResults.map((r) => r.best.provider.toUpperCase())),
+						].join(", "),
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Multi-swap failed");
 				console.error(formatError(error));

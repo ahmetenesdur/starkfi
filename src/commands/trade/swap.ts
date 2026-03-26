@@ -1,31 +1,42 @@
 import type { Command } from "commander";
+import { Amount } from "starkzap";
 import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import { getRoute, getCalldata } from "../../services/fibrous/route.js";
-import { createSpinner, formatError } from "../../lib/format.js";
-import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
+import { createSpinner, formatError, formatTable } from "../../lib/format.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { Amount, fromAddress } from "starkzap";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import {
+	resolveProviders,
+	getAllQuotes,
+	getBestQuote,
+	resolveProvider,
+	calculateSavings,
+	toSlippageBps,
+	type SwapProviderId,
+} from "../../services/swap/index.js";
 
 export function registerSwapCommand(program: Command): void {
 	program
 		.command("trade")
-		.description("Swap tokens using Fibrous aggregation")
+		.description("Swap tokens via Fibrous (default), AVNU, Ekubo, or auto")
 		.argument("<amount>", "Amount to swap")
 		.argument("<from>", "Source token symbol")
 		.argument("<to>", "Destination token symbol")
 		.option("-s, --slippage <percent>", "Slippage tolerance %", "1")
+		.option(
+			"-p, --provider <name>",
+			"Swap provider (defaults to Fibrous). Valid: fibrous, avnu, ekubo, auto"
+		)
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi trade 0.1 ETH USDC\n  $ starkfi trade 100 USDC STRK --slippage 0.5\n  $ starkfi trade 0.5 ETH DAI --simulate"
+			"\nExamples:\n  $ starkfi trade 0.1 ETH USDC\n  $ starkfi trade 100 USDC STRK --provider avnu\n  $ starkfi trade 0.5 ETH DAI --simulate"
 		)
 		.action(async (amount: string, from: string, to: string, opts) => {
-			const spinner = createSpinner("Finding best route...").start();
+			const spinner = createSpinner("Fetching swap quote...").start();
 
 			try {
 				const session = requireSession();
@@ -36,69 +47,100 @@ export function registerSwapCommand(program: Command): void {
 
 				const tokenIn = resolveToken(from, chainId);
 				const tokenOut = resolveToken(to, chainId);
-
-				const parsedAmount = Amount.parse(amount, tokenIn);
-				const rawAmount = parsedAmount.toBase().toString();
+				const amountInRaw = Amount.parse(amount, tokenIn).toBase();
 				const slippage = parseFloat(opts.slippage);
+				const providerChoice = opts.provider as SwapProviderId | "auto" | undefined;
 
-				spinner.text = "Calculating route...";
-				const route = await getRoute(tokenIn, tokenOut, rawAmount);
+				const providers = resolveProviders(wallet, providerChoice);
 
-				const outputAmount = Amount.fromRaw(route.outputAmount, tokenOut);
-				const outputFormatted = outputAmount.toUnit();
-
-				console.log(
-					`\n  Route: ${amount} ${tokenIn.symbol} → ~${outputFormatted} ${tokenOut.symbol}`
-				);
-				if (route.estimatedGasUsedInUsd) {
-					console.log(`  Est. gas: ~$${route.estimatedGasUsedInUsd.toFixed(4)}`);
-				}
-				console.log(`  Slippage: ${slippage}%\n`);
-
-				spinner.text = "Generating calldata...";
-				const calldataResponse = await getCalldata(
+				spinner.text = "Fetching quotes...";
+				const quotes = await getAllQuotes(providers, {
 					tokenIn,
 					tokenOut,
-					rawAmount,
-					slippage,
-					session.address
-				);
+					amountInRaw,
+					slippageBps: toSlippageBps(slippage),
+				});
 
-				const builder = wallet
-					.tx()
-					.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount)
-					.add({
-						contractAddress: FIBROUS_ROUTER_ADDRESS,
-						entrypoint: "swap",
-						calldata: calldataResponse.calldata,
-					});
+				const best = getBestQuote(quotes);
+
+				// Display comparison table when multiple quotes are available.
+				if (quotes.length > 1) {
+					const savings = calculateSavings(
+						quotes[0].amountOutRaw,
+						quotes[quotes.length - 1].amountOutRaw
+					);
+
+					spinner.stop();
+					console.log(
+						"\n" +
+							formatTable(
+								["Provider", "Output", "Status"],
+								quotes.map((q) => [
+									`${q.isBest ? "✓ " : "  "}${q.provider.toUpperCase()}`,
+									`${q.amountOutFormatted} ${tokenOut.symbol}`,
+									q.isBest ? "Best" : "",
+								])
+							)
+					);
+
+					if (savings) {
+						console.log(`\n  Savings vs worst: ${savings}`);
+					}
+					console.log();
+				} else {
+					spinner.stop();
+					console.log(
+						`\n  Route: ${amount} ${tokenIn.symbol} → ~${best.amountOutFormatted} ${tokenOut.symbol}`
+					);
+
+					console.log(`  Slippage: ${slippage}%\n`);
+				}
+
+				// Build the swap transaction via the winning provider.
+				const execSpinner = createSpinner(
+					`Executing via ${best.provider.toUpperCase()}...`
+				).start();
+
+				const provider = resolveProvider(providers, best.provider);
+				const builder = wallet.tx();
+
+				await provider.buildSwapTx(builder, {
+					tokenIn,
+					tokenOut,
+					amountInRaw,
+					walletAddress: session.address,
+					slippage,
+				});
 
 				if (opts.simulate) {
-					spinner.text = "Simulating transaction...";
+					execSpinner.text = "Simulating transaction...";
 					const sim = await simulateTransaction(builder, chainId);
 
-					handleSimulationResult(sim, spinner, opts, {
+					handleSimulationResult(sim, execSpinner, opts, {
 						input: `${amount} ${tokenIn.symbol}`,
-						expectedOutput: `~${outputFormatted} ${tokenOut.symbol}`,
+						expectedOutput: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+						provider: best.provider.toUpperCase(),
 					});
 					return;
 				}
 
-				spinner.text = "Executing swap...";
+				execSpinner.text = "Executing swap...";
 				const tx = await builder.send();
 
-				spinner.text = "Waiting for confirmation...";
+				execSpinner.text = "Waiting for confirmation...";
 				await tx.wait();
 
-				spinner.succeed("Swap confirmed");
-				const txResult = {
-					input: `${amount} ${tokenIn.symbol}`,
-					output: `~${outputFormatted} ${tokenOut.symbol}`,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				};
-
-				outputResult(txResult, opts);
+				execSpinner.succeed("Swap confirmed");
+				outputResult(
+					{
+						input: `${amount} ${tokenIn.symbol}`,
+						output: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+						provider: best.provider.toUpperCase(),
+						txHash: tx.hash,
+						explorer: tx.explorerUrl,
+					},
+					opts
+				);
 			} catch (error) {
 				spinner.fail("Swap failed");
 				console.error(formatError(error));
