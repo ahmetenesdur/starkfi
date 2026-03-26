@@ -22,7 +22,6 @@ export function fetchTokens(chainId?: ChainId): Token[] {
 	return Array.from(getTokenMap(chainId).values());
 }
 
-// Resolve a token by symbol (case-insensitive, O(1) lookup).
 export function resolveToken(symbol: string, chainId?: ChainId): Token {
 	const token = getTokenMap(chainId).get(symbol.toUpperCase());
 
