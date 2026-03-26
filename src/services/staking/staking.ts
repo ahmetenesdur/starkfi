@@ -43,7 +43,6 @@ export interface StakingOverview {
 	positions: StakingOverviewPosition[];
 }
 
-// Find a pool matching a specific token symbol from a validator's pools.
 export function resolvePoolForToken(pools: PoolInfo[], tokenSymbol: string): PoolInfo {
 	const upper = tokenSymbol.toUpperCase();
 	const match = pools.find((p) => p.tokenSymbol.toUpperCase() === upper);
@@ -77,7 +76,6 @@ export async function getValidatorPools(
 	);
 }
 
-// Smart stake: auto-detects enter vs. add_to_delegation_pool.
 export async function stake(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -110,7 +108,6 @@ export async function claimRewards(wallet: StarkZapWallet, poolAddress: string):
 	};
 }
 
-// Compound: claim rewards and re-stake them atomically in a single tx.
 export async function compoundRewards(
 	wallet: StarkZapWallet,
 	poolAddress: string
@@ -138,7 +135,6 @@ export async function compoundRewards(
 	};
 }
 
-// Step 1 of 2-step exit: declare intent, then wait for cooldown.
 export async function exitPoolIntent(
 	wallet: StarkZapWallet,
 	poolAddress: string,
@@ -156,7 +152,6 @@ export async function exitPoolIntent(
 	};
 }
 
-// Step 2 of 2-step exit: complete withdrawal after cooldown.
 export async function exitPool(wallet: StarkZapWallet, poolAddress: string): Promise<TxResult> {
 	const position = await wallet.getPoolPosition(fromAddress(poolAddress));
 
@@ -204,8 +199,6 @@ export async function getPosition(
 	};
 }
 
-// Scan all known validators & pools to build a consolidated staking dashboard.
-// If targetValidator is provided, it will strictly scan that validator's pools.
 export async function getStakingOverview(
 	sdk: StarkZap,
 	wallet: StarkZapWallet,
