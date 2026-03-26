@@ -1,10 +1,16 @@
 import type { WalletInterface } from "starkzap";
-import { StarkZap, OnboardStrategy, VesuLendingProvider, type FeeMode } from "starkzap";
+import {
+	StarkZap,
+	OnboardStrategy,
+	VesuLendingProvider,
+	AvnuSwapProvider,
+	EkuboSwapProvider,
+	type FeeMode,
+} from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
-import { resolveNetwork } from "../../lib/resolve-network.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
+import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 import { initPriceService } from "../price/price.js";
 import {
 	AVNU_PAYMASTER_URL,
@@ -16,7 +22,6 @@ import {
 
 export type StarkZapWallet = WalletInterface;
 
-// Resolve fee mode: gasfree (developer pays) vs gasless (user pays in ERC-20).
 export function resolveFeeModeConfig(
 	gasfreeMode: boolean,
 	gasToken: string | undefined
@@ -120,8 +125,11 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 		patchGaslessMode(wallet, gasTokenAddress);
 	}
 
-	// Register Vesu as the default lending provider.
 	wallet.lending().registerProvider(new VesuLendingProvider(), true);
+
+	wallet.registerSwapProvider(new AvnuSwapProvider());
+	wallet.registerSwapProvider(new EkuboSwapProvider());
+	wallet.setDefaultSwapProvider("avnu");
 
 	return wallet;
 }
@@ -153,7 +161,6 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 	const sdk = createSDK(network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
 	const wallet = await connectWallet(sdk, session);
 
-	// Initialise the price service so any module can call getTokenUsdPrice().
 	initPriceService(wallet, resolveChainId(session));
 
 	return { sdk, wallet, gasTokenAddress };
