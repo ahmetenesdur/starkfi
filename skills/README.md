@@ -9,7 +9,7 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [authenticate-wallet](./authenticate-wallet/SKILL.md) | auth        | Email OTP login, session management, wallet deploy                |
 | [balance](./balance/SKILL.md)                         | wallet-data | Check STRK, ETH, and ERC-20 token balances                        |
 | [send](./send/SKILL.md)                               | transaction | Transfer tokens to a Starknet address                             |
-| [trade](./trade/SKILL.md)                             | transaction | Swap tokens via Fibrous aggregation                               |
+| [trade](./trade/SKILL.md)                             | transaction | Swap tokens via Fibrous (default), AVNU, or Ekubo         |
 | [multi-swap](./multi-swap/SKILL.md)                   | transaction | Multiple swaps in one transaction (up to 3)                       |
 | [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send in one multicall             |
 | [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC) |

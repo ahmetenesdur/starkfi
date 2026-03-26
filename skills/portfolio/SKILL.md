@@ -30,7 +30,7 @@ Display a comprehensive DeFi portfolio dashboard aggregating token balances, sta
 
 1. Use `portfolio` as the FIRST command when the user asks "what do I have?" or wants an overall assessment.
 2. The `portfolio` command is read-only — it never modifies any on-chain state.
-3. USD prices are sourced from Fibrous aggregation and may have slight variations.
+3. USD prices are sourced from the StarkZap SDK and may have slight variations.
 4. For `portfolio-rebalance`, ALWAYS use `--simulate` first to preview the plan before executing.
 5. Target allocations must sum to **100%**. If they don't, inform the user and ask them to adjust.
 6. After rebalancing, run `portfolio` again to confirm the new allocation.
@@ -134,7 +134,7 @@ npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --sli
 | `Partial failure`      | Some sections may show errors while others succeed. The portfolio uses fault-tolerant aggregation. |
 | `Network error`        | Retry once. Use `config` to set custom RPC.                                                        |
 | `Invalid allocation`   | Ensure target percentages sum to 100 and token symbols are valid.                                  |
-| `Rebalance failed`     | Check balances, ensure tokens have sufficient liquidity on Fibrous.                                |
+| `Rebalance failed`     | Check balances, ensure tokens have sufficient liquidity on supported providers. |
 | `Insufficient balance` | Not enough tokens to execute swaps — check `balance` first.                                        |
 
 ## Related Skills

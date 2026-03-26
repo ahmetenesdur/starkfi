@@ -23,11 +23,12 @@ starkfi trade <amount> <fromToken> <toToken> [flags]
 
 **Flags:**
 
-| Flag                       | Default | Description                     |
-| -------------------------- | ------- | ------------------------------- |
-| `-s, --slippage <percent>` | `1`     | Maximum slippage tolerance (%)  |
-| `--simulate`               | `false` | Estimate fees without executing |
-| `--json`                   | `false` | Output raw JSON                 |
+| Flag                       | Default    | Description                                               |
+| -------------------------- | ---------- | --------------------------------------------------------- |
+| `-p, --provider <name>`    | `fibrous`  | Swap provider: `fibrous`, `avnu`, `ekubo`, or `auto`      |
+| `-s, --slippage <percent>` | `1`        | Maximum slippage tolerance (%)                             |
+| `--simulate`               | `false`    | Estimate fees without executing                            |
+| `--json`                   | `false`    | Output raw JSON                                            |
 
 **Examples:**
 
@@ -54,11 +55,12 @@ starkfi multi-swap "<amount> <from>><to>, <amount> <from>><to>"
 
 **Flags:**
 
-| Flag                       | Default | Description                     |
-| -------------------------- | ------- | ------------------------------- |
-| `-s, --slippage <percent>` | `1`     | Maximum slippage tolerance (%)  |
-| `--simulate`               | `false` | Estimate fees without executing |
-| `--json`                   | `false` | Output raw JSON                 |
+| Flag                       | Default    | Description                                               |
+| -------------------------- | ---------- | --------------------------------------------------------- |
+| `-p, --provider <name>`    | `fibrous`  | Swap provider: `fibrous`, `avnu`, `ekubo`, or `auto`      |
+| `-s, --slippage <percent>` | `1`        | Maximum slippage tolerance (%)                             |
+| `--simulate`               | `false`    | Estimate fees without executing                            |
+| `--json`                   | `false`    | Output raw JSON                                            |
 
 **Examples:**
 

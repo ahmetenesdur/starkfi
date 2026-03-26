@@ -59,21 +59,23 @@ _No input parameters required._
 
 #### `get_swap_quote`
 
-Calculates optimal routing, expected output, and slippage prior to execution. Always call this **before** `swap_tokens` so the user can review the expected output.
+Calculates swap routing via Fibrous (default). Returns the expected output amount and quote details. Optionally specify a different provider or use `auto` to race all providers for best price. Always call this **before** `swap_tokens` so the user can review the expected output.
 
 | Parameter    | Type   | Required | Description                                          |
 | ------------ | ------ | -------- | ---------------------------------------------------- |
 | `amount`     | string | **Yes**  | Amount to swap (e.g. `0.1`, `100`)                   |
 | `from_token` | string | **Yes**  | Source token symbol to sell (e.g. `ETH`, `USDC`)     |
 | `to_token`   | string | **Yes**  | Destination token symbol to buy (e.g. `STRK`, `DAI`) |
+| `provider`   | string | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all). |
 
 #### `get_multi_swap_quote`
 
-Calculates optimal batch routing for 2-3 swap pairs at once. Uses Fibrous `routeBatch` API when all pairs share the same output token, otherwise falls back to parallel individual routes.
+Calculates routing for 2-3 swap pairs at once. Each pair uses Fibrous by default, or specify a different provider.
 
-| Parameter | Type                                                    | Required | Description                     |
-| --------- | ------------------------------------------------------- | -------- | ------------------------------- |
-| `swaps`   | array of `{ amount, from_token, to_token }` (2-3 items) | **Yes**  | Array of swap pairs (2-3 items) |
+| Parameter  | Type                                                    | Required | Description                     |
+| ---------- | ------------------------------------------------------- | -------- | ------------------------------- |
+| `swaps`    | array of `{ amount, from_token, to_token }` (2-3 items) | **Yes**  | Array of swap pairs (2-3 items) |
+| `provider` | string                                                  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all per pair). |
 
 #### `list_validators`
 
@@ -137,7 +139,7 @@ _No input parameters required._
 
 #### `swap_tokens`
 
-Broadcasts an aggregated token swap transaction via the Fibrous router. Only call this **after** showing the user a quote via `get_swap_quote`.
+Broadcasts a token swap transaction via Fibrous (default) or a specified provider. Only call this **after** showing the user a quote via `get_swap_quote`.
 
 | Parameter    | Type    | Required | Description                                               |
 | ------------ | ------- | -------- | --------------------------------------------------------- |
@@ -145,6 +147,7 @@ Broadcasts an aggregated token swap transaction via the Fibrous router. Only cal
 | `from_token` | string  | **Yes**  | Source token symbol to sell (e.g. `ETH`, `STRK`)          |
 | `to_token`   | string  | **Yes**  | Destination token symbol to buy (e.g. `USDC`, `DAI`)      |
 | `slippage`   | number  | No       | Slippage tolerance in % (default: `1`)                    |
+| `provider`   | string  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all). |
 | `simulate`   | boolean | No       | Set `true` to estimate fees without sending a transaction |
 
 #### `send_tokens`
@@ -160,12 +163,13 @@ Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets
 
 #### `multi_swap`
 
-Executes 2-3 token swaps in a single transaction via Fibrous batch routing. Call `get_multi_swap_quote` first to preview.
+Executes 2-3 token swaps in a single transaction. Each pair uses Fibrous by default. Call `get_multi_swap_quote` first to preview.
 
 | Parameter  | Type                                                    | Required | Description                                   |
 | ---------- | ------------------------------------------------------- | -------- | --------------------------------------------- |
 | `swaps`    | array of `{ amount, from_token, to_token }` (2-3 items) | **Yes**  | Array of swap pairs (2-3 items)               |
 | `slippage` | number                                                  | No       | Slippage tolerance in % (default: `1`)        |
+| `provider` | string                                                  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all per pair). |
 | `simulate` | boolean                                                 | No       | Set `true` to estimate fees without executing |
 
 #### `batch_execute`
@@ -299,7 +303,7 @@ Automatically adjusts a lending position to restore health factor via debt repay
 
 #### `rebalance_portfolio`
 
-Rebalances a portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction via Fibrous routing.
+Rebalances a portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction via Fibrous (default).
 
 | Parameter   | Type    | Required | Description                                                       |
 | ----------- | ------- | -------- | ----------------------------------------------------------------- |
@@ -329,4 +333,4 @@ Views and modifies global CLI behavior: RPC routing, network selection, and Gas 
 3. **Confirm with the user** — Never execute a transactional tool without explicit user confirmation
 4. **Use `get_auth_status` first** — Verify the session is active before attempting any wallet operations
 5. **Check `get_stake_status` and `get_lending_position`** — Query existing positions before staking/lending to avoid duplicate operations
-6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only (Fibrous API)
+6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only

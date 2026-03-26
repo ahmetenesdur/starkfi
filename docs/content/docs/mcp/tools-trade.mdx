@@ -22,11 +22,12 @@ Always follow the **quote → confirm → execute** pattern:
 
 Get a price quote for a swap without executing. **Always call this before `swap_tokens`** so the user can review the expected output.
 
-| Param        | Type   | Required | Description                                    |
-| ------------ | ------ | -------- | ---------------------------------------------- |
-| `amount`     | string | Yes      | Amount to swap (e.g., `0.1`, `100`)            |
-| `from_token` | string | Yes      | Source token symbol (e.g., `ETH`, `USDC`)      |
-| `to_token`   | string | Yes      | Destination token symbol (e.g., `STRK`, `DAI`) |
+| Param        | Type   | Required | Description                                                    |
+| ------------ | ------ | -------- | -------------------------------------------------------------- |
+| `amount`     | string | Yes      | Amount to swap (e.g., `0.1`, `100`)                            |
+| `from_token` | string | Yes      | Source token symbol (e.g., `ETH`, `USDC`)                      |
+| `to_token`   | string | Yes      | Destination token symbol (e.g., `STRK`, `DAI`)                 |
+| `provider`   | string | No       | `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all)     |
 
 This is a **read-only** tool — safe to call without user confirmation. Returns expected output amount, estimated gas cost, and route details.
 
@@ -36,13 +37,14 @@ This is a **read-only** tool — safe to call without user confirmation. Returns
 
 Execute a token swap on Starknet using Fibrous DEX aggregation.
 
-| Param        | Type    | Required | Description                                    |
-| ------------ | ------- | -------- | ---------------------------------------------- |
-| `amount`     | string  | Yes      | Amount to swap (e.g., `0.1`, `100`)            |
-| `from_token` | string  | Yes      | Source token to sell (e.g., `ETH`, `STRK`)     |
-| `to_token`   | string  | Yes      | Destination token to buy (e.g., `USDC`, `DAI`) |
-| `slippage`   | number  | No       | Slippage tolerance in % (default: `1`)         |
-| `simulate`   | boolean | No       | Set `true` to estimate fees without executing  |
+| Param        | Type    | Required | Description                                                    |
+| ------------ | ------- | -------- | -------------------------------------------------------------- |
+| `amount`     | string  | Yes      | Amount to swap (e.g., `0.1`, `100`)                            |
+| `from_token` | string  | Yes      | Source token to sell (e.g., `ETH`, `STRK`)                     |
+| `to_token`   | string  | Yes      | Destination token to buy (e.g., `USDC`, `DAI`)                 |
+| `slippage`   | number  | No       | Slippage tolerance in % (default: `1`)                         |
+| `simulate`   | boolean | No       | Set `true` to estimate fees without executing                  |
+| `provider`   | string  | No       | `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all)     |
 
 > **Important:** Always call `get_swap_quote` first and confirm with the user before executing.
 
@@ -52,9 +54,10 @@ Execute a token swap on Starknet using Fibrous DEX aggregation.
 
 Get quotes for 2–3 swap pairs at once using Fibrous batch routing.
 
-| Param   | Type  | Required | Description               |
-| ------- | ----- | -------- | ------------------------- |
-| `swaps` | array | Yes      | Array of 2–3 swap objects |
+| Param      | Type   | Required | Description                                                    |
+| ---------- | ------ | -------- | -------------------------------------------------------------- |
+| `swaps`    | array  | Yes      | Array of 2–3 swap objects                                      |
+| `provider` | string | No       | `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all)     |
 
 Each swap object: `{ amount, from_token, to_token }`
 
@@ -66,11 +69,12 @@ This is a **read-only** tool — safe to call without user confirmation.
 
 Execute 2–3 swaps in a single multicall transaction. **Call `get_multi_swap_quote` first** to preview.
 
-| Param      | Type    | Required | Description                                   |
-| ---------- | ------- | -------- | --------------------------------------------- |
-| `swaps`    | array   | Yes      | Array of 2–3 swap objects                     |
-| `slippage` | number  | No       | Slippage tolerance in % (default: `1`)        |
-| `simulate` | boolean | No       | Set `true` to estimate fees without executing |
+| Param      | Type    | Required | Description                                                    |
+| ---------- | ------- | -------- | -------------------------------------------------------------- |
+| `swaps`    | array   | Yes      | Array of 2–3 swap objects                                      |
+| `slippage` | number  | No       | Slippage tolerance in % (default: `1`)                         |
+| `simulate` | boolean | No       | Set `true` to estimate fees without executing                  |
+| `provider` | string  | No       | `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all)     |
 
 Each swap object: `{ amount, from_token, to_token }`
 

@@ -1,6 +1,6 @@
 ---
 name: multi-swap
-description: Execute multiple token swaps in a single Starknet transaction using Fibrous aggregation. Supports 2-3 swap pairs bundled into one multicall. Use this skill when the user wants to swap multiple token pairs at once, do batch swaps, execute several trades simultaneously, perform parallel swaps, or do bulk trading in one transaction. Also trigger when the user mentions "two swaps", "three swaps", "swap X and Y at the same time", or wants to convert multiple tokens in a single call.
+description: Execute multiple token swaps in a single Starknet transaction via Fibrous (default). Supports per-provider selection (avnu, ekubo, or auto to race all). Supports 2-3 swap pairs bundled into one multicall. Use this skill when the user wants to swap multiple token pairs at once, do batch swaps, execute several trades simultaneously, perform parallel swaps, or do bulk trading in one transaction. Also trigger when the user mentions "two swaps", "three swaps", "swap X and Y at the same time", or wants to convert multiple tokens in a single call.
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Multi-Swap
 
-Execute 2-3 independent token swaps in a single Starknet transaction via Fibrous aggregation. All swaps are bundled into one multicall, saving gas compared to executing them individually.
+Execute 2-3 independent token swaps in a single Starknet transaction via Fibrous (default). Other providers can be selected with `--provider`, or use `--provider auto` to race all providers per pair. All swaps are bundled into one multicall, saving gas compared to executing them individually.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ Execute 2-3 independent token swaps in a single Starknet transaction via Fibrous
 ## Commands
 
 ```bash
-npx starkfi@latest multi-swap "<pairs>" [--slippage <percent>] [--simulate] [--json]
+npx starkfi@latest multi-swap "<pairs>" [--provider <fibrous|avnu|ekubo|auto>] [--slippage <percent>] [--simulate] [--json]
 ```
 
 ## Parameters
@@ -45,6 +45,7 @@ npx starkfi@latest multi-swap "<pairs>" [--slippage <percent>] [--simulate] [--j
 | Parameter    | Type   | Description                                            | Required |
 | ------------ | ------ | ------------------------------------------------------ | -------- |
 | `pairs`      | string | Swap pairs: `"100 USDC>ETH, 50 USDT>STRK"` (2-3 pairs) | Yes      |
+| `--provider` | string | Provider: `fibrous` (default), `avnu`, `ekubo`, `auto` (race all) | No       |
 | `--slippage` | number | Slippage tolerance in % (default: `1`)                 | No       |
 | `--simulate` | flag   | Estimate fees without broadcasting                     | No       |
 | `--json`     | flag   | Output as JSON                                         | No       |
@@ -79,14 +80,16 @@ npx starkfi@latest multi-swap "50 DAI>ETH, 100 USDC>STRK, 0.1 ETH>USDT" --simula
 
 ## Error Handling
 
-| Error                  | Action                                                         |
-| ---------------------- | -------------------------------------------------------------- |
-| `Too few pairs`        | Multi-swap requires at least 2 pairs. Use `trade` for singles. |
-| `Too many pairs`       | Maximum 3 pairs. Split into multiple calls.                    |
-| `No route found`       | One or more pairs lack liquidity.                              |
-| `Insufficient balance` | Check `balance` — user may lack one of the source tokens.      |
-| `Simulation failed`    | One of the routes is invalid or would revert.                  |
-| `Not authenticated`    | Run `authenticate-wallet` skill first.                         |
+| Error                     | Action                                                         |
+| ------------------------- | -------------------------------------------------------------- |
+| `Too few pairs`           | Multi-swap requires at least 2 pairs. Use `trade` for singles. |
+| `Too many pairs`          | Maximum 3 pairs. Split into multiple calls.                    |
+| `No route found`          | One or more pairs lack liquidity.                              |
+| `Insufficient balance`    | Check `balance` — user may lack one of the source tokens.      |
+| `Provider unavailable`    | Specified provider is invalid. Valid: fibrous, avnu, ekubo.    |
+| `All providers failed`    | All providers timed out or errored. Retry later.               |
+| `Simulation failed`       | One of the routes is invalid or would revert.                  |
+| `Not authenticated`       | Run `authenticate-wallet` skill first.                         |
 
 ## Related Skills
 

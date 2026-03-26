@@ -1,6 +1,6 @@
 ---
 name: trade
-description: Swap tokens on Starknet using Fibrous aggregation for optimal routing. Supports simulation (dry-run) before execution. Use this skill when the user wants to swap, exchange, trade, convert, buy, or sell one token for another on Starknet. Also use when the user asks about token prices, exchange rates, DEX routing, best swap route, or wants to check how much they would receive for a given amount — even if they don't explicitly say "swap".
+description: Swap tokens on Starknet via Fibrous DEX aggregator. Supports per-provider selection (avnu, ekubo, or auto to race all). Use this skill when the user wants to swap, exchange, trade, convert, buy, or sell one token for another on Starknet. Also use when the user asks about token prices, exchange rates, DEX routing, best swap route, or wants to check how much they would receive for a given amount — even if they don't explicitly say "swap".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Trade / Swap Tokens
 
-Exchange one token for another on Starknet via Fibrous trade aggregation. The CLI finds the best route across multiple DEXs, simulates the swap, and executes. All transactions are routed through the Paymaster by default (gas paid in STRK or configured token).
+Exchange one token for another on Starknet via Fibrous (default). Other providers (AVNU, Ekubo) can be selected with `--provider`, or use `--provider auto` to race all providers for the best price. All transactions are routed through the Paymaster by default (gas paid in STRK or configured token).
 
 ## Prerequisites
 
@@ -35,19 +35,20 @@ Exchange one token for another on Starknet via Fibrous trade aggregation. The CL
 ## Commands
 
 ```bash
-npx starkfi@latest trade <amount> <from> <to> [--slippage <percent>] [--simulate] [--json]
+npx starkfi@latest trade <amount> <from> <to> [--provider <fibrous|avnu|ekubo|auto>] [--slippage <percent>] [--simulate] [--json]
 ```
 
 ## Parameters
 
-| Parameter    | Type   | Description                              | Required |
-| ------------ | ------ | ---------------------------------------- | -------- |
-| `amount`     | number | Amount of source token to swap           | Yes      |
-| `from`       | string | Source token symbol (e.g. `ETH`, `USDC`) | Yes      |
-| `to`         | string | Target token symbol (e.g. `STRK`, `DAI`) | Yes      |
-| `--slippage` | number | Slippage tolerance in % (default: `1`)   | No       |
-| `--simulate` | flag   | Estimate fees without broadcasting       | No       |
-| `--json`     | flag   | Output as JSON                           | No       |
+| Parameter    | Type   | Description                                       | Required |
+| ------------ | ------ | ------------------------------------------------- | -------- |
+| `amount`     | number | Amount of source token to swap                    | Yes      |
+| `from`       | string | Source token symbol (e.g. `ETH`, `USDC`)          | Yes      |
+| `to`         | string | Target token symbol (e.g. `STRK`, `DAI`)          | Yes      |
+| `--provider` | string | Provider: `fibrous` (default), `avnu`, `ekubo`, `auto` (race all) | No |
+| `--slippage` | number | Slippage tolerance in % (default: `1`)            | No       |
+| `--simulate` | flag   | Estimate fees without broadcasting                | No       |
+| `--json`     | flag   | Output as JSON                                    | No       |
 
 ## Examples
 
@@ -77,12 +78,14 @@ npx starkfi@latest tx-status <hash>
 
 ## Error Handling
 
-| Error                  | Action                                                  |
-| ---------------------- | ------------------------------------------------------- |
-| `No route found`       | Liquidity may be too low or pair doesn't exist.         |
-| `Insufficient balance` | Check `balance` and suggest a smaller amount.           |
-| `Simulation failed`    | Route is invalid or would revert. Do not retry blindly. |
-| `Not authenticated`    | Run `authenticate-wallet` skill first.                  |
+| Error                     | Action                                                  |
+| ------------------------- | ------------------------------------------------------- |
+| `No route found`          | Liquidity may be too low or pair doesn't exist.         |
+| `Insufficient balance`    | Check `balance` and suggest a smaller amount.           |
+| `Provider unavailable`    | Specified provider is invalid. Valid: fibrous, avnu, ekubo. |
+| `All providers failed`    | All providers timed out or errored. Retry later.        |
+| `Simulation failed`       | Route is invalid or would revert. Do not retry blindly. |
+| `Not authenticated`       | Run `authenticate-wallet` skill first.                  |
 
 ## Related Skills
 

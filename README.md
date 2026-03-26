@@ -90,12 +90,13 @@ StarkFi leverages **all core Starkzap modules**:
 
 ## Features
 
-### 🔄 Intelligent Swap Routing (Fibrous)
+### 🔄 Token Swap (Fibrous)
 
-DEX-aggregated swaps with optimal routing. Single swaps, multi-swap (up to 3 pairs), and batch routing.
+Swap tokens on Starknet via Fibrous DEX aggregator with fee-normalized quotes. Supports per-provider selection (`--provider avnu|ekubo|auto`) and multi-pair batch swaps.
 
 ```bash
-npx starkfi@latest trade 100 USDC ETH --slippage 1
+npx starkfi@latest trade 100 USDC ETH                    # Swap via Fibrous (default)
+npx starkfi@latest trade 100 USDC ETH --provider auto     # Race all providers for best price
 npx starkfi@latest multi-swap "100 USDC>ETH, 50 USDT>ETH"
 ```
 
@@ -163,9 +164,9 @@ npx starkfi@latest config set-network mainnet   # Switch back
 | **Batch**               | ✅            | All batch operations (supply, stake, send)      |
 | **Portfolio**           | ✅            | Balances, staking positions, lending positions  |
 | **Wallet (Send)**       | ✅            | Token transfers and simulation                  |
-| **Swap (Fibrous)**      | Mainnet only  | Fibrous aggregator API is mainnet-only          |
-| **Multi-Swap (Fibrous)**| Mainnet only  | Fibrous aggregator API is mainnet-only          |
-| **Rebalance (Fibrous)** | Mainnet only  | Uses Fibrous for swap routing                   |
+| **Swap**                   | Mainnet only  | Fibrous (default), AVNU, Ekubo — selectable via `--provider` |
+| **Multi-Swap**             | Mainnet only  | Per-pair provider selection                                  |
+| **Rebalance**              | Mainnet only  | Uses swap routing for rebalance execution                    |
 
 ### 💸 Gas Abstraction
 
@@ -333,12 +334,12 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | `send <amount> <token> <recipient> [--simulate] [--json]` | Transfer tokens                  |
 | `portfolio [--json]`                                      | Full DeFi portfolio              |
 
-### Trading (Fibrous)
+### Trading
 
-| Command                                                             | Description                 |
-| ------------------------------------------------------------------- | --------------------------- |
-| `trade <amount> <from> <to> [--slippage <%>] [--simulate] [--json]` | Swap tokens                 |
-| `multi-swap "<pairs>" [--slippage <%>] [--simulate] [--json]`       | Multi-pair swap (2-3 pairs) |
+| Command                                                                                    | Description                 |
+| ------------------------------------------------------------------------------------------ | --------------------------- |
+| `trade <amount> <from> <to> [--provider <fibrous\|avnu\|ekubo\|auto>] [--slippage <%>] [--simulate] [--json]` | Swap tokens (via Fibrous)   |
+| `multi-swap "<pairs>" [--provider <name>] [--slippage <%>] [--simulate] [--json]`          | Multi-pair swap (2-3 pairs) |
 
 ### Batching (Multicall)
 
@@ -426,7 +427,7 @@ StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi
 
 | Feature       | Description                                               |
 | ------------- | --------------------------------------------------------- |
-| **Swap**      | DEX-aggregated trading via Fibrous                        |
+| **Swap**      | Token trading via Fibrous (default), AVNU, or Ekubo               |
 | **Stake**     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)     |
 | **Lend**      | Supply, borrow, repay, withdraw, close on Vesu V2         |
 | **Portfolio** | Balances with USD valuations and position health          |
@@ -454,7 +455,7 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 | **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
 | **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
 | **Auth Server** | [Hono](https://hono.dev/) v4.12.7 + [Privy TEE](https://privy.io/)               |
-| **DEX Routing** | [Fibrous](https://fibrous.finance/) Aggregator                                   |
+| **DEX Routing** | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) |
 | **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                             |
 | **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                               |
 
@@ -462,7 +463,7 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 
 ## Error Handling
 
-StarkFi implements a robust error handling system with a custom `StarkfiError` class and **28 specific error codes** organized by domain:
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **30 specific error codes** organized by domain:
 
 | Domain         | Error Codes                                                                                                                                         |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -470,7 +471,7 @@ StarkFi implements a robust error handling system with a custom `StarkfiError` c
 | **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                   |
 | **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                     |
 | **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_ALLOCATION`                                                                                               |
-| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
+| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `PROVIDER_UNAVAILABLE`, `ALL_PROVIDERS_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
 | **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                              |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.
