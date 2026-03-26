@@ -13,7 +13,6 @@ import {
 	type RiskLevel,
 } from "./health.js";
 
-// Re-export health types for backward compatibility.
 export {
 	resolveConfig,
 	classifyRisk,

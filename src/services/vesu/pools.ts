@@ -7,7 +7,6 @@ export interface PoolInfo {
 	address: string;
 }
 
-/** De-duplicated list of Vesu pools from SDK market data. */
 export async function getVesuPools(wallet: StarkZapWallet): Promise<PoolInfo[]> {
 	const markets = await wallet.lending().getMarkets();
 	const seen = new Map<string, PoolInfo>();
@@ -22,7 +21,6 @@ export async function getVesuPools(wallet: StarkZapWallet): Promise<PoolInfo[]> 
 	return [...seen.values()];
 }
 
-/** Full market data for a specific pool. */
 export async function getPoolMarkets(
 	wallet: StarkZapWallet,
 	poolAddress: string
@@ -31,7 +29,6 @@ export async function getPoolMarkets(
 	return markets.filter((m) => m.poolAddress.toString() === poolAddress);
 }
 
-/** Resolve a pool name or hex address to a `PoolInfo`. Throws on ambiguous or missing match. */
 export async function resolvePoolAddress(
 	wallet: StarkZapWallet,
 	poolInput: string
