@@ -1,40 +1,54 @@
+import { Amount } from "starkzap";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import { getCalldata, getRoute } from "../../services/fibrous/route.js";
-import { Amount, fromAddress } from "starkzap";
-import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
-import { requireSession } from "../../services/auth/session.js";
+import {
+	resolveProviders,
+	getAllQuotes,
+	getBestQuote,
+	resolveProvider,
+	calculateSavings,
+	toSlippageBps,
+	type SwapProviderId,
+} from "../../services/swap/index.js";
 
 export async function handleGetSwapQuote(args: {
 	amount: string;
 	from_token: string;
 	to_token: string;
+	provider?: string;
 }) {
-	const session = requireSession();
-	const chainId = resolveChainId(session);
-	const tokenIn = resolveToken(args.from_token, chainId);
-	const tokenOut = resolveToken(args.to_token, chainId);
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
+		const tokenIn = resolveToken(args.from_token, chainId);
+		const tokenOut = resolveToken(args.to_token, chainId);
+		const amountInRaw = Amount.parse(args.amount, tokenIn).toBase();
 
-	const parsedAmount = Amount.parse(args.amount, tokenIn);
-	const rawAmount = parsedAmount.toBase().toString();
+		const providerChoice = args.provider as SwapProviderId | "auto" | undefined;
+		const providers = resolveProviders(wallet, providerChoice);
+		const quotes = await getAllQuotes(providers, { tokenIn, tokenOut, amountInRaw });
+		const best = getBestQuote(quotes);
 
-	const routeResponse = await getRoute(tokenIn, tokenOut, rawAmount);
+		const savings =
+			quotes.length > 1
+				? calculateSavings(quotes[0].amountOutRaw, quotes[quotes.length - 1].amountOutRaw)
+				: null;
 
-	const outputAmount = Amount.fromRaw(BigInt(routeResponse.outputAmount), tokenOut);
-	const outputFormatted = outputAmount.toUnit();
-
-	return jsonResult({
-		success: true,
-		amountIn: `${args.amount} ${tokenIn.symbol}`,
-		expectedAmountOut: `~${outputFormatted} ${tokenOut.symbol}`,
-		estimatedGasUsd: routeResponse.estimatedGasUsedInUsd
-			? `$${routeResponse.estimatedGasUsedInUsd.toFixed(4)}`
-			: "Unknown",
-		routeId: routeResponse.routeId,
-		message: "Quote generated successfully. Use swap_tokens to execute.",
+		return jsonResult({
+			success: true,
+			bestProvider: best.provider,
+			amountIn: `${args.amount} ${tokenIn.symbol}`,
+			expectedAmountOut: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+			...(savings ? { savings } : {}),
+			quotes: quotes.map((q) => ({
+				provider: q.provider,
+				amountOut: q.amountOutFormatted,
+				isBest: q.isBest,
+			})),
+			message: "Quote generated. Use swap_tokens to execute.",
+		});
 	});
 }
 
@@ -44,40 +58,42 @@ export async function handleSwapTokens(args: {
 	to_token: string;
 	slippage?: number;
 	simulate?: boolean;
+	provider?: string;
 }) {
 	return withWallet(async ({ session, wallet }) => {
 		const chainId = resolveChainId(session);
 		const tokenIn = resolveToken(args.from_token, chainId);
 		const tokenOut = resolveToken(args.to_token, chainId);
+		const amountInRaw = Amount.parse(args.amount, tokenIn).toBase();
+		const slippage = args.slippage ?? 1;
 
-		const parsedAmount = Amount.parse(args.amount, tokenIn);
-		const rawAmount = parsedAmount.toBase().toString();
+		const providerChoice = args.provider as SwapProviderId | "auto" | undefined;
+		const providers = resolveProviders(wallet, providerChoice);
 
-		const calldataResponse = await getCalldata(
+		const quotes = await getAllQuotes(providers, {
 			tokenIn,
 			tokenOut,
-			rawAmount,
-			args.slippage ?? 1,
-			session.address
-		);
+			amountInRaw,
+			slippageBps: toSlippageBps(slippage),
+		});
+		const best = getBestQuote(quotes);
+		const provider = resolveProvider(providers, best.provider);
+		const builder = wallet.tx();
 
-		const builder = wallet
-			.tx()
-			.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount)
-			.add({
-				contractAddress: FIBROUS_ROUTER_ADDRESS,
-				entrypoint: "swap",
-				calldata: calldataResponse.calldata,
-			});
-
-		const outputAmount = Amount.fromRaw(BigInt(calldataResponse.route.outputAmount), tokenOut);
-		const outputFormatted = outputAmount.toUnit();
+		await provider.buildSwapTx(builder, {
+			tokenIn,
+			tokenOut,
+			amountInRaw,
+			walletAddress: session.address,
+			slippage,
+		});
 
 		if (args.simulate) {
 			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				amountIn: `${args.amount} ${tokenIn.symbol}`,
-				expectedAmountOut: `~${outputFormatted} ${tokenOut.symbol}`,
+				expectedAmountOut: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+				provider: best.provider,
 			});
 		}
 
@@ -89,8 +105,9 @@ export async function handleSwapTokens(args: {
 			txHash: tx.hash,
 			explorerUrl: tx.explorerUrl,
 			amountIn: `${args.amount} ${tokenIn.symbol}`,
-			amountOut: `~${outputFormatted} ${tokenOut.symbol}`,
-			slippage: `${args.slippage ?? 1}%`,
+			amountOut: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+			provider: best.provider,
+			slippage: `${slippage}%`,
 		});
 	});
 }

@@ -9,14 +9,21 @@ import {
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
+const providerParam = z
+	.enum(["auto", "fibrous", "avnu", "ekubo"])
+	.optional()
+	.default("fibrous")
+	.describe("Swap provider: fibrous (default), avnu, ekubo, or auto (race all)");
+
 export function registerTradeTools(server: McpServer): number {
 	server.tool(
 		"get_swap_quote",
-		"Get an expected output and route from Fibrous *without* executing the swap. ALWAYS use this BEFORE calling swap_tokens so the user can review the expected output amount and slippage.",
+		"Get a swap quote via Fibrous (default). Use provider='auto' to race all providers for best price. ALWAYS use this BEFORE calling swap_tokens so the user can review the expected output.",
 		{
 			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
 			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'USDC')"),
 			to_token: z.string().describe("Destination token symbol to buy (e.g. 'STRK', 'DAI')"),
+			provider: providerParam,
 		},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetSwapQuote)
@@ -24,7 +31,7 @@ export function registerTradeTools(server: McpServer): number {
 
 	server.tool(
 		"swap_tokens",
-		"Execute a token swap on Starknet using Fibrous aggregation. Finds optimal route and executes. Set simulate=true to estimate fees without executing. ONLY call this after showing the user a quote via get_swap_quote.",
+		"Execute a token swap via Fibrous (default) or a specified provider. Set simulate=true to estimate fees without executing. ONLY call this after showing the user a quote via get_swap_quote.",
 		{
 			amount: z.string().describe("Amount to swap in (e.g. '0.1', '100')"),
 			from_token: z.string().describe("Source token symbol to sell (e.g. 'ETH', 'STRK')"),
@@ -36,6 +43,7 @@ export function registerTradeTools(server: McpServer): number {
 				.describe(
 					"Set true to simulate only — estimates fees without sending a transaction"
 				),
+			provider: providerParam,
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSwapTokens)
@@ -49,13 +57,14 @@ export function registerTradeTools(server: McpServer): number {
 
 	server.tool(
 		"get_multi_swap_quote",
-		"Get quotes for multiple token swaps at once (2-3 pairs). Uses Fibrous batch routing for optimal rates.",
+		"Get multi-swap quotes via Fibrous (default) or a specified provider per pair.",
 		{
 			swaps: z
 				.array(swapItemSchema)
 				.min(2)
 				.max(3)
 				.describe("Array of swap pairs (2-3 items)"),
+			provider: providerParam,
 		},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetMultiSwapQuote)
@@ -63,7 +72,7 @@ export function registerTradeTools(server: McpServer): number {
 
 	server.tool(
 		"multi_swap",
-		"Execute multiple token swaps in a single transaction (2-3 pairs). Uses Fibrous batch routing. Call get_multi_swap_quote first to preview.",
+		"Execute multiple token swaps via Fibrous (default) in a single transaction. Call get_multi_swap_quote first to preview.",
 		{
 			swaps: z
 				.array(swapItemSchema)
@@ -75,6 +84,7 @@ export function registerTradeTools(server: McpServer): number {
 				.boolean()
 				.optional()
 				.describe("Set true to simulate only — estimates fees without executing"),
+			provider: providerParam,
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleMultiSwap)
@@ -82,7 +92,7 @@ export function registerTradeTools(server: McpServer): number {
 
 	server.tool(
 		"batch_execute",
-		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap, stake, supply, send. Requires at least 2 operations.",
+		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap (via best provider), stake, supply, send. Requires at least 2 operations.",
 		{
 			operations: z
 				.array(

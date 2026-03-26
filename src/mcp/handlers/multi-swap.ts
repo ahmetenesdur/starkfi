@@ -1,83 +1,111 @@
-import { Amount, fromAddress, type ChainId } from "starkzap";
+import { Amount, type ChainId } from "starkzap";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import {
-	getCalldataBatch,
-	getRouteBatch,
-	type BatchSwapPair,
-} from "../../services/fibrous/route.js";
-import { FIBROUS_ROUTER_ADDRESS } from "../../services/fibrous/config.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
-import { requireSession } from "../../services/auth/session.js";
+import {
+	resolveProviders,
+	getAllQuotes,
+	getBestQuote,
+	resolveProvider,
+	toSlippageBps,
+	type SwapProviderId,
+} from "../../services/swap/index.js";
 
-async function resolvePairs(
-	swaps: { amount: string; from_token: string; to_token: string }[],
-	chainId?: ChainId
-): Promise<BatchSwapPair[]> {
-	return Promise.all(
-		swaps.map(async (s) => {
-			const tokenIn = resolveToken(s.from_token, chainId);
-			const tokenOut = resolveToken(s.to_token, chainId);
-			const parsedAmount = Amount.parse(s.amount, tokenIn);
-			return { tokenIn, tokenOut, amount: parsedAmount.toBase().toString() };
-		})
-	);
+interface SwapInput {
+	amount: string;
+	from_token: string;
+	to_token: string;
 }
 
-export async function handleGetMultiSwapQuote(args: {
-	swaps: { amount: string; from_token: string; to_token: string }[];
-}) {
-	const session = requireSession();
-	const chainId = resolveChainId(session);
-	const pairs = await resolvePairs(args.swaps, chainId);
-	const routes = await getRouteBatch(pairs);
+function resolvePairs(swaps: SwapInput[], chainId?: ChainId) {
+	return swaps.map((s) => {
+		const tokenIn = resolveToken(s.from_token, chainId);
+		const tokenOut = resolveToken(s.to_token, chainId);
+		const amountInRaw = Amount.parse(s.amount, tokenIn).toBase();
+		return { tokenIn, tokenOut, amountInRaw };
+	});
+}
 
-	return jsonResult({
-		success: true,
-		quotes: routes.map((r, i) => ({
-			amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
-			expectedAmountOut: `~${Amount.fromRaw(BigInt(r.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
-			estimatedGasUsd: r.estimatedGasUsedInUsd ?? null,
-		})),
-		message: "Quotes generated. Use multi_swap to execute.",
+export async function handleGetMultiSwapQuote(args: { swaps: SwapInput[]; provider?: string }) {
+	return withWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
+		const pairs = resolvePairs(args.swaps, chainId);
+
+		const providerChoice = args.provider as SwapProviderId | "auto" | undefined;
+		const providers = resolveProviders(wallet, providerChoice);
+
+		const results = await Promise.all(
+			pairs.map(async (pair, i) => {
+				const quotes = await getAllQuotes(providers, {
+					tokenIn: pair.tokenIn,
+					tokenOut: pair.tokenOut,
+					amountInRaw: pair.amountInRaw,
+				});
+				const best = getBestQuote(quotes);
+				return {
+					amountIn: `${args.swaps[i].amount} ${pair.tokenIn.symbol}`,
+					expectedAmountOut: `~${best.amountOutFormatted} ${pair.tokenOut.symbol}`,
+					provider: best.provider,
+				};
+			})
+		);
+
+		return jsonResult({
+			success: true,
+			quotes: results,
+			message: "Quotes generated. Use multi_swap to execute.",
+		});
 	});
 }
 
 export async function handleMultiSwap(args: {
-	swaps: { amount: string; from_token: string; to_token: string }[];
+	swaps: SwapInput[];
 	slippage?: number;
 	simulate?: boolean;
+	provider?: string;
 }) {
 	return withWallet(async ({ session, wallet }) => {
 		const chainId = resolveChainId(session);
-		const pairs = await resolvePairs(args.swaps, chainId);
-		const calldataResults = await getCalldataBatch(pairs, args.slippage ?? 1, session.address);
+		const pairs = resolvePairs(args.swaps, chainId);
+		const slippage = args.slippage ?? 1;
+
+		const providerChoice = args.provider as SwapProviderId | "auto" | undefined;
+		const providers = resolveProviders(wallet, providerChoice);
 
 		const builder = wallet.tx();
+		const swapSummary: { amountIn: string; expectedAmountOut: string; provider: string }[] = [];
+
 		for (let i = 0; i < pairs.length; i++) {
 			const pair = pairs[i];
-			const cd = calldataResults[i];
-			const parsedAmount = Amount.parse(args.swaps[i].amount, pair.tokenIn);
+			const quotes = await getAllQuotes(providers, {
+				tokenIn: pair.tokenIn,
+				tokenOut: pair.tokenOut,
+				amountInRaw: pair.amountInRaw,
+				slippageBps: toSlippageBps(slippage),
+			});
+			const best = getBestQuote(quotes);
+			const provider = resolveProvider(providers, best.provider);
 
-			builder.approve(pair.tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount).add({
-				contractAddress: FIBROUS_ROUTER_ADDRESS,
-				entrypoint: "swap",
-				calldata: cd.calldata,
+			await provider.buildSwapTx(builder, {
+				tokenIn: pair.tokenIn,
+				tokenOut: pair.tokenOut,
+				amountInRaw: pair.amountInRaw,
+				walletAddress: session.address,
+				slippage,
+			});
+
+			swapSummary.push({
+				amountIn: `${args.swaps[i].amount} ${pair.tokenIn.symbol}`,
+				expectedAmountOut: `~${best.amountOutFormatted} ${pair.tokenOut.symbol}`,
+				provider: best.provider,
 			});
 		}
 
-		const formatSwap = (i: number) => ({
-			amountIn: `${args.swaps[i].amount} ${pairs[i].tokenIn.symbol}`,
-			expectedAmountOut: `~${Amount.fromRaw(BigInt(calldataResults[i].route.outputAmount), pairs[i].tokenOut).toUnit()} ${pairs[i].tokenOut.symbol}`,
-		});
-
 		if (args.simulate) {
 			const sim = await simulateTransaction(builder, chainId);
-			return simulationResult(sim, {
-				swaps: pairs.map((_, i) => formatSwap(i)),
-			});
+			return simulationResult(sim, { swaps: swapSummary });
 		}
 
 		const tx = await builder.send();
@@ -87,8 +115,8 @@ export async function handleMultiSwap(args: {
 			success: true,
 			txHash: tx.hash,
 			explorerUrl: tx.explorerUrl,
-			swaps: pairs.map((_, i) => formatSwap(i)),
-			slippage: `${args.slippage ?? 1}%`,
+			swaps: swapSummary,
+			slippage: `${slippage}%`,
 		});
 	});
 }
