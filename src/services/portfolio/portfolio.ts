@@ -43,7 +43,6 @@ export interface PortfolioData {
 	totalUsdValue: number;
 }
 
-// Fetch complete DeFi portfolio: balances (with USD), staking, and lending.
 export async function getPortfolio(
 	sdk: StarkZap,
 	wallet: WalletInterface,

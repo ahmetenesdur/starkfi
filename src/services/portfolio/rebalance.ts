@@ -1,11 +1,10 @@
-import { Amount, fromAddress } from "starkzap";
+import { Amount } from "starkzap";
 import type { WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import type { PortfolioData } from "./portfolio.js";
 import { resolveToken } from "../tokens/tokens.js";
-import { getCalldata } from "../fibrous/route.js";
-import { FIBROUS_ROUTER_ADDRESS } from "../fibrous/config.js";
+import { resolveProviders, getAllQuotes, getBestQuote, resolveProvider } from "../swap/index.js";
 import { simulateTransaction } from "../simulate/simulate.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
@@ -185,18 +184,24 @@ export async function executeRebalance(
 	const slippage = opts?.slippage ?? 1;
 	const builder = wallet.tx();
 
+	const providers = resolveProviders(wallet);
+
 	for (const trade of plan.trades) {
 		const tokenIn = resolveToken(trade.fromToken, chainId);
 		const tokenOut = resolveToken(trade.toToken, chainId);
 		const parsedAmount = Amount.parse(trade.amount, tokenIn);
-		const rawAmount = parsedAmount.toBase().toString();
+		const amountInRaw = parsedAmount.toBase();
 
-		const cd = await getCalldata(tokenIn, tokenOut, rawAmount, slippage, session.address);
+		const quotes = await getAllQuotes(providers, { tokenIn, tokenOut, amountInRaw });
+		const best = getBestQuote(quotes);
+		const provider = resolveProvider(providers, best.provider);
 
-		builder.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount).add({
-			contractAddress: FIBROUS_ROUTER_ADDRESS,
-			entrypoint: "swap",
-			calldata: cd.calldata,
+		await provider.buildSwapTx(builder, {
+			tokenIn,
+			tokenOut,
+			amountInRaw,
+			walletAddress: session.address,
+			slippage,
 		});
 	}
 
