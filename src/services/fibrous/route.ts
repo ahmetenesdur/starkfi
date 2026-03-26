@@ -1,7 +1,25 @@
-import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "./config.js";
+import {
+	FIBROUS_BASE_URL,
+	DEFAULT_SLIPPAGE,
+	FIBROUS_FEE_DIRECT_BPS,
+	FIBROUS_FEE_MULTIHOP_BPS,
+} from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
 import type { Token } from "starkzap";
+
+// Mirrors Fibrous Interface's calculateFeeRate logic:
+// if ANY route entry has more than 1 flattened swap → multi-hop fee.
+export function isDirectRoute(route: RouteResponse): boolean {
+	return !route.route.some((entry) => entry.swaps.flat().length > 1);
+}
+
+// Deduct Fibrous service fee from gross outputAmount.
+// The API returns pre-fee values; the fee is taken on-chain during execution.
+export function applyServiceFee(grossAmount: bigint, route: RouteResponse): bigint {
+	const feeBps = isDirectRoute(route) ? FIBROUS_FEE_DIRECT_BPS : FIBROUS_FEE_MULTIHOP_BPS;
+	return grossAmount - (grossAmount * feeBps) / 10_000n;
+}
 
 interface RouteToken {
 	name: string;

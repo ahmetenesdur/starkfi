@@ -3,8 +3,13 @@ import type { TxBuilder, WalletInterface, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { initSDKAndWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
-import { getCalldata } from "../fibrous/route.js";
-import { FIBROUS_ROUTER_ADDRESS } from "../fibrous/config.js";
+import {
+	resolveProviders,
+	getAllQuotes,
+	getBestQuote,
+	resolveProvider,
+	type SwapProvider,
+} from "../swap/index.js";
 import { resolvePoolAddress } from "../vesu/pools.js";
 import { findValidator } from "../staking/validators.js";
 import { getValidatorPools, resolvePoolForToken } from "../staking/staking.js";
@@ -67,11 +72,18 @@ export async function buildBatch(
 
 	const builder = wallet.tx();
 	const summary: string[] = [];
+	const providers = resolveProviders(wallet);
 
 	for (const op of operations) {
 		switch (op.type) {
 			case "swap":
-				await addSwapCalls(builder, op.params as BatchSwapParams, session, chainId);
+				await addSwapCalls(
+					builder,
+					op.params as BatchSwapParams,
+					providers,
+					session,
+					chainId
+				);
 				break;
 			case "stake":
 				await addStakeCalls(
@@ -109,26 +121,25 @@ export async function buildBatch(
 async function addSwapCalls(
 	builder: TxBuilder,
 	params: BatchSwapParams,
+	providers: SwapProvider[],
 	session: Session,
 	chainId?: ChainId
 ): Promise<void> {
 	const tokenIn = resolveToken(params.from_token, chainId);
 	const tokenOut = resolveToken(params.to_token, chainId);
 	const parsedAmount = Amount.parse(params.amount, tokenIn);
-	const rawAmount = parsedAmount.toBase().toString();
+	const amountInRaw = parsedAmount.toBase();
 
-	const cd = await getCalldata(
+	const quotes = await getAllQuotes(providers, { tokenIn, tokenOut, amountInRaw });
+	const best = getBestQuote(quotes);
+	const provider = resolveProvider(providers, best.provider);
+
+	await provider.buildSwapTx(builder, {
 		tokenIn,
 		tokenOut,
-		rawAmount,
-		params.slippage ?? 1,
-		session.address
-	);
-
-	builder.approve(tokenIn, fromAddress(FIBROUS_ROUTER_ADDRESS), parsedAmount).add({
-		contractAddress: FIBROUS_ROUTER_ADDRESS,
-		entrypoint: "swap",
-		calldata: cd.calldata,
+		amountInRaw,
+		walletAddress: session.address,
+		slippage: params.slippage ?? 1,
 	});
 }
 
