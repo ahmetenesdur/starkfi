@@ -1,8 +1,6 @@
 import { Amount, type Token, type ChainId, type WalletInterface } from "starkzap";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-// Resolves token USD prices via StarkZap wallet.getQuote() with an LRU cache.
-
 interface PriceCacheEntry {
 	promise: Promise<number>;
 	timestamp: number;
@@ -17,7 +15,6 @@ const priceCache = new Map<string, PriceCacheEntry>();
 let activeWallet: WalletInterface | null = null;
 let activeChainId: ChainId | undefined;
 
-// Initialise the price service with a connected wallet.
 export function initPriceService(wallet: WalletInterface, chainId?: ChainId): void {
 	activeWallet = wallet;
 
@@ -27,19 +24,16 @@ export function initPriceService(wallet: WalletInterface, chainId?: ChainId): vo
 	}
 }
 
-// Tear down the price service (e.g. on logout).
 export function destroyPriceService(): void {
 	activeWallet = null;
 	activeChainId = undefined;
 	priceCache.clear();
 }
 
-// Clear the price cache without tearing down the service.
 export function clearPriceCache(): void {
 	priceCache.clear();
 }
 
-// Get the USD price of a token (best-effort). Stablecoins short-circuit; others are cached for 60s.
 export async function getTokenUsdPrice(token: Token, chainId?: ChainId): Promise<number> {
 	if (STABLECOIN_SYMBOLS.has(token.symbol.toUpperCase())) {
 		return 1.0;
@@ -67,8 +61,6 @@ export async function getTokenUsdPrice(token: Token, chainId?: ChainId): Promise
 
 	return promise;
 }
-
-// Internal helpers
 
 async function fetchTokenPrice(token: Token, chainId?: ChainId): Promise<number> {
 	if (!activeWallet) {
