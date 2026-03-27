@@ -7,6 +7,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 
 export async function handleListLendingPools(args: { name?: string }) {
 	return withReadonlyWallet(async ({ wallet }) => {
@@ -99,8 +100,7 @@ export async function handleSupplyAssets(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
@@ -108,8 +108,8 @@ export async function handleSupplyAssets(args: {
 			amount: `${args.amount} ${token.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
 		});
 	});
 }
@@ -139,8 +139,7 @@ export async function handleWithdrawAssets(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
@@ -148,8 +147,8 @@ export async function handleWithdrawAssets(args: {
 			amount: `${args.amount} ${token.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
 		});
 	});
 }
@@ -203,8 +202,7 @@ export async function handleBorrowAssets(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
@@ -213,8 +211,8 @@ export async function handleBorrowAssets(args: {
 			borrowed: `${args.borrow_amount} ${debtToken.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
 		});
 	});
 }
@@ -247,8 +245,7 @@ export async function handleRepayDebt(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
@@ -256,8 +253,8 @@ export async function handleRepayDebt(args: {
 			repaid: `${args.amount} ${debtToken.symbol}`,
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
 		});
 	});
 }
@@ -300,16 +297,71 @@ export async function handleClosePosition(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
 			action: "close_position",
 			pool: pool.address,
 			poolName: pool.name,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
+		});
+	});
+}
+
+export async function handleQuoteHealth(args: {
+	pool: string;
+	collateral_token: string;
+	debt_token: string;
+	action: "borrow" | "repay" | "deposit" | "withdraw";
+	amount: string;
+}) {
+	return withReadonlyWallet(async ({ session, wallet }) => {
+		const chainId = resolveChainId(session);
+		const pool = await resolvePoolAddress(wallet, args.pool);
+		const collateralToken = resolveToken(args.collateral_token, chainId);
+		const debtToken = resolveToken(args.debt_token, chainId);
+		const poolAddr = fromAddress(pool.address);
+
+		const token = args.action === "deposit" || args.action === "withdraw"
+			? collateralToken
+			: debtToken;
+
+		const actionInput = args.action === "repay"
+			? { action: "repay" as const, request: { collateralToken, debtToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
+			: args.action === "deposit"
+				? { action: "deposit" as const, request: { token: collateralToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
+				: args.action === "withdraw"
+					? { action: "withdraw" as const, request: { token: collateralToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
+					: { action: "borrow" as const, request: { collateralToken, debtToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } };
+
+		const quote = await wallet.lending().quoteHealth({
+			action: actionInput,
+			health: { collateralToken, debtToken, poolAddress: poolAddr },
+		});
+
+		const current = quote.current;
+		const projected = quote.projected;
+
+		const currentHF = current && Number(current.debtValue) > 0
+			? Number(current.collateralValue) / Number(current.debtValue)
+			: null;
+		const projectedHF = projected && Number(projected.debtValue) > 0
+			? Number(projected.collateralValue) / Number(projected.debtValue)
+			: null;
+
+		return jsonResult({
+			success: true,
+			pool: pool.address,
+			poolName: pool.name,
+			action: args.action,
+			amount: `${args.amount} ${token.symbol}`,
+			currentHealthFactor: currentHF?.toFixed(4) ?? "∞",
+			projectedHealthFactor: projectedHF?.toFixed(4) ?? "∞",
+			riskChange: currentHF && projectedHF
+				? projectedHF > currentHF ? "IMPROVING" : projectedHF < currentHF ? "DECLINING" : "STABLE"
+				: "UNKNOWN",
 		});
 	});
 }

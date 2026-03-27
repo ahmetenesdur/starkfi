@@ -10,6 +10,7 @@ import {
 	handleClosePosition,
 	handleMonitorLendingPosition,
 	handleAutoRebalanceLending,
+	handleQuoteHealth,
 } from "../handlers/index.js";
 import { withErrorHandling } from "./error-handling.js";
 
@@ -194,5 +195,19 @@ export function registerLendingTools(server: McpServer): number {
 		withErrorHandling(handleAutoRebalanceLending)
 	);
 
-	return 9;
+	server.tool(
+		"lending_quote_health",
+		"Simulate the impact of a lending action (borrow, repay, deposit, withdraw) on position health factor WITHOUT executing. Returns current and projected health.",
+		{
+			pool: z.string().describe("Pool name or address"),
+			collateral_token: z.string().describe("Collateral token symbol"),
+			debt_token: z.string().describe("Debt token symbol"),
+			action: z.enum(["borrow", "repay", "deposit", "withdraw"]).describe("Action to simulate"),
+			amount: z.string().describe("Amount for the action"),
+		},
+		{ readOnlyHint: true, destructiveHint: false },
+		withErrorHandling(handleQuoteHealth)
+	);
+
+	return 10;
 }

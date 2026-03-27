@@ -4,6 +4,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 import {
 	resolveProviders,
 	getAllQuotes,
@@ -97,13 +98,12 @@ export async function handleSwapTokens(args: {
 			});
 		}
 
-		const tx = await builder.send();
-		await tx.wait();
+		const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 		return jsonResult({
 			success: true,
-			txHash: tx.hash,
-			explorerUrl: tx.explorerUrl,
+			txHash: hash,
+			explorerUrl,
 			amountIn: `${args.amount} ${tokenIn.symbol}`,
 			amountOut: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
 			provider: best.provider,
