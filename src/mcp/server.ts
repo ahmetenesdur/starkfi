@@ -22,9 +22,10 @@ const MCP_INSTRUCTIONS = `StarkFi is a Starknet DeFi toolkit. You can:
 - Supply, borrow, repay, withdraw, and close positions on Vesu V2 lending pools
 - Monitor lending health factors with 4-level risk alerts (HEALTHY/WARNING/DANGER/CRITICAL)
 - Auto-rebalance lending positions via repay or add-collateral strategies
+- Create, preview, list, and cancel Dollar-Cost Averaging (DCA) recurring buy orders via AVNU or Ekubo
 - Rebalance portfolio to target allocation via optimized multi-swap
 
-Always call get_swap_quote before swap_tokens. Always call list_validators before staking. Always call list_lending_pools before lending operations. Use simulate=true on transactional tools to preview fees before execution.`;
+Always call get_swap_quote before swap_tokens. Always call list_validators before staking. Always call list_lending_pools before lending operations. Always call dca_preview before dca_create. Use simulate=true on transactional tools to preview fees before execution.`;
 
 function printBanner(summary: ToolSummary): void {
 	const version = pkg.version;

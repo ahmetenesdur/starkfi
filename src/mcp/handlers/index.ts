@@ -4,6 +4,7 @@ export * from "./trade.js";
 export * from "./staking.js";
 export * from "./config.js";
 export * from "./lending.js";
+export * from "./dca.js";
 export * from "./portfolio.js";
 export * from "./multi-swap.js";
 export * from "./batch.js";
