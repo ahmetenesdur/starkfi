@@ -1,6 +1,6 @@
 ---
 title: Lending Tools
-description: 9 tools for Vesu V2 lending operations — supply, borrow, repay, withdraw, close, monitor, auto-rebalance
+description: 10 tools for Vesu V2 lending operations — supply, borrow, repay, withdraw, close, monitor, auto-rebalance, quote health
 ---
 
 > **Prerequisite:** All lending tools require an active authenticated session. Call `get_auth_status` first to verify.
@@ -170,4 +170,22 @@ Automatically adjust a lending position to improve its health factor. Chooses th
 > **Important:** This is a **transactional** tool. Always confirm with the user and use `simulate: true` first to preview the action.
 
 Returns: action taken, amount, token, previous HF, estimated new HF, and transaction hash.
+
+---
+
+## lending_quote_health
+
+Simulate the impact of a lending action on the position's Health Factor **without executing**. Useful for previewing how a borrow, repay, deposit, or withdrawal would change the health factor before committing.
+
+| Param              | Type   | Required | Description                                            |
+| ------------------ | ------ | -------- | ------------------------------------------------------ |
+| `pool`             | string | Yes      | Pool name or contract address                          |
+| `collateral_token` | string | Yes      | Collateral token symbol                                |
+| `debt_token`       | string | Yes      | Debt token symbol                                      |
+| `action`           | string | Yes      | Action to simulate: `borrow`, `repay`, `deposit`, `withdraw` |
+| `amount`           | string | Yes      | Amount for the action                                  |
+
+This is a **read-only** tool — safe to call without user confirmation.
+
+Returns: current health factor, projected health factor, and risk change indicator (`IMPROVING`, `DECLINING`, `STABLE`).
 

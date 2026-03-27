@@ -23,7 +23,7 @@ npx starkfi@latest --help
 
 Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
 
-- 🤖 **34 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- 🤖 **35 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
 - ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
 - 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
 - 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
@@ -40,7 +40,7 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │                                                                                       │
 │  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐    │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │    │
-│  │  (34+    │  │  (34 tools)    │  │ (11 workflows) │  │  (BYOAI · Chat DeFi)    │    │
+│  │  (35+    │  │  (35 tools)    │  │ (11 workflows) │  │  (BYOAI · Chat DeFi)    │    │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │    │
 │  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │    │
 │       │               │                  │             └───────────┬─────────────┘    │
@@ -228,7 +228,7 @@ npx starkfi@latest portfolio-rebalance --target "60 ETH, 40 STRK" --simulate
 
 ## AI Integration (MCP)
 
-StarkFi exposes **34 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
+StarkFi exposes **35 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
 
 ```bash
 # Start the MCP server

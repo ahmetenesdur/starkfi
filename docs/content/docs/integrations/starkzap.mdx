@@ -97,6 +97,33 @@ const tx = await wallet
 
 StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, and lending operations where multiple calls must execute atomically.
 
+### v2 Enhancements
+
+StarkFi leverages three key capabilities introduced in Starkzap v2:
+
+| Feature              | API                         | What It Does                                              |
+| -------------------- | --------------------------- | --------------------------------------------------------- |
+| **Preflight**        | `builder.sendWithPreflight()` | Simulates the transaction before broadcasting — catches reverts early |
+| **Watch**            | `tx.watch()`                | Streams real-time finality updates (`RECEIVED` → `ACCEPTED_ON_L2`)    |
+| **Quote Health**     | `quoteHealth()`             | Projects health factor impact of a lending action without executing   |
+
+```typescript
+// Preflight — simulate before sending
+const tx = await builder.sendWithPreflight({ feeMode: "sponsored" });
+
+// Watch — track transaction finality
+for await (const update of tx.watch()) {
+	console.log(update.status); // RECEIVED → ACCEPTED_ON_L2
+}
+
+// Quote Health — simulate lending impact
+const projection = await sdk.quoteHealth({
+	pool, collateralToken, debtToken,
+	action: "borrow", amount,
+});
+// projection.currentHealth, projection.projectedHealth
+```
+
 ### Token Presets
 
 ```typescript

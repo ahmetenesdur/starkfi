@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: 34 MCP tools for AI-native Starknet DeFi automation
+description: 35 MCP tools for AI-native Starknet DeFi automation
 ---
 
 ## What is MCP?
@@ -34,14 +34,14 @@ Before using StarkFi MCP tools:
 | **Wallet**        | 6     | `get_tx_status`, `get_balance`, `deploy_account`, `send_tokens`, `get_portfolio`, `rebalance_portfolio`                                                                |
 | **Trade**         | 5     | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                 |
 | **Staking**       | 8     | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                         |
-| **Lending**       | 9     | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` |
+| **Lending**       | 10    | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending`, `lending_quote_health` |
 | **DCA**           | 4     | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`                                                                                                                                    |
 
 ## How It Works
 
 1. StarkFi starts an MCP server via `starkfi mcp-start`
 2. The server uses `StdioServerTransport` for communication
-3. AI clients connect and discover all 34 tools with JSON schemas
+3. AI clients connect and discover all 35 tools with JSON schemas
 4. The AI sends tool calls, StarkFi executes them on Starknet
 5. Results are returned as structured JSON
 

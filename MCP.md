@@ -21,7 +21,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 
 ## Tool Registry
 
-Upon initialization, the StarkFi server dynamically provisions **34 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (9), and **dca** (4).
+Upon initialization, the StarkFi server dynamically provisions **35 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (10), and **dca** (4).
 
 ---
 
@@ -124,6 +124,18 @@ Retrieves the user's supplied yield, outstanding debt, Health Factor, and Risk L
 | `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`)               |
 | `collateral_token` | string | **Yes**  | Collateral token symbol (e.g. `ETH`, `STRK`)                                |
 | `borrow_token`     | string | No       | Borrow token symbol (e.g. `USDC`, `USDT`). Optional for supply-only checks. |
+
+#### `lending_quote_health`
+
+Simulates the impact of a lending action (borrow, repay, deposit, withdraw) on position health factor **without executing**. Returns current and projected health.
+
+| Parameter          | Type   | Required | Description                                                   |
+| ------------------ | ------ | -------- | ------------------------------------------------------------- |
+| `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
+| `collateral_token` | string | **Yes**  | Collateral token symbol (e.g. `ETH`, `STRK`)                  |
+| `debt_token`       | string | **Yes**  | Debt token symbol (e.g. `USDC`, `USDT`)                       |
+| `action`           | enum   | **Yes**  | Action to simulate: `borrow`, `repay`, `deposit`, `withdraw`  |
+| `amount`           | string | **Yes**  | Amount for the action (e.g. `100`, `0.5`)                     |
 
 ---
 
@@ -361,58 +373,6 @@ Rebalances a portfolio to match a target allocation. Calculates optimal swaps an
 | `target`    | string  | **Yes**  | Target allocation, e.g. `"50 ETH, 30 USDC, 20 STRK"`             |
 | `slippage`  | number  | No       | Slippage tolerance % (default: `1`)                               |
 | `simulate`  | boolean | No       | Set `true` to preview plan without executing                      |
-
----
-
-### DCA (Dollar-Cost Averaging) Tools
-
-#### `dca_preview`
-
-Previews a single DCA cycle by fetching a swap quote for the per-cycle amount. Always call this **before** `dca_create` so the user can review the expected output per cycle.
-
-| Parameter          | Type   | Required | Description                                              |
-| ------------------ | ------ | -------- | -------------------------------------------------------- |
-| `sell_token`       | string | **Yes**  | Token to sell (e.g. `USDC`, `STRK`)                      |
-| `buy_token`        | string | **Yes**  | Token to buy (e.g. `ETH`, `STRK`)                        |
-| `amount_per_cycle` | string | **Yes**  | Amount to sell per cycle (e.g. `10`, `50`)                |
-| `provider`         | string | No       | Swap provider for routing: `avnu`, `ekubo`                |
-
-#### `dca_create`
-
-Creates a new recurring DCA order. Only call this **after** showing the user a preview via `dca_preview`.
-
-| Parameter          | Type    | Required | Description                                                  |
-| ------------------ | ------- | -------- | ------------------------------------------------------------ |
-| `sell_token`       | string  | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                            |
-| `buy_token`        | string  | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                             |
-| `sell_amount`      | string  | **Yes**  | Total amount to sell over the DCA period (e.g. `1000`)         |
-| `amount_per_cycle` | string  | **Yes**  | Amount to sell per cycle (e.g. `10`)                           |
-| `frequency`        | string  | No       | ISO 8601 duration (default: `P1D`). E.g. `PT12H`, `P1W`       |
-| `provider`         | string  | No       | DCA provider: `avnu`, `ekubo`                                  |
-| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction     |
-
-#### `dca_list`
-
-Lists DCA orders for the authenticated wallet. Supports filtering by status and provider.
-
-| Parameter  | Type   | Required | Description                                                   |
-| ---------- | ------ | -------- | ------------------------------------------------------------- |
-| `status`   | string | No       | Filter by status: `ACTIVE`, `CLOSED`, `INDEXING`               |
-| `provider` | string | No       | Filter by DCA provider: `avnu`, `ekubo`                        |
-| `page`     | number | No       | Page number for pagination (default: `0`)                      |
-
-#### `dca_cancel`
-
-Cancels an active DCA order. Requires either `order_id` or `order_address`.
-
-| Parameter       | Type    | Required | Description                                               |
-| --------------- | ------- | -------- | --------------------------------------------------------- |
-| `order_id`      | string  | No*      | Order ID to cancel                                        |
-| `order_address` | string  | No*      | Order contract address to cancel                          |
-| `provider`      | string  | No       | DCA provider: `avnu`, `ekubo`                              |
-| `simulate`      | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-\*At least one of `order_id` or `order_address` is required.
 
 ---
 

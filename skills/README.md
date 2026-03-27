@@ -11,7 +11,7 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [send](./send/SKILL.md)                               | transaction | Transfer tokens to a Starknet address                             |
 | [trade](./trade/SKILL.md)                             | transaction | Swap tokens via Fibrous (default), AVNU, or Ekubo         |
 | [multi-swap](./multi-swap/SKILL.md)                   | transaction | Multiple swaps in one transaction (up to 3)                       |
-| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send in one multicall             |
+| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send + DCA in one multicall       |
 | [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC) |
 | [lending](./lending/SKILL.md)                         | transaction | Vesu V2 lending: supply, borrow, repay, monitor, auto-rebalance |
 | [dca](./dca/SKILL.md)                                 | transaction | Dollar-Cost Averaging: create, preview, list, cancel recurring orders |
