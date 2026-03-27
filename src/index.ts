@@ -52,6 +52,12 @@ import { registerPortfolioCommand } from "./commands/portfolio/portfolio.js";
 import { registerPortfolioRebalanceCommand } from "./commands/portfolio/portfolio-rebalance.js";
 import { registerBatchCommand } from "./commands/batch/batch.js";
 import { registerConfigCommand } from "./commands/config/config.js";
+import {
+	registerDcaCreateCommand,
+	registerDcaListCommand,
+	registerDcaCancelCommand,
+	registerDcaPreviewCommand,
+} from "./commands/dca/dca.js";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -100,6 +106,7 @@ const COMMAND_GROUPS: Record<string, string[]> = {
 	Wallet: ["address", "balance", "send", "deploy"],
 	Trading: ["trade", "multi-swap"],
 	Staking: ["stake", "unstake", "rewards", "pools", "validators", "stake-status"],
+	DCA: ["dca-create", "dca-list", "dca-cancel", "dca-preview"],
 	Lending: [
 		"lend-pools",
 		"lend-supply",
@@ -251,6 +258,11 @@ registerRewardsCommand(program);
 registerPoolsCommand(program);
 registerValidatorsCommand(program);
 registerStakeStatusCommand(program);
+
+registerDcaCreateCommand(program);
+registerDcaListCommand(program);
+registerDcaCancelCommand(program);
+registerDcaPreviewCommand(program);
 
 registerLendPoolsCommand(program);
 registerLendSupplyCommand(program);

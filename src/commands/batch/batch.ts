@@ -72,6 +72,39 @@ function parseOperation(type: string, raw: string): BatchOperation {
 				params: { amount: parts[0], token: parts[1], to: parts[2] },
 			};
 		}
+		case "dca-create": {
+			if (parts.length < 4) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --dca-create format: "${raw}". Expected: "100 STRK USDC 10 [P1D]"`
+				);
+			}
+			return {
+				type: "dca-create",
+				params: {
+					sell_amount: parts[0],
+					sell_token: parts[1],
+					buy_token: parts[2],
+					amount_per_cycle: parts[3],
+					...(parts[4] ? { frequency: parts[4] } : {}),
+				},
+			};
+		}
+		case "dca-cancel": {
+			if (parts.length < 1 || !parts[0]) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --dca-cancel format: "${raw}". Expected: "orderId [provider]"`
+				);
+			}
+			return {
+				type: "dca-cancel",
+				params: {
+					order_id: parts[0],
+					...(parts[1] ? { provider: parts[1] } : {}),
+				},
+			};
+		}
 		default:
 			throw new StarkfiError(ErrorCode.INVALID_CONFIG, `Unknown operation type: ${type}`);
 	}
@@ -87,6 +120,8 @@ export function registerBatchCommand(program: Command): void {
 		.option("--stake <args>", 'Stake tokens: "50 STRK karnot" (repeatable)', collect, [])
 		.option("--supply <args>", 'Supply to Vesu: "200 USDC 0xPool" (repeatable)', collect, [])
 		.option("--send <args>", 'Send tokens: "10 STRK 0xAddr" (repeatable)', collect, [])
+		.option("--dca-create <args>", 'Create DCA order: "100 STRK USDC 10 P1D" (repeatable)', collect, [])
+		.option("--dca-cancel <args>", 'Cancel DCA order: "orderId [provider]" (repeatable)', collect, [])
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -95,12 +130,15 @@ export function registerBatchCommand(program: Command): void {
 Examples:
   $ starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"
   $ starkfi batch --swap "100 USDC ETH" --supply "200 USDC 0xABC" --simulate
+  $ starkfi batch --swap "50 USDC ETH" --dca-create "100 STRK USDC 10 P1D"
 
 Flag formats:
-  --swap   "<amount> <from> <to>"          e.g. "0.5 ETH USDC"
-  --stake  "<amount> <token> <validator>"  e.g. "50 STRK karnot"
-  --supply "<amount> <token> <pool>"       e.g. "200 USDC 0xABC..."
-  --send   "<amount> <token> <address>"    e.g. "10 STRK 0x04a3..."
+  --swap       "<amount> <from> <to>"                      e.g. "0.5 ETH USDC"
+  --stake      "<amount> <token> <validator>"              e.g. "50 STRK karnot"
+  --supply     "<amount> <token> <pool>"                   e.g. "200 USDC 0xABC..."
+  --send       "<amount> <token> <address>"                e.g. "10 STRK 0x04a3..."
+  --dca-create "<total> <sell> <buy> <perCycle> [freq]"    e.g. "100 STRK USDC 10 P1D"
+  --dca-cancel "<orderId> [provider]"                      e.g. "abc123 avnu"
 
 Minimum 2 operations required. Each flag can be repeated.`
 		)
@@ -113,12 +151,14 @@ Minimum 2 operations required. Each flag can be repeated.`
 					...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
 					...(opts.supply as string[]).map((s: string) => parseOperation("supply", s)),
 					...(opts.send as string[]).map((s: string) => parseOperation("send", s)),
+					...(opts.dcaCreate as string[]).map((s: string) => parseOperation("dca-create", s)),
+					...(opts.dcaCancel as string[]).map((s: string) => parseOperation("dca-cancel", s)),
 				];
 
 				if (operations.length < 2) {
 					throw new StarkfiError(
 						ErrorCode.INVALID_AMOUNT,
-						"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send options."
+						"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--dca-create/--dca-cancel options."
 					);
 				}
 
