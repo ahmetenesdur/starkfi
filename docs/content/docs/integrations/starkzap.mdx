@@ -1,11 +1,11 @@
 ---
 title: Starkzap SDK
-description: Core SDK powering wallets, tokens, staking, and transaction building
+description: Core SDK powering wallets, tokens, staking, DCA, and transaction building
 ---
 
 ## Overview
 
-[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, gas abstraction, and multicall transaction building.
+[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, DCA, gas abstraction, and multicall transaction building.
 
 StarkFi uses **Starkzap v2.0.0** as a direct dependency.
 
@@ -17,6 +17,7 @@ StarkFi uses **Starkzap v2.0.0** as a direct dependency.
 | Token Transfers      | `wallet.transfer()`                         | `send`                         |
 | Staking              | `wallet.stake()`, `wallet.exitPoolIntent()` | `stake`, `unstake`             |
 | Rewards              | `wallet.claimPoolRewards()`                 | `rewards --claim / --compound` |
+| DCA                  | `wallet.dca()`                              | `dca-create`, `dca-cancel`, `dca-list`, `dca-preview` |
 | Wallet Deploy        | `wallet.ensureReady()`                      | `deploy`                       |
 | Transaction Building | `wallet.tx()` (TxBuilder)                   | `batch`, `multi-swap`          |
 | Gas Abstraction      | `feeMode: "sponsored"`                      | `config set-gasfree`           |
@@ -94,7 +95,7 @@ const tx = await wallet
 	.send({ feeMode: "sponsored" });
 ```
 
-StarkFi uses TxBuilder for `batch`, `multi-swap`, and lending operations where multiple calls must execute atomically.
+StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, and lending operations where multiple calls must execute atomically.
 
 ### Token Presets
 

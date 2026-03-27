@@ -1,0 +1,87 @@
+---
+title: DCA Tools
+description: 4 tools for Dollar-Cost Averaging — preview, create, list, and cancel recurring buy orders
+---
+
+> **Prerequisite:** All DCA tools require an active authenticated session. Call `get_auth_status` first to verify.
+
+## Recommended Flow
+
+```
+1. dca_preview   →  Preview single cycle output
+2. dca_create    →  Create recurring order
+3. dca_list      →  Monitor active orders
+4. dca_cancel    →  Cancel when done
+```
+
+---
+
+## dca_preview
+
+Preview a single DCA cycle by estimating the swap output for one execution. Always call this **before** `dca_create` so the user can review the expected output per cycle.
+
+| Param        | Type   | Required | Description                                |
+| ------------ | ------ | -------- | ------------------------------------------ |
+| `sell_token` | string | Yes      | Token to sell (e.g. `USDC`, `ETH`)          |
+| `buy_token`  | string | Yes      | Token to buy (e.g. `STRK`, `ETH`)           |
+| `amount`     | string | Yes      | Amount to sell per cycle (e.g. `10`, `100`)  |
+| `provider`   | string | No       | DCA provider: `avnu` (default) or `ekubo`   |
+
+This is a **read-only** tool — safe to call without user confirmation.
+
+---
+
+## dca_create
+
+Create a recurring DCA order that automatically swaps a fixed amount at regular intervals.
+
+| Param              | Type    | Required | Description                                               |
+| ------------------ | ------- | -------- | --------------------------------------------------------- |
+| `sell_token`       | string  | Yes      | Token to sell (e.g. `USDC`, `ETH`)                         |
+| `buy_token`        | string  | Yes      | Token to buy (e.g. `STRK`, `ETH`)                          |
+| `amount`           | string  | Yes      | Total amount to sell across all cycles                      |
+| `amount_per_cycle` | string  | Yes      | Amount sold per cycle (e.g. `10`)                           |
+| `frequency`        | string  | No       | ISO 8601 duration (default: `P1D`). E.g. `PT12H`, `P1W`    |
+| `provider`         | string  | No       | DCA provider: `avnu` (default) or `ekubo`                   |
+| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction   |
+
+> **Important:** Always preview with `dca_preview` first and confirm the expected output per cycle with the user before calling this tool.
+
+### Frequency Examples
+
+| Duration | Meaning         |
+| -------- | --------------- |
+| `PT12H`  | Every 12 hours  |
+| `P1D`    | Daily (default) |
+| `P1W`    | Weekly          |
+| `P1M`    | Monthly         |
+
+---
+
+## dca_list
+
+List the user's DCA orders with optional filtering by status and provider.
+
+| Param      | Type   | Required | Description                                         |
+| ---------- | ------ | -------- | --------------------------------------------------- |
+| `status`   | string | No       | Filter by status: `ACTIVE`, `CLOSED`, or `INDEXING` |
+| `provider` | string | No       | Filter by provider: `avnu` or `ekubo`               |
+| `page`     | number | No       | Page number for pagination (default: `0`)           |
+
+This is a **read-only** tool — safe to call without user confirmation.
+
+---
+
+## dca_cancel
+
+Cancel an active DCA order. Requires the order ID or order address.
+
+| Param           | Type    | Required | Description                           |
+| --------------- | ------- | -------- | ------------------------------------- |
+| `order_id`      | string  | No*      | DCA order ID (from `dca_list`)        |
+| `order_address` | string  | No*      | DCA order contract address (`0x...`)  |
+| `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`       |
+
+\*At least one of `order_id` or `order_address` is required.
+
+> **Important:** This is a **transactional** tool. Always confirm with the user before cancelling an order.

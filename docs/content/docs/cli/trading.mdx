@@ -1,13 +1,13 @@
 ---
 title: Trading Commands
-description: Token swaps and multi-swap via Fibrous aggregation
+description: Token swaps and multi-swap via Fibrous, AVNU, Ekubo, or auto routing
 ---
 
 > **Prerequisite:** All trading commands require an active authenticated session. Run `starkfi auth login` first.
 
 ## trade
 
-Swaps one token for another using the best available route via Fibrous DEX aggregation.
+Swaps one token for another using the best available route via Fibrous (default), AVNU, Ekubo, or `auto` to race all providers.
 
 ```bash
 starkfi trade <amount> <fromToken> <toToken> [flags]

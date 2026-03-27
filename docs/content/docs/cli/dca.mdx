@@ -1,0 +1,164 @@
+---
+title: DCA Commands
+description: Dollar-Cost Averaging — create, preview, list, and cancel recurring buy orders
+---
+
+> **Prerequisite:** All DCA commands require an active authenticated session. Run `starkfi auth login` first.
+
+## Typical Flow
+
+```
+1. starkfi dca-preview 10 USDC ETH     →  Preview one cycle
+2. starkfi dca-create 1000 USDC ETH \
+     --per-cycle 10 --frequency P1D    →  Create daily DCA order
+3. starkfi dca-list --status ACTIVE    →  Monitor active orders
+4. starkfi dca-cancel <orderId>        →  Cancel when done
+```
+
+---
+
+## dca-preview
+
+Previews a single DCA cycle — estimates the swap output for one execution without creating an order.
+
+```bash
+starkfi dca-preview <amount> <sell> <buy> [flags]
+```
+
+**Arguments:**
+
+| Argument | Description            |
+| -------- | ---------------------- |
+| `amount` | Amount to sell per cycle |
+| `sell`   | Token to sell (e.g. `USDC`) |
+| `buy`    | Token to buy (e.g. `ETH`)  |
+
+**Flags:**
+
+| Flag                    | Default | Description                      |
+| ----------------------- | ------- | -------------------------------- |
+| `--provider <name>`     | `avnu`  | DCA provider: `avnu` or `ekubo`  |
+| `--json`                | `false` | Output raw JSON                  |
+
+**Examples:**
+
+```bash
+starkfi dca-preview 10 USDC ETH
+starkfi dca-preview 50 USDC STRK --provider ekubo
+starkfi dca-preview 100 DAI ETH --json
+```
+
+> **Tip:** Always preview before creating a DCA order so you can review the expected output per cycle.
+
+---
+
+## dca-create
+
+Creates a recurring DCA order that automatically swaps a fixed amount at regular intervals.
+
+```bash
+starkfi dca-create <amount> <sell> <buy> --per-cycle <n> [flags]
+```
+
+**Arguments:**
+
+| Argument | Description                        |
+| -------- | ---------------------------------- |
+| `amount` | Total amount to sell across all cycles |
+| `sell`   | Token to sell (e.g. `USDC`)         |
+| `buy`    | Token to buy (e.g. `ETH`)           |
+
+**Flags:**
+
+| Flag                    | Default | Description                                          |
+| ----------------------- | ------- | ---------------------------------------------------- |
+| `--per-cycle <amount>`  | —       | Amount sold per cycle (**required**)                 |
+| `--frequency <duration>`| `P1D`   | ISO 8601 duration (e.g. `PT12H`, `P1D`, `P1W`)      |
+| `--provider <name>`     | `avnu`  | DCA provider: `avnu` or `ekubo`                      |
+| `--simulate`            | `false` | Estimate fees without executing                      |
+| `--json`                | `false` | Output raw JSON                                      |
+
+**Examples:**
+
+```bash
+starkfi dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D       # Daily: 10 USDC/day for 100 days
+starkfi dca-create 500 USDC STRK --per-cycle 50 --frequency P1W       # Weekly: 50 USDC/week for 10 weeks
+starkfi dca-create 100 DAI ETH --per-cycle 10 --simulate              # Preview fees first
+```
+
+> **Frequency Examples:**
+>
+> - `PT12H` — every 12 hours
+> - `P1D` — daily (default)
+> - `P1W` — weekly
+> - `P1M` — monthly
+
+---
+
+## dca-list
+
+Lists your DCA orders with optional filtering by status and provider.
+
+```bash
+starkfi dca-list [flags]
+```
+
+**Flags:**
+
+| Flag                | Default | Description                                    |
+| ------------------- | ------- | ---------------------------------------------- |
+| `--status <status>` | —       | Filter: `ACTIVE`, `CLOSED`, or `INDEXING`       |
+| `--provider <name>` | —       | Filter by provider: `avnu` or `ekubo`           |
+| `--page <number>`   | `0`     | Page number for pagination                      |
+| `--json`            | `false` | Output raw JSON                                 |
+
+**Examples:**
+
+```bash
+starkfi dca-list                          # All orders
+starkfi dca-list --status ACTIVE          # Active orders only
+starkfi dca-list --provider ekubo --json  # Ekubo orders as JSON
+```
+
+---
+
+## dca-cancel
+
+Cancels an active DCA order.
+
+```bash
+starkfi dca-cancel <orderId> [flags]
+```
+
+**Arguments:**
+
+| Argument  | Description                 |
+| --------- | --------------------------- |
+| `orderId` | DCA order ID (from `dca-list`) |
+
+**Flags:**
+
+| Flag                | Default | Description                        |
+| ------------------- | ------- | ---------------------------------- |
+| `--provider <name>` | —       | DCA provider: `avnu` or `ekubo`    |
+| `--json`            | `false` | Output raw JSON                    |
+
+**Examples:**
+
+```bash
+starkfi dca-cancel abc123
+starkfi dca-cancel abc123 --provider ekubo
+```
+
+---
+
+## Providers
+
+DCA uses third-party providers to execute recurring orders on-chain:
+
+| Provider | Description                                             |
+| -------- | ------------------------------------------------------- |
+| `avnu`   | AVNU DCA — default provider, wide token coverage        |
+| `ekubo`  | Ekubo DCA — concentrated liquidity-based execution      |
+
+Use `--provider` on any DCA command to select a specific provider. Defaults to `avnu`.

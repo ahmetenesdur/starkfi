@@ -12,7 +12,7 @@ The `batch` command lets you combine multiple operations — swaps, staking, len
 ## Usage
 
 ```bash
-starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [flags]
+starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [--dca-create "..."] [--dca-cancel "..."] [flags]
 ```
 
 At least **2 operations** are required per batch. Each flag can be repeated.
@@ -25,6 +25,8 @@ At least **2 operations** are required per batch. Each flag can be repeated.
 | `--stake "<amount> <token> <validator>"` | Stake tokens                    |
 | `--supply "<amount> <token> <pool>"`     | Supply to lending pool          |
 | `--send "<amount> <token> <recipient>"`  | Send tokens                     |
+| `--dca-create "<amount> <sell> <buy> <perCycle> [frequency]"` | Create DCA order   |
+| `--dca-cancel "<orderId>"`             | Cancel DCA order                |
 | `--simulate`                             | Estimate fees without executing |
 | `--json`                                 | Output raw JSON                 |
 
@@ -52,6 +54,18 @@ At least **2 operations** are required per batch. Each flag can be repeated.
 
 ```bash
 --send "<amount> <token> <recipient>"
+```
+
+### DCA Create
+
+```bash
+--dca-create "<amount> <sell> <buy> <perCycle> [frequency]"
+```
+
+### DCA Cancel
+
+```bash
+--dca-cancel "<orderId>"
 ```
 
 ## Examples

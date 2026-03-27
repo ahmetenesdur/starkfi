@@ -5,7 +5,7 @@ description: StarkFi — Starknet DeFi from your terminal and AI agents
 
 ## What is StarkFi?
 
-**StarkFi** is a Starknet DeFi toolkit that lets you swap, stake, lend, batch, and manage your portfolio — all from the **terminal** or through **AI agents** via the MCP server.
+**StarkFi** is a Starknet DeFi toolkit that lets you swap, stake, lend, DCA, batch, and manage your portfolio — all from the **terminal** or through **AI agents** via the MCP server.
 
 No browser needed. No wallet extension. Just authenticate with your email and start interacting with DeFi protocols directly.
 
@@ -30,9 +30,10 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 
 | Feature             | What It Does                                                 | How                           |
 | ------------------- | ------------------------------------------------------------ | ----------------------------- |
-| **Token Swaps**     | Best-price routing via Fibrous DEX aggregator                | `trade`, `multi-swap`         |
+| **Token Swaps**     | Multi-provider routing via Fibrous, AVNU, Ekubo, or auto     | `trade`, `multi-swap`         |
 | **Staking**         | Delegate STRK, WBTC, tBTC, SolvBTC, LBTC to validators       | `stake`, `unstake`, `rewards` |
 | **Lending**         | Supply, borrow, repay, monitor, auto-rebalance on Vesu V2     | `lend-supply`, `lend-borrow`, `lend-monitor`, `lend-auto` |
+| **DCA**             | Recurring buy orders via AVNU and Ekubo                        | `dca-create`, `dca-list`, `dca-cancel` |
 | **Batch**           | Combine multiple operations into a single atomic transaction | `batch`                       |
 | **Portfolio**       | Full DeFi dashboard with USD valuations + rebalancing         | `portfolio`, `portfolio-rebalance` |
 | **Gas Abstraction** | Pay gas in USDC, USDT, DAI, ETH — or let the developer pay   | `config`                      |
@@ -41,19 +42,19 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 
 ### CLI — For Developers and Power Users
 
-30+ commands for every DeFi operation. Supports `--simulate` for dry-runs and `--json` for machine-readable output.
+34+ commands for every DeFi operation. Supports `--simulate` for dry-runs and `--json` for machine-readable output.
 
 → [CLI Reference](/docs/cli)
 
 ### MCP Server — For AI Agents
 
-30 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage lending positions, monitor health factors, rebalance portfolios, and execute batch operations.
+34 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage DCA orders, monitor lending positions, rebalance portfolios, and execute batch operations.
 
 → [MCP Server](/docs/mcp)
 
 ### Agent Skills — For Automated Workflows
 
-10 pre-packaged multi-step workflows that AI agents can trigger with natural language prompts like _"Stake my STRK with the best validator"_.
+11 pre-packaged multi-step workflows that AI agents can trigger with natural language prompts like _"Stake my STRK with the best validator"_ or _"DCA 100 USDC into ETH daily"_.
 
 → [Agent Skills](/docs/skills)
 

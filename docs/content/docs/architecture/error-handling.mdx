@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 28 typed error codes, retry logic, and error recovery patterns
+description: 32 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
@@ -34,7 +34,7 @@ The `toJSON()` method ensures errors are consistently serialized in MCP response
 
 ## Error Codes
 
-StarkFi defines 28 typed error codes organized by domain:
+StarkFi defines 32 typed error codes organized by domain:
 
 ### Authentication & Session
 
@@ -85,6 +85,12 @@ StarkFi defines 28 typed error codes organized by domain:
 | `MONITOR_FAILED`  | Health monitoring operation error | Check pool/token params and retry               |
 | `REBALANCE_FAILED`| Position rebalance error          | Check balances, health factor, and retry        |
 
+### DCA
+
+| Code              | When                              | Resolution                                      |
+| ----------------- | --------------------------------- | ----------------------------------------------- |
+| `DCA_FAILED`      | DCA order operation error         | Check token pair, amount, and provider status   |
+
 ### Infrastructure
 
 | Code                   | When                                 | Resolution                                   |
@@ -93,6 +99,9 @@ StarkFi defines 28 typed error codes organized by domain:
 | `NETWORK_ERROR`        | RPC or API connectivity issue        | Check connection, retry automatically        |
 | `RATE_LIMITED`         | Too many requests to RPC/API         | Wait and retry, or configure a custom RPC    |
 | `BATCH_LIMIT_EXCEEDED` | More than 3 operations in multi-swap | Split into multiple transactions             |
+| `SDK_NOT_INITIALIZED`  | Starkzap SDK not initialized         | Ensure authentication is complete            |
+| `PROVIDER_UNAVAILABLE` | DEX provider is unavailable          | Try a different provider or retry later      |
+| `ALL_PROVIDERS_FAILED` | All DEX providers failed             | Check network status and retry               |
 
 ### Validation
 

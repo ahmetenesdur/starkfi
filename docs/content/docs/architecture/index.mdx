@@ -13,7 +13,7 @@ StarkFi follows a layered architecture with four entry points that share a commo
 │                                                                                     │
 │  ┌──────────┐  ┌───────────────-┐  ┌────────────────┐  ┌─────────────────────────┐  │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
-│  │  (30+    │  │  (30 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
+│  │  (34+    │  │  (34 tools)    │  │ (11 workflows) │  │  (BYOAI · Chat DeFi)    │  │
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
 │  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
 │       │               │                  │             └───────────┬─────────────┘  │
@@ -21,11 +21,11 @@ StarkFi follows a layered architecture with four entry points that share a commo
 │                       ▼                  ▼                                          │
 │  ┌──────────────────────────────────────────────────────────────────────────────┐   │
 │  │                           Service Layer                                      │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────────┐      │   │
-│  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │  │  Portfolio   │      │   │
-│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│  │  Dashboard   │      │   │
-│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘  └──────┬───────┘      │   │
-│  │       └─────────────┴────────────┴────────────┴───────────────┘              │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │  DEX     │  │ Staking  │  │  Vesu  │  │ DCA  │  │  Batch   │  │Portfolio │  │   │
+│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │      │  │ Multicall│  │Dashboard │  │   │
+│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └───┬──┘  └────┬─────┘  └────┬─────┘  │   │
+│  │       └─────────────┴────────────┴───────────┴──────────┴─────────────┘        │   │
 │  │                       │                                                      │   │
 │  │       ┌───────────────┴───────────────────────────┐                          │   │
 │  │       │       Starkzap SDK (starkzap v2.0.0)      │                          │   │
@@ -50,22 +50,24 @@ StarkFi follows a layered architecture with four entry points that share a commo
 ```
 src/
 ├── index.ts          # CLI entry point (Commander.js)
-├── commands/         # 10 command directories
+├── commands/         # 11 command directories
 │   ├── auth/         # login, verify, logout
 │   ├── wallet/       # address, balance, send, deploy
 │   ├── trade/        # trade, multi-swap
 │   ├── staking/      # stake, unstake, rewards, pools, validators, stake-status
 │   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status, lend-monitor, lend-auto
+│   ├── dca/          # dca-preview, dca-create, dca-list, dca-cancel
 │   ├── batch/        # batch multicall
 │   ├── portfolio/    # portfolio dashboard
 │   ├── config/       # config subcommands
 │   ├── chain/        # tx-status
 │   └── system/       # status (mcp-start is inline in index.ts)
-├── services/         # 11 service modules
+├── services/         # 12 service modules
 │   ├── starkzap/     # SDK client initialization + config
 │   ├── fibrous/      # DEX routing, calldata, pricing
 │   ├── vesu/         # Lending pool API + on-chain operations
 │   ├── staking/      # Validator resolution + pool operations
+│   ├── dca/          # DCA order management (create, cancel, list, preview)
 │   ├── tokens/       # Token resolution + balance queries
 │   ├── batch/        # Multicall composition via TxBuilder
 │   ├── simulate/     # Transaction simulation (fee estimation)
@@ -75,8 +77,8 @@ src/
 │   └── config/       # Configuration persistence
 ├── mcp/              # MCP server layer
 │   ├── server.ts     # Server setup + stdio transport
-│   ├── tools/        # 5 domain tool files + 2 utilities (Zod schemas)
-│   └── handlers/     # 9 domain handlers + 3 utility files
+│   ├── tools/        # 6 domain tool files + 2 utilities (Zod schemas)
+│   └── handlers/     # 10 domain handlers + 3 utility files
 └── lib/              # 12 shared utilities
     ├── errors.ts     # ErrorCode enum + StarkfiError class
     ├── parse-starknet-error.ts # Cairo hex decoding + error map
@@ -98,7 +100,7 @@ src/
 
 Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. Cross-service composition happens only in dedicated orchestrators:
 
-- **`batch`** service composes swap + stake + supply + send operations
+- **`batch`** service composes swap + stake + supply + send + dca-create + dca-cancel operations
 - **`portfolio`** service aggregates data from tokens, staking, and lending services
 
 ### Tool → Handler → Service (MCP)
@@ -144,7 +146,7 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 | **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)             | v1.27.1         |
 | **Schema Validation** | [Zod](https://zod.dev/)                                                              | v4.3.6          |
 | **Auth Server**       | [Hono](https://hono.dev/) + [Privy TEE](https://privy.io/)                           | v4.12.7         |
-| **DEX Routing**       | [Fibrous](https://fibrous.finance/) Aggregator                                       | —               |
+| **DEX Routing**       | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) | —               |
 | **Lending Protocol**  | [Vesu](https://vesu.io/) V2                                                          | —               |
 | **Gas Abstraction**   | [AVNU](https://avnu.fi/) Paymaster                                                   | —               |
 | **Terminal UI**       | [Chalk](https://github.com/chalk/chalk) + [Ora](https://github.com/sindresorhus/ora) | v5.6.2 / v9.3.0 |

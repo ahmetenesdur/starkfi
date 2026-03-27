@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: 30 MCP tools for AI-native Starknet DeFi automation
+description: 34 MCP tools for AI-native Starknet DeFi automation
 ---
 
 ## What is MCP?
@@ -35,12 +35,13 @@ Before using StarkFi MCP tools:
 | **Trade**         | 5     | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                 |
 | **Staking**       | 8     | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                         |
 | **Lending**       | 9     | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` |
+| **DCA**           | 4     | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`                                                                                                                                    |
 
 ## How It Works
 
 1. StarkFi starts an MCP server via `starkfi mcp-start`
 2. The server uses `StdioServerTransport` for communication
-3. AI clients connect and discover all 30 tools with JSON schemas
+3. AI clients connect and discover all 34 tools with JSON schemas
 4. The AI sends tool calls, StarkFi executes them on Starknet
 5. Results are returned as structured JSON
 
@@ -61,7 +62,7 @@ All tools return consistent error responses with typed `StarkfiError` codes — 
 2. **Quote before executing** — call `get_swap_quote` before `swap_tokens`, and `get_multi_swap_quote` before `multi_swap`
 3. **Use simulation** — set `simulate: true` on any transactional tool to preview fees
 4. **Confirm with the user** — never execute a transactional tool without explicit user confirmation
-5. **Check existing positions** — use `get_stake_status` and `get_lending_position` before staking/lending to avoid duplicates
+5. **Check existing positions** — use `get_stake_status`, `get_lending_position`, and `dca_list` before creating new positions to avoid duplicates
 
 ## Starting the Server
 
