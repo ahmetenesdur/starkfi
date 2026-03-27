@@ -8,6 +8,7 @@ import { createSpinner, formatError, formatTable } from "../../lib/format.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { waitWithProgress } from "../../lib/tx-progress.js";
 import {
 	resolveProviders,
 	getAllQuotes,
@@ -136,8 +137,9 @@ export function registerMultiSwapCommand(program: Command): void {
 				execSpinner.text = "Executing multi-swap...";
 				const tx = await builder.send();
 
-				execSpinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					execSpinner.text = `Transaction: ${status}`;
+				});
 
 				execSpinner.succeed("Multi-swap confirmed");
 				outputResult(

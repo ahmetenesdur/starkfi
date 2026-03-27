@@ -6,6 +6,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatError } from "../../lib/format.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { waitWithProgress } from "../../lib/tx-progress.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 // Collect repeatable options into array.
@@ -195,8 +196,9 @@ Minimum 2 operations required. Each flag can be repeated.`
 				spinner.text = "Executing batch...";
 				const tx = await builder.send();
 
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Batch confirmed");
 				const txResult = {

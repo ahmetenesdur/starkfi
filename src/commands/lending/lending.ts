@@ -10,6 +10,7 @@ import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { handleSimulationResult, outputResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { waitWithProgress } from "../../lib/tx-progress.js";
 
 function handleLendingError(error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
@@ -167,8 +168,9 @@ export function registerLendSupplyCommand(program: Command): void {
 
 				spinner.text = `Supplying ${amount} ${opts.token}...`;
 				const tx = await builder.send();
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Supply confirmed");
 				outputResult(
@@ -228,8 +230,9 @@ export function registerLendWithdrawCommand(program: Command): void {
 
 				spinner.text = `Withdrawing ${amount} ${opts.token}...`;
 				const tx = await builder.send();
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Withdrawal confirmed");
 				outputResult(
@@ -320,8 +323,9 @@ export function registerLendBorrowCommand(program: Command): void {
 
 				spinner.text = `Borrowing ${opts.borrowAmount} ${opts.borrowToken}...`;
 				const tx = await builder.send();
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Borrow confirmed");
 				outputResult(
@@ -388,8 +392,9 @@ export function registerLendRepayCommand(program: Command): void {
 
 				spinner.text = `Repaying ${amount} ${opts.token}...`;
 				const tx = await builder.send();
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Repayment confirmed");
 				outputResult(
@@ -466,8 +471,9 @@ export function registerLendCloseCommand(program: Command): void {
 
 				spinner.text = "Closing position...";
 				const tx = await builder.send();
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Position closed successfully");
 				outputResult(

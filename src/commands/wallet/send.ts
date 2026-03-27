@@ -8,6 +8,7 @@ import { validateAddress } from "../../lib/validation.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { waitWithProgress } from "../../lib/tx-progress.js";
 
 export function registerSendCommand(program: Command): void {
 	program
@@ -61,8 +62,9 @@ export function registerSendCommand(program: Command): void {
 				spinner.text = "Executing transfer...";
 				const tx = await builder.send();
 
-				spinner.text = "Waiting for confirmation...";
-				await tx.wait();
+				await waitWithProgress(tx, (status) => {
+					spinner.text = `Transaction: ${status}`;
+				});
 
 				spinner.succeed("Transfer confirmed");
 				const txResult = {
