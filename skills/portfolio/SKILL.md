@@ -143,5 +143,6 @@ npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --sli
 - Use `staking` `stake-status` for detailed staking positions.
 - Use `lending` `lend-status` for detailed lending positions.
 - Use `lending` `lend-monitor` to monitor health factors across lending positions.
+- Use `dca` `dca-list` to view active DCA orders.
 - Use `trade` if you need to swap a single token pair (not full rebalance).
 

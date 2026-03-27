@@ -91,5 +91,6 @@ npx starkfi@latest tx-status <hash>
 
 - Use `balance` to check available tokens before trading.
 - Use `multi-swap` for executing 2-3 swaps in a single transaction.
-- Use `batch` for combining a swap with other operations (stake, supply, send).
+- Use `batch` for combining a swap with other operations (stake, supply, send, dca).
+- Use `dca` for recurring buy orders instead of a one-time swap.
 - Use `config` to set a custom RPC if experiencing rate limits.

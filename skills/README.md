@@ -14,6 +14,7 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send in one multicall             |
 | [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC) |
 | [lending](./lending/SKILL.md)                         | transaction | Vesu V2 lending: supply, borrow, repay, monitor, auto-rebalance |
+| [dca](./dca/SKILL.md)                                 | transaction | Dollar-Cost Averaging: create, preview, list, cancel recurring orders |
 | [portfolio](./portfolio/SKILL.md)                     | wallet-data | DeFi dashboard + portfolio optimization via rebalancing           |
 | [config](./config/SKILL.md)                           | utility     | RPC, network, gas settings, transaction status                    |
 
@@ -36,7 +37,7 @@ npx skills add ahmetenesdur/starkfi
 
 1. **Authenticate** → `authenticate-wallet` (required first)
 2. **Check funds** → `balance` or `portfolio`
-3. **Execute** → `send`, `trade`, `multi-swap`, `batch`, `staking`, or `lending`
+3. **Execute** → `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, or `dca`
 4. **Verify** → `tx-status` (via `config` skill)
 
 ## Trigger Examples
@@ -55,6 +56,8 @@ npx skills add ahmetenesdur/starkfi
 | "Fix my risky position"             | `lending`             |
 | "Show me my portfolio"              | `portfolio`           |
 | "Rebalance to 50% ETH, 30% USDC"   | `portfolio`           |
+| "DCA 100 USDC into ETH daily"       | `dca`                 |
+| "Show my active DCA orders"         | `dca`                 |
 | "I'm getting rate limit errors"     | `config`              |
 
 ## License

@@ -77,4 +77,5 @@ npx starkfi@latest balance --json
 - Run this BEFORE `send` or `trade` to verify sufficient funds.
 - Run this BEFORE `staking` to confirm available STRK/BTC tokens.
 - Run this BEFORE `lending` supply operations to confirm available assets.
+- Run this BEFORE `dca` to verify sufficient sell token balance for the total DCA amount.
 - Use `portfolio` for a complete view including staking and lending positions with USD values.
