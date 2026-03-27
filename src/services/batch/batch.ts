@@ -17,7 +17,7 @@ import { validateAddress } from "../../lib/validation.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { resolveNetwork } from "../../lib/resolve-network.js";
 
-export type BatchOperationType = "swap" | "stake" | "supply" | "send";
+export type BatchOperationType = "swap" | "stake" | "supply" | "send" | "dca-create" | "dca-cancel";
 
 export interface BatchSwapParams {
 	amount: string;
@@ -45,11 +45,28 @@ export interface BatchSendParams {
 	to: string;
 }
 
+export interface BatchDcaCreateParams {
+	sell_amount: string;
+	sell_token: string;
+	buy_token: string;
+	amount_per_cycle: string;
+	frequency?: string;
+	provider?: string;
+}
+
+export interface BatchDcaCancelParams {
+	order_id?: string;
+	order_address?: string;
+	provider?: string;
+}
+
 export type BatchParams =
 	| BatchSwapParams
 	| BatchStakeParams
 	| BatchSupplyParams
 	| BatchSendParams
+	| BatchDcaCreateParams
+	| BatchDcaCancelParams
 	| Record<string, string>;
 
 export interface BatchOperation {
@@ -105,6 +122,12 @@ export async function buildBatch(
 				break;
 			case "send":
 				await addSendCalls(builder, op.params as BatchSendParams, chainId);
+				break;
+			case "dca-create":
+				addDcaCreateCalls(builder, op.params as BatchDcaCreateParams, chainId);
+				break;
+			case "dca-cancel":
+				addDcaCancelCalls(builder, op.params as BatchDcaCancelParams);
 				break;
 			default:
 				throw new StarkfiError(
@@ -210,6 +233,44 @@ async function addSendCalls(
 	builder.transfer(token, { to: fromAddress(validatedTo), amount: parsedAmount });
 }
 
+function addDcaCreateCalls(
+	builder: TxBuilder,
+	params: BatchDcaCreateParams,
+	chainId?: ChainId
+): void {
+	const sellToken = resolveToken(params.sell_token, chainId);
+	const buyToken = resolveToken(params.buy_token, chainId);
+	const sellAmount = Amount.parse(params.sell_amount, sellToken);
+	const sellAmountPerCycle = Amount.parse(params.amount_per_cycle, sellToken);
+
+	builder.dcaCreate({
+		sellToken,
+		buyToken,
+		sellAmount,
+		sellAmountPerCycle,
+		frequency: params.frequency ?? "P1D",
+		provider: params.provider,
+	});
+}
+
+function addDcaCancelCalls(
+	builder: TxBuilder,
+	params: BatchDcaCancelParams
+): void {
+	if (!params.order_id && !params.order_address) {
+		throw new StarkfiError(
+			ErrorCode.DCA_FAILED,
+			"DCA cancel in batch requires order_id or order_address."
+		);
+	}
+
+	builder.dcaCancel({
+		orderId: params.order_id,
+		orderAddress: params.order_address,
+		provider: params.provider,
+	});
+}
+
 function formatOpSummary(op: BatchOperation): string {
 	const p = op.params;
 	switch (op.type) {
@@ -228,6 +289,14 @@ function formatOpSummary(op: BatchOperation): string {
 		case "send": {
 			const s = p as BatchSendParams;
 			return `send ${s.amount} ${s.token.toUpperCase()} → ${s.to.slice(0, 10)}…`;
+		}
+		case "dca-create": {
+			const s = p as BatchDcaCreateParams;
+			return `dca-create ${s.sell_amount} ${s.sell_token.toUpperCase()} → ${s.buy_token.toUpperCase()} (${s.amount_per_cycle}/cycle)`;
+		}
+		case "dca-cancel": {
+			const s = p as BatchDcaCancelParams;
+			return `dca-cancel ${s.order_id ?? s.order_address ?? "unknown"}`;
 		}
 		default:
 			return `${op.type}: ${JSON.stringify(p)}`;

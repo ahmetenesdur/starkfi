@@ -5,6 +5,8 @@ import {
 	VesuLendingProvider,
 	AvnuSwapProvider,
 	EkuboSwapProvider,
+	AvnuDcaProvider,
+	EkuboDcaProvider,
 	type FeeMode,
 } from "starkzap";
 import type { Session } from "../auth/session.js";
@@ -130,6 +132,10 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 	wallet.registerSwapProvider(new AvnuSwapProvider());
 	wallet.registerSwapProvider(new EkuboSwapProvider());
 	wallet.setDefaultSwapProvider("avnu");
+
+	wallet.dca().registerProvider(new AvnuDcaProvider());
+	wallet.dca().registerProvider(new EkuboDcaProvider());
+	wallet.dca().setDefaultProvider("avnu");
 
 	return wallet;
 }
