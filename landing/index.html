@@ -17,13 +17,13 @@
 		<title>StarkFi | Starknet DeFi CLI + MCP Server + Agent Skills</title>
 		<meta
 			name="description"
-			content="StarkFi — Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
+			content="StarkFi — Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 34 MCP tools, 11 Agent Skills, tx simulation, gas abstraction."
 		/>
 
 		<!-- SEO Essentials -->
 		<meta
 			name="keywords"
-			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain, Telegram Bot"
+			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, DCA, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain, Telegram Bot"
 		/>
 		<meta name="author" content="ahmetenesdur" />
 		<meta name="robots" content="index, follow" />
@@ -42,7 +42,7 @@
 		/>
 		<meta
 			property="og:description"
-			content="Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
+			content="Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 34 MCP tools, 11 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta property="og:image" content="https://starkfi.app/og-image.png" />
 		<meta property="og:image:width" content="1200" />
@@ -56,7 +56,7 @@
 		<meta name="twitter:title" content="StarkFi | Starknet DeFi from your Terminal & AI" />
 		<meta
 			name="twitter:description"
-			content="Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction."
+			content="Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 34 MCP tools, 11 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta name="twitter:image" content="https://starkfi.app/og-image.png" />
 		<meta name="twitter:site" content="@starkfiapp" />
@@ -68,7 +68,7 @@
 				"@type": "SoftwareApplication",
 				"name": "StarkFi",
 				"url": "https://starkfi.app",
-				"description": "Swap, stake, lend, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 30 MCP tools, 10 Agent Skills, tx simulation, gas abstraction.",
+				"description": "Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 34 MCP tools, 11 Agent Skills, tx simulation, gas abstraction.",
 				"applicationCategory": "DeveloperApplication",
 				"operatingSystem": "Cross-platform",
 				"offers": {
@@ -294,8 +294,8 @@
 					<p
 						class="text-zinc-600 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
 					>
-						Swap, stake, lend and batch on Starknet &mdash; from the CLI, AI agents
-						or Telegram. 30 MCP tools, 10 Agent Skills, built-in gas abstraction.
+						Swap, stake, lend, DCA and batch on Starknet &mdash; from the CLI, AI agents
+						or Telegram. 34 MCP tools, 11 Agent Skills, built-in gas abstraction.
 					</p>
 					<div class="flex flex-col items-center gap-6 w-full px-4 sm:px-0">
 						<div
@@ -389,7 +389,7 @@
 										class="material-symbols-outlined text-[14px] text-pastel-lavender"
 										>route</span
 									>
-									Fetching route via Fibrous aggregator...
+									Fetching best route across providers...
 								</p>
 								<p class="flex gap-2 items-center">
 									<span
@@ -446,7 +446,7 @@
 							>MCP Tools</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
-							>30</span
+							>34</span
 						>
 					</div>
 					<div
@@ -468,7 +468,7 @@
 							>Agent Skills</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
-							>10</span
+							>11</span
 						>
 					</div>
 					<div
@@ -531,8 +531,8 @@
 								Token Swaps
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Best-price routing via Fibrous aggregator. Single swap or
-								multi-swap up to 3 pairs in one transaction.
+								Best-price routing via Fibrous, AVNU and Ekubo &mdash; or
+								<code class="text-pastel-blue bg-white/5 border border-white/10 px-1 py-0.5 rounded text-xs">auto</code> to race all. Multi-swap up to 3 pairs.
 							</p>
 						</div>
 
@@ -551,7 +551,7 @@
 								Batch Transactions
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Combine swap + stake + supply + send into a single transaction.
+								Combine swap + stake + supply + send + DCA into a single transaction.
 								Define steps inline, execute everything atomically.
 							</p>
 						</div>
@@ -633,7 +633,7 @@
 								MCP Server + Skills
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								30 MCP tools + 10 Agent Skills. Let Claude, Cursor or any
+								34 MCP tools + 11 Agent Skills. Let Claude, Cursor or any
 								MCP-compatible agent operate autonomously.
 							</p>
 						</div>
@@ -688,7 +688,27 @@
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								AI-powered DeFi on Telegram. Bring your own model &mdash;
-								OpenAI, Claude or Gemini. Chat to swap, stake and lend.
+								OpenAI, Claude or Gemini. Chat to swap, stake, lend and DCA.
+							</p>
+						</div>
+
+						<!-- Feature Card 10 — DCA -->
+						<div
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
+						>
+							<div
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
+							>
+								<span class="material-symbols-outlined text-pastel-blue text-2xl"
+									>event_repeat</span
+								>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								DCA Orders
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								Recurring buy orders via AVNU and Ekubo. Set amount,
+								frequency and let the protocol execute automatically.
 							</p>
 						</div>
 					</div>
@@ -707,7 +727,7 @@
 								</h2>
 								<p class="text-zinc-600 text-lg font-light">
 									Every feature exposed as an MCP tool &mdash; AI agents like Claude or
-									Cursor can execute DeFi operations directly. 10 Agent Skills
+									Cursor can execute DeFi operations directly. 11 Agent Skills
 									bundle multi-step workflows into single commands.
 								</p>
 							</div>
@@ -726,10 +746,10 @@
 										<h3
 											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
-											30 MCP Tools
+											34 MCP Tools
 										</h3>
 										<p class="text-zinc-600 text-sm leading-relaxed font-light">
-											Swap, stake, lend, send, batch, portfolio — all exposed
+											Swap, stake, lend, DCA, send, batch, portfolio — all exposed
 											as typed JSON-schema tools for any MCP-compatible agent.
 										</p>
 									</div>
@@ -747,11 +767,11 @@
 										<h3
 											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
-											10 Agent Skills
+											11 Agent Skills
 										</h3>
 										<p class="text-zinc-600 text-sm leading-relaxed font-light">
 											Pre-packaged multi-step workflows — trade, stake, lend,
-											batch — that agents can invoke with zero config.
+											DCA, batch — that agents can invoke with zero config.
 										</p>
 									</div>
 								</div>
@@ -965,7 +985,7 @@
 							Start trading on Starknet
 						</h2>
 						<p class="text-zinc-600 text-lg md:text-xl font-light">
-							Install with one command. Swap, stake and lend in minutes.
+							Install with one command. Swap, stake, lend and DCA in minutes.
 							Open source, MIT licensed, community-driven.
 						</p>
 						<div
