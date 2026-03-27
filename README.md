@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
+  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, DCA (Dollar-Cost Averaging), portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@ npx starkfi@latest --help
 
 Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
 
-- 🤖 **30 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- 🤖 **34 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
 - ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
 - 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
 - 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
@@ -35,36 +35,36 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                     StarkFi                                         │
-│                                                                                     │
-│  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐  │
-│  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
-│  │  (30+    │  │  (30 tools)    │  │ (10 workflows) │  │  (BYOAI · Chat DeFi)    │  │
-│  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
-│  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
-│       │               │                  │             └───────────┬─────────────┘  │
-│       └───────────────┼──────────────────┼─────────────────────────┘                │
-│                       ▼                  ▼                                          │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                           Service Layer                                      │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────────┐      │   │
-│  │  │ Fibrous  │  │ Staking  │  │  Vesu  │  │  Batch   │  │  Portfolio   │      │   │
-│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │ Multicall│  │  Dashboard   │      │   │
-│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └────┬─────┘  └──────┬───────┘      │   │
-│  │       └─────────────┴────────────┴────────────┴───────────────┘              │   │
-│  │                       │                                                      │   │
-│  │       ┌───────────────┴───────────────────────────┐                          │   │
-│  │       │       Starkzap SDK (starkzap v2.0.0)      │                          │   │
-│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                          │   │
-│  │       └───────────────┬───────────────────────────┘                          │   │
-│  └───────────────────────┼──────────────────────────────────────────────────────┘   │
-│                          ▼                                                          │
-│  ┌──────────────────────────────────────┐  ┌──────────────────────┐                 │
-│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │                 │
-│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │                 │
-│  └──────────────────────────────────────┘  └──────────────────────┘                 │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│                                     StarkFi                                           │
+│                                                                                       │
+│  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐    │
+│  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │    │
+│  │  (34+    │  │  (34 tools)    │  │ (11 workflows) │  │  (BYOAI · Chat DeFi)    │    │
+│  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │    │
+│  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │    │
+│       │               │                  │             └───────────┬─────────────┘    │
+│       └───────────────┼──────────────────┼─────────────────────────┘                  │
+│                       ▼                  ▼                                            │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                           Service Layer                                        │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │  DEX     │  │ Staking  │  │  Vesu  │  │ DCA  │  │  Batch   │  │Portfolio │  │   │
+│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │      │  │ Multicall│  │Dashboard │  │   │
+│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └───┬──┘  └────┬─────┘  └────┬─────┘  │   │
+│  │       └─────────────┴────────────┴───────────┴──────────┴─────────────┘        │   │
+│  │                     │                                                          │   │
+│  │         ┌───────────┴───────────────────────────────┐                          │   │
+│  │         │       Starkzap SDK (starkzap v2.0.0)      │                          │   │
+│  │         │  Wallet · TxBuilder · Tokens · Paymaster  │                          │   │
+│  │         └─────────────┬─────────────────────────────┘                          │   │
+│  └───────────────────────┼────────────────────────────────────────────────────────┘   │
+│                          ▼                                                            │
+│  ┌──────────────────────────────────────┐  ┌──────────────────────┐                   │
+│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │                   │
+│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │                   │
+│  └──────────────────────────────────────┘  └──────────────────────┘                   │
+└───────────────────────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
                     ┌──────────────────┐
@@ -83,21 +83,33 @@ StarkFi leverages **all core Starkzap modules**:
 | **Wallets**                          | `OnboardStrategy.Privy` + `argentXV050` preset for automated email-based wallet onboarding via Privy TEE   |
 | **Gasless Transactions (Paymaster)** | Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode    |
 | **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step) |
-| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send in one transaction                        |
+| **DCA**                              | Dollar-Cost Averaging via AVNU and Ekubo — create, preview, list, and cancel recurring buy orders          |
+| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + dca-create + send in one transaction           |
 | **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                       |
 
 ---
 
 ## Features
 
-### 🔄 Token Swap (Fibrous)
+### 🔄 Token Swap (Multi-Provider)
 
-Swap tokens on Starknet via Fibrous DEX aggregator with fee-normalized quotes. Supports per-provider selection (`--provider avnu|ekubo|auto`) and multi-pair batch swaps.
+Swap tokens on Starknet via Fibrous (default), AVNU, or Ekubo — or use `--provider auto` to race all providers for the best price. Supports multi-pair batch swaps.
 
 ```bash
 npx starkfi@latest trade 100 USDC ETH                    # Swap via Fibrous (default)
 npx starkfi@latest trade 100 USDC ETH --provider auto     # Race all providers for best price
 npx starkfi@latest multi-swap "100 USDC>ETH, 50 USDT>ETH"
+```
+
+### 📅 Dollar-Cost Averaging (DCA)
+
+Set up recurring buy orders that automatically swap a fixed amount at regular intervals. Supports AVNU and Ekubo DCA providers.
+
+```bash
+npx starkfi@latest dca-preview 10 USDC ETH                                     # Preview single cycle
+npx starkfi@latest dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D       # Daily DCA
+npx starkfi@latest dca-list --status ACTIVE                                      # View orders
+npx starkfi@latest dca-cancel <order_id>                                         # Cancel order
 ```
 
 ### ⚛️ Atomic Transaction Batching
@@ -157,16 +169,16 @@ npx starkfi@latest config set-network sepolia   # Switch to testnet
 npx starkfi@latest config set-network mainnet   # Switch back
 ```
 
-| Module                  | Network-Aware | Notes                                          |
-| ----------------------- | ------------- | ---------------------------------------------- |
-| **Lending (Vesu V2)**   | ✅            | Pools, supply, borrow, monitor, auto-rebalance |
-| **Staking**             | ✅            | Multi-token — STRK, WBTC, tBTC, SolvBTC, LBTC  |
-| **Batch**               | ✅            | All batch operations (supply, stake, send)      |
-| **Portfolio**           | ✅            | Balances, staking positions, lending positions  |
-| **Wallet (Send)**       | ✅            | Token transfers and simulation                  |
-| **Swap**                   | Mainnet only  | Fibrous (default), AVNU, Ekubo — selectable via `--provider` |
-| **Multi-Swap**             | Mainnet only  | Per-pair provider selection                                  |
-| **Rebalance**              | Mainnet only  | Uses swap routing for rebalance execution                    |
+| Module                | Network-Aware | Notes                                                        |
+| --------------------- | ------------- | ------------------------------------------------------------ |
+| **Lending (Vesu V2)** | ✅            | Pools, supply, borrow, monitor, auto-rebalance               |
+| **Staking**           | ✅            | Multi-token — STRK, WBTC, tBTC, SolvBTC, LBTC                |
+| **Batch**             | ✅            | All batch operations (supply, stake, send, dca-create, dca-cancel) |
+| **Portfolio**         | ✅            | Balances, staking positions, lending positions               |
+| **Wallet (Send)**     | ✅            | Token transfers and simulation                               |
+| **Swap**              | Mainnet only  | Fibrous (default), AVNU, Ekubo — selectable via `--provider` |
+| **Multi-Swap**        | Mainnet only  | Per-pair provider selection                                  |
+| **Rebalance**         | Mainnet only  | Uses swap routing for rebalance execution                    |
 
 ### 💸 Gas Abstraction
 
@@ -216,7 +228,7 @@ npx starkfi@latest portfolio-rebalance --target "60 ETH, 40 STRK" --simulate
 
 ## AI Integration (MCP)
 
-StarkFi exposes **30 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
+StarkFi exposes **34 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
 
 ```bash
 # Start the MCP server
@@ -225,13 +237,14 @@ npx starkfi@latest mcp-start
 
 ### Tool Categories
 
-| Category          | Tools                                                                                                                                                                  | Count |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                                     | 2     |
-| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`, `rebalance_portfolio`                                                                | 6     |
-| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                 | 5     |
-| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                         | 8     |
+| Category          | Tools                                                                                                                                                                                   | Count |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                                                      | 2     |
+| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`, `rebalance_portfolio`                                                                                 | 6     |
+| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                                  | 5     |
+| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                                          | 8     |
 | **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` | 9     |
+| **DCA**           | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`                                                                                                                                   | 4     |
 
 ### Example — AI Agent Workflow
 
@@ -265,14 +278,14 @@ For the complete tool registry and schemas, see [MCP Documentation](https://docs
 
 ## Agent Skills
 
-StarkFi ships with **10 agent skills** — structured instruction sets that teach AI coding assistants how to use StarkFi without custom prompting.
+StarkFi ships with **11 agent skills** — structured instruction sets that teach AI coding assistants how to use StarkFi without custom prompting.
 
-| Category         | Skills                                                       |
-| ---------------- | ------------------------------------------------------------ |
-| **Auth**         | `authenticate-wallet`                                        |
-| **Wallet Data**  | `balance`, `portfolio`                                       |
-| **Transactions** | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending` |
-| **Utility**      | `config`                                                     |
+| Category         | Skills                                                              |
+| ---------------- | ------------------------------------------------------------------- |
+| **Auth**         | `authenticate-wallet`                                               |
+| **Wallet Data**  | `balance`, `portfolio`                                              |
+| **Transactions** | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, `dca` |
+| **Utility**      | `config`                                                            |
 
 ```bash
 # Install skills for your AI assistant
@@ -336,16 +349,25 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 ### Trading
 
-| Command                                                                                    | Description                 |
-| ------------------------------------------------------------------------------------------ | --------------------------- |
+| Command                                                                                                       | Description                 |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | `trade <amount> <from> <to> [--provider <fibrous\|avnu\|ekubo\|auto>] [--slippage <%>] [--simulate] [--json]` | Swap tokens (via Fibrous)   |
-| `multi-swap "<pairs>" [--provider <name>] [--slippage <%>] [--simulate] [--json]`          | Multi-pair swap (2-3 pairs) |
+| `multi-swap "<pairs>" [--provider <name>] [--slippage <%>] [--simulate] [--json]`                             | Multi-pair swap (2-3 pairs) |
+
+### DCA (Dollar-Cost Averaging)
+
+| Command                                                                                                               | Description          |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `dca-preview <amount> <sell> <buy> [--provider <avnu\|ekubo>] [--json]`                                               | Preview single cycle |
+| `dca-create <amount> <sell> <buy> --per-cycle <n> [--frequency <duration>] [--provider <name>] [--simulate] [--json]` | Create DCA order     |
+| `dca-list [--status <ACTIVE\|CLOSED\|INDEXING>] [--provider <name>] [--page <n>] [--json]`                            | List DCA orders      |
+| `dca-cancel <order_id> [--provider <name>] [--json]`                                                                  | Cancel a DCA order   |
 
 ### Batching (Multicall)
 
 | Command                                                                     | Description                  |
 | --------------------------------------------------------------------------- | ---------------------------- |
-| `batch [--simulate] --swap "..." --stake "..." --supply "..." --send "..."` | Atomic multicall (min 2 ops) |
+| `batch [--simulate] --swap "..." --stake "..." --supply "..." --send "..." --dca-create "..." --dca-cancel "..."` | Atomic multicall (min 2 ops) |
 
 ### Staking
 
@@ -360,9 +382,9 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 ### Lending (Vesu V2)
 
-| Command                                                                                                                        | Description                            |
-| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| `lend-pools [name]`                                                                                                                        | List lending pools                     |
+| Command                                                                                                                                     | Description                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `lend-pools [name]`                                                                                                                         | List lending pools                     |
 | `lend-supply <amount> -p <pool> -t <token> [--simulate]`                                                                                    | Supply assets                          |
 | `lend-withdraw <amount> -p <pool> -t <token> [--simulate]`                                                                                  | Withdraw assets                        |
 | `lend-borrow -p <pool> --collateral-amount <n> --collateral-token <t> --borrow-amount <n> --borrow-token <t> [--use-supplied] [--simulate]` | Borrow                                 |
@@ -374,23 +396,23 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 ### Portfolio
 
-| Command                                                                                | Description                     |
-| -------------------------------------------------------------------------------------- | ------------------------------- |
-| `portfolio [--json]`                                                                   | Full DeFi dashboard             |
-| `portfolio-rebalance --target "<allocation>" [--slippage <%>] [--simulate] [--json]`   | Rebalance to target allocation  |
+| Command                                                                              | Description                    |
+| ------------------------------------------------------------------------------------ | ------------------------------ |
+| `portfolio [--json]`                                                                 | Full DeFi dashboard            |
+| `portfolio-rebalance --target "<allocation>" [--slippage <%>] [--simulate] [--json]` | Rebalance to target allocation |
 
 ### Configuration
 
-| Command                                 | Description                    |
-| --------------------------------------- | ------------------------------ |
-| `config list`                           | Show current configuration (with effective network source)    |
-| `config reset`                          | Reset all settings to defaults |
-| `config set-rpc <url>`                  | Set custom RPC endpoint        |
-| `config get-rpc`                        | Show current RPC               |
-| `config set-network <mainnet\|sepolia>` | Switch network instantly (no re-login needed)                 |
-| `config set-gas-token <token\|reset>`   | Set gas payment token          |
-| `config set-gasfree <on\|off>`          | Toggle developer-sponsored gas |
-| `tx-status <hash>`                      | Check transaction status       |
+| Command                                 | Description                                                |
+| --------------------------------------- | ---------------------------------------------------------- |
+| `config list`                           | Show current configuration (with effective network source) |
+| `config reset`                          | Reset all settings to defaults                             |
+| `config set-rpc <url>`                  | Set custom RPC endpoint                                    |
+| `config get-rpc`                        | Show current RPC                                           |
+| `config set-network <mainnet\|sepolia>` | Switch network instantly (no re-login needed)              |
+| `config set-gas-token <token\|reset>`   | Set gas payment token                                      |
+| `config set-gasfree <on\|off>`          | Toggle developer-sponsored gas                             |
+| `tx-status <hash>`                      | Check transaction status                                   |
 
 ---
 
@@ -427,9 +449,10 @@ StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi
 
 | Feature       | Description                                               |
 | ------------- | --------------------------------------------------------- |
-| **Swap**      | Token trading via Fibrous (default), AVNU, or Ekubo               |
+| **Swap**      | Token trading via Fibrous (default), AVNU, or Ekubo       |
 | **Stake**     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)     |
 | **Lend**      | Supply, borrow, repay, withdraw, close on Vesu V2         |
+| **DCA**       | Dollar-Cost Averaging with recurring buy orders            |
 | **Portfolio** | Balances with USD valuations and position health          |
 | **Batch**     | Combine swap + stake + supply + send in one transaction   |
 | **Gas Modes** | Gasless (pay in ERC-20) and gasfree (developer-sponsored) |
@@ -448,31 +471,31 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 
 ## Tech Stack
 
-| Layer           | Technology                                                                       |
-| --------------- | -------------------------------------------------------------------------------- |
-| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/starkzap) v2.0.0             |
-| **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                       |
-| **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1 |
-| **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                   |
-| **Auth Server** | [Hono](https://hono.dev/) v4.12.7 + [Privy TEE](https://privy.io/)               |
+| Layer           | Technology                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| **Core SDK**    | [Starkzap](https://github.com/keep-starknet-strange/starkzap) v2.0.0                                 |
+| **CLI**         | [Commander.js](https://github.com/tj/commander.js) v14.0.3                                           |
+| **MCP**         | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) v1.27.1                     |
+| **Schema**      | [Zod](https://zod.dev/) v4.3.6                                                                       |
+| **Auth Server** | [Hono](https://hono.dev/) v4.12.7 + [Privy TEE](https://privy.io/)                                   |
 | **DEX Routing** | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) |
-| **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                             |
-| **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                               |
+| **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                                                 |
+| **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                                                   |
 
 ---
 
 ## Error Handling
 
-StarkFi implements a robust error handling system with a custom `StarkfiError` class and **30 specific error codes** organized by domain:
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **32 specific error codes** organized by domain:
 
-| Domain         | Error Codes                                                                                                                                         |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Auth**       | `AUTH_REQUIRED`, `AUTH_FAILED`, `SESSION_EXPIRED`                                                                                                   |
-| **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                   |
-| **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                     |
-| **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_ALLOCATION`                                                                                               |
-| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `PROVIDER_UNAVAILABLE`, `ALL_PROVIDERS_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
-| **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                              |
+| Domain         | Error Codes                                                                                                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**       | `AUTH_REQUIRED`, `AUTH_FAILED`, `SESSION_EXPIRED`                                                                                                                                                                                                       |
+| **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                                                                                                                       |
+| **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                                                                                                                         |
+| **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_ALLOCATION`                                                                                                                                                                             |
+| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `PROVIDER_UNAVAILABLE`, `ALL_PROVIDERS_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `DCA_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
+| **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                                                                                                                                  |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.
 

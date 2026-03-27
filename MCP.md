@@ -21,7 +21,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 
 ## Tool Registry
 
-Upon initialization, the StarkFi server dynamically provisions **30 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), and **lending** (9).
+Upon initialization, the StarkFi server dynamically provisions **34 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (9), and **dca** (4).
 
 ---
 
@@ -127,6 +127,57 @@ Retrieves the user's supplied yield, outstanding debt, Health Factor, and Risk L
 
 ---
 
+### DCA (Dollar-Cost Averaging) Tools
+
+#### `dca_preview`
+
+Previews a single DCA cycle by estimating the swap output for one execution. Always call this **before** `dca_create` so the user can review the expected output per cycle.
+
+| Parameter       | Type   | Required | Description                                               |
+| --------------- | ------ | -------- | --------------------------------------------------------- |
+| `sell_token`    | string | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                        |
+| `buy_token`     | string | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                         |
+| `amount`        | string | **Yes**  | Amount to sell per cycle (e.g. `10`, `100`)                |
+| `provider`      | string | No       | DCA provider: `avnu` (default) or `ekubo`                 |
+
+#### `dca_create`
+
+Creates a recurring DCA order that automatically executes swaps at regular intervals. Only call this **after** previewing with `dca_preview`.
+
+| Parameter        | Type    | Required | Description                                               |
+| ---------------- | ------- | -------- | --------------------------------------------------------- |
+| `sell_token`     | string  | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                        |
+| `buy_token`      | string  | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                         |
+| `amount`         | string  | **Yes**  | Total amount to sell across all cycles                     |
+| `amount_per_cycle` | string | **Yes** | Amount sold per cycle (e.g. `10`)                         |
+| `frequency`      | string  | No       | ISO 8601 duration (default: `P1D`). E.g. `PT12H`, `P1W`  |
+| `provider`       | string  | No       | DCA provider: `avnu` (default) or `ekubo`                 |
+| `simulate`       | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+#### `dca_list`
+
+Lists the user's DCA orders with optional filtering by status and provider.
+
+| Parameter  | Type   | Required | Description                                                |
+| ---------- | ------ | -------- | ---------------------------------------------------------- |
+| `status`   | string | No       | Filter by status: `ACTIVE`, `CLOSED`, or `INDEXING`        |
+| `provider` | string | No       | Filter by provider: `avnu` or `ekubo`                      |
+| `page`     | number | No       | Page number for pagination (default: `0`)                  |
+
+#### `dca_cancel`
+
+Cancels an active DCA order. Requires either the order ID or order address.
+
+| Parameter       | Type    | Required | Description                                               |
+| --------------- | ------- | -------- | --------------------------------------------------------- |
+| `order_id`      | string  | No*      | DCA order ID (from `dca_list`)                            |
+| `order_address` | string  | No*      | DCA order contract address (`0x...`)                      |
+| `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`                           |
+
+\*At least one of `order_id` or `order_address` is required.
+
+---
+
 ### Transactional Tools
 
 These tools construct and broadcast transactions. The connecting AI client is strictly responsible for prompting the user for explicit confirmation before execution. All transactional tools accept an optional `simulate` parameter — when set to `true`, the tool estimates fees and validates the transaction without broadcasting.
@@ -178,7 +229,7 @@ Executes multiple DeFi operations (swap, stake, supply, send) in a single Starkn
 
 | Parameter    | Type                                      | Required | Description                                                                                                                                                                                                                                                  |
 | ------------ | ----------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `operations` | array of `{ type, params }` (min 2 items) | **Yes**  | Each operation has a `type` (`swap`, `stake`, `supply`, `send`) and a `params` record. **swap**: `{amount, from_token, to_token}`. **stake**: `{amount, token?, pool? or validator?}`. **supply**: `{amount, token, pool}`. **send**: `{amount, token, to}`. |
+| `operations` | array of `{ type, params }` (min 2 items) | **Yes**  | Each operation has a `type` (`swap`, `stake`, `supply`, `send`, `dca-create`, `dca-cancel`) and a `params` record. **swap**: `{amount, from_token, to_token}`. **stake**: `{amount, token?, pool? or validator?}`. **supply**: `{amount, token, pool}`. **send**: `{amount, token, to}`. **dca-create**: `{sell_token, buy_token, sell_amount, amount_per_cycle, frequency?, provider?}`. **dca-cancel**: `{order_id?, order_address?, provider?}`. |
 | `simulate`   | boolean                                   | No       | Set `true` to estimate fees without executing                                                                                                                                                                                                                |
 
 #### `stake_tokens`
@@ -313,6 +364,58 @@ Rebalances a portfolio to match a target allocation. Calculates optimal swaps an
 
 ---
 
+### DCA (Dollar-Cost Averaging) Tools
+
+#### `dca_preview`
+
+Previews a single DCA cycle by fetching a swap quote for the per-cycle amount. Always call this **before** `dca_create` so the user can review the expected output per cycle.
+
+| Parameter          | Type   | Required | Description                                              |
+| ------------------ | ------ | -------- | -------------------------------------------------------- |
+| `sell_token`       | string | **Yes**  | Token to sell (e.g. `USDC`, `STRK`)                      |
+| `buy_token`        | string | **Yes**  | Token to buy (e.g. `ETH`, `STRK`)                        |
+| `amount_per_cycle` | string | **Yes**  | Amount to sell per cycle (e.g. `10`, `50`)                |
+| `provider`         | string | No       | Swap provider for routing: `avnu`, `ekubo`                |
+
+#### `dca_create`
+
+Creates a new recurring DCA order. Only call this **after** showing the user a preview via `dca_preview`.
+
+| Parameter          | Type    | Required | Description                                                  |
+| ------------------ | ------- | -------- | ------------------------------------------------------------ |
+| `sell_token`       | string  | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                            |
+| `buy_token`        | string  | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                             |
+| `sell_amount`      | string  | **Yes**  | Total amount to sell over the DCA period (e.g. `1000`)         |
+| `amount_per_cycle` | string  | **Yes**  | Amount to sell per cycle (e.g. `10`)                           |
+| `frequency`        | string  | No       | ISO 8601 duration (default: `P1D`). E.g. `PT12H`, `P1W`       |
+| `provider`         | string  | No       | DCA provider: `avnu`, `ekubo`                                  |
+| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction     |
+
+#### `dca_list`
+
+Lists DCA orders for the authenticated wallet. Supports filtering by status and provider.
+
+| Parameter  | Type   | Required | Description                                                   |
+| ---------- | ------ | -------- | ------------------------------------------------------------- |
+| `status`   | string | No       | Filter by status: `ACTIVE`, `CLOSED`, `INDEXING`               |
+| `provider` | string | No       | Filter by DCA provider: `avnu`, `ekubo`                        |
+| `page`     | number | No       | Page number for pagination (default: `0`)                      |
+
+#### `dca_cancel`
+
+Cancels an active DCA order. Requires either `order_id` or `order_address`.
+
+| Parameter       | Type    | Required | Description                                               |
+| --------------- | ------- | -------- | --------------------------------------------------------- |
+| `order_id`      | string  | No*      | Order ID to cancel                                        |
+| `order_address` | string  | No*      | Order contract address to cancel                          |
+| `provider`      | string  | No       | DCA provider: `avnu`, `ekubo`                              |
+| `simulate`      | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+\*At least one of `order_id` or `order_address` is required.
+
+---
+
 ### Configuration Utilities
 
 #### `config_action`
@@ -328,9 +431,10 @@ Views and modifies global CLI behavior: RPC routing, network selection, and Gas 
 
 ## Agent Best Practices
 
-1. **Always quote before executing** — Call `get_swap_quote` before `swap_tokens`, and `get_multi_swap_quote` before `multi_swap`
+1. **Always quote before executing** — Call `get_swap_quote` before `swap_tokens`, `get_multi_swap_quote` before `multi_swap`, and `dca_preview` before `dca_create`
 2. **Use simulation for transparency** — Set `simulate: true` on any transactional tool to preview fees before executing
 3. **Confirm with the user** — Never execute a transactional tool without explicit user confirmation
 4. **Use `get_auth_status` first** — Verify the session is active before attempting any wallet operations
-5. **Check `get_stake_status` and `get_lending_position`** — Query existing positions before staking/lending to avoid duplicate operations
+5. **Check existing positions** — Query `get_stake_status`, `get_lending_position`, and `dca_list` before creating new positions to avoid duplicates
 6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only
+7. **DCA lifecycle** — Always preview with `dca_preview` first, list existing orders with `dca_list` to avoid duplicates, and confirm cancellation before calling `dca_cancel`
