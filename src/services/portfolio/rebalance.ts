@@ -7,6 +7,7 @@ import { resolveToken } from "../tokens/tokens.js";
 import { resolveProviders, getAllQuotes, getBestQuote, resolveProvider } from "../swap/index.js";
 import { simulateTransaction } from "../simulate/simulate.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
 
 export interface TargetAllocation {
@@ -210,12 +211,11 @@ export async function executeRebalance(
 		return { plan, simulation };
 	}
 
-	const tx = await builder.send();
-	await tx.wait();
+	const { hash, explorerUrl } = await sendWithPreflight(builder);
 
 	return {
 		plan,
-		txHash: tx.hash,
-		explorerUrl: tx.explorerUrl,
+		txHash: hash,
+		explorerUrl,
 	};
 }

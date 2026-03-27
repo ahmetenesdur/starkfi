@@ -4,6 +4,7 @@ import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { TxResult } from "../../lib/types.js";
+import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 import { getTokenUsdPrice } from "../price/price.js";
 import { classifyRisk, resolveConfig } from "./health.js";
 
@@ -155,19 +156,15 @@ export async function closePosition(
 	const collateralToken = resolveToken(collateralTokenSymbol, chainId);
 	const debtToken = resolveToken(debtTokenSymbol, chainId);
 
-	const tx = await wallet
-		.tx()
-		.lendRepay({
-			collateralToken,
-			debtToken,
-			amount: Amount.parse(position.debtAmount, debtToken),
-			withdrawCollateral: true,
-			poolAddress: resolveOptionalPool(poolAddress),
-		})
-		.send();
+	const builder = wallet.tx().lendRepay({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse(position.debtAmount, debtToken),
+		withdrawCollateral: true,
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 
-	await tx.wait();
-	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
+	return sendWithPreflight(builder);
 }
 
 export async function addCollateral(
