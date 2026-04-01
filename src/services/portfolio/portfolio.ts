@@ -143,21 +143,23 @@ function parseNumericPart(formatted: string): number {
 async function fetchLending(wallet: Wallet): Promise<PortfolioLending[]> {
 	const pools = await getVesuPools("mainnet");
 
-	const tasks = pools.flatMap((pool) =>
-		pool.assets.map(async (asset) => {
-			const supplied = await getSuppliedBalance(wallet, pool.address, asset.symbol);
-			if (supplied && supplied !== "0") {
-				return { pool: pool.name, asset: asset.symbol, supplied } as PortfolioLending;
-			}
-			return null;
-		})
+	const poolAssets = pools.flatMap((pool) =>
+		pool.assets.map((asset) => ({
+			poolAddress: pool.address,
+			poolName: pool.name,
+			assetSymbol: asset.symbol,
+		}))
 	);
 
-	const results = await Promise.allSettled(tasks);
-	return results
-		.filter(
-			(r): r is PromiseFulfilledResult<PortfolioLending> =>
-				r.status === "fulfilled" && r.value !== null
-		)
-		.map((r) => r.value);
+	return runConcurrent(poolAssets, 5, async ({ poolAddress, poolName, assetSymbol }) => {
+		try {
+			const supplied = await getSuppliedBalance(wallet, poolAddress, assetSymbol);
+			if (supplied && supplied !== "0") {
+				return { pool: poolName, asset: assetSymbol, supplied } as PortfolioLending;
+			}
+		} catch {
+			// Silently skip if one asset check fails, mirroring original allSettled behavior
+		}
+		return undefined;
+	});
 }
