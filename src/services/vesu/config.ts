@@ -38,3 +38,6 @@ export const V2_POOLS: readonly PoolEntry[] = [
 
 // AmountDenomination enum values for calldata encoding.
 export const DENOMINATION_ASSETS = 1;
+
+export const CACHE_TTL_MS = 5 * 60 * 1000;
+export const VESU_REQUEST_TIMEOUT_MS = 15_000;

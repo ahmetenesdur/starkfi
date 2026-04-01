@@ -1,4 +1,4 @@
-import { VESU_API_BASE, V2_POOLS } from "./config.js";
+import { VESU_API_BASE, V2_POOLS, CACHE_TTL_MS, VESU_REQUEST_TIMEOUT_MS } from "./config.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
 import { fetchWithTimeout } from "../../lib/fetch.js";
@@ -60,9 +60,6 @@ interface RawPoolResponse {
 		pairs: RawPair[];
 	};
 }
-
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const VESU_REQUEST_TIMEOUT_MS = 15_000;
 
 interface CacheEntry {
 	data: VesuPoolData;
