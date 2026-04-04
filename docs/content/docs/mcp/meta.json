@@ -8,6 +8,7 @@
 		"tools-trade",
 		"tools-staking",
 		"tools-lending",
-		"tools-dca"
+		"tools-dca",
+		"tools-confidential"
 	]
 }

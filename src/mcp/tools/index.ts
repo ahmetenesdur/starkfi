@@ -5,6 +5,7 @@ import { registerTradeTools } from "./trade.js";
 import { registerStakingTools } from "./staking.js";
 import { registerLendingTools } from "./lending.js";
 import { registerDcaTools } from "./dca.js";
+import { registerConfidentialTools } from "./confidential.js";
 
 export interface ToolCategory {
 	name: string;
@@ -24,6 +25,7 @@ export function registerTools(server: McpServer): ToolSummary {
 		{ name: "Staking", count: registerStakingTools(server) },
 		{ name: "Lending", count: registerLendingTools(server) },
 		{ name: "DCA", count: registerDcaTools(server) },
+		{ name: "Confidential", count: registerConfidentialTools(server) },
 	];
 
 	return {

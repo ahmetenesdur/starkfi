@@ -1,4 +1,4 @@
 {
 	"title": "CLI Reference",
-	"pages": ["index", "wallet", "trading", "staking", "lending", "dca", "batch", "portfolio", "config"]
+	"pages": ["index", "wallet", "trading", "staking", "lending", "dca", "confidential", "batch", "portfolio", "config"]
 }

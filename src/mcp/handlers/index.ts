@@ -11,3 +11,4 @@ export * from "./batch.js";
 export * from "./context.js";
 export * from "./monitor.js";
 export * from "./rebalance.js";
+export * from "./confidential.js";

@@ -21,7 +21,7 @@ To integrate StarkFi into your AI environment, configure your MCP client setting
 
 ## Tool Registry
 
-Upon initialization, the StarkFi server dynamically provisions **35 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (10), and **dca** (4).
+Upon initialization, the StarkFi server dynamically provisions **42 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (10), **dca** (4), and **confidential** (7).
 
 ---
 
@@ -187,6 +187,74 @@ Cancels an active DCA order. Requires either the order ID or order address.
 | `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`                           |
 
 \*At least one of `order_id` or `order_address` is required.
+
+---
+
+### Confidential Transfer Tools (Tongo Cash)
+
+Privacy-preserving transfers using ZK proofs via Tongo. Amounts are hidden on-chain; recipients are identified by elliptic curve public keys (x, y), not Starknet addresses.
+
+#### `confidential_setup`
+
+Configures Tongo Cash credentials. The private key is stored locally and never sent to the network. Must be called before any other confidential operations.
+
+| Parameter          | Type   | Required | Description                                            |
+| ------------------ | ------ | -------- | ------------------------------------------------------ |
+| `tongo_key`        | string | **Yes**  | Tongo private key (kept locally, never sent to network) |
+| `contract_address` | string | **Yes**  | Tongo contract address on Starknet (`0x…`)             |
+
+#### `confidential_balance`
+
+Returns the confidential account state: active balance, pending balance, nonce, and Tongo address. Call this before fund/transfer/withdraw to verify state.
+
+_No input parameters required._
+
+#### `confidential_fund`
+
+Funds the confidential account by converting public ERC-20 tokens into private confidential balance.
+
+| Parameter  | Type    | Required | Description                                               |
+| ---------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`   | string  | **Yes**  | Amount to fund (e.g. `100`)                               |
+| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+#### `confidential_transfer`
+
+Transfers tokens confidentially to another Tongo account. Generates ZK proofs locally and submits on-chain. Recipient is identified by elliptic curve point (x, y), NOT a Starknet address.
+
+| Parameter     | Type    | Required | Description                                               |
+| ------------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`      | string  | **Yes**  | Amount to transfer                                         |
+| `recipient_x` | string  | **Yes**  | Recipient public key X coordinate (BigNumberish)          |
+| `recipient_y` | string  | **Yes**  | Recipient public key Y coordinate (BigNumberish)          |
+| `token`       | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate`    | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+#### `confidential_withdraw`
+
+Withdraws from confidential account to a public Starknet address. Converts private balance back to public ERC-20 tokens.
+
+| Parameter  | Type    | Required | Description                                               |
+| ---------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`   | string  | **Yes**  | Amount to withdraw                                         |
+| `to`       | string  | No       | Recipient Starknet address (default: own wallet)          |
+| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+#### `confidential_ragequit`
+
+Emergency exit — withdraws the entire confidential balance to a public address. Use when you need to exit immediately.
+
+| Parameter | Type   | Required | Description                                      |
+| --------- | ------ | -------- | ------------------------------------------------ |
+| `to`      | string | No       | Recipient Starknet address (default: own wallet) |
+
+#### `confidential_rollover`
+
+Activates pending confidential balance. Received transfers start as "pending" and must be rolled over to become spendable.
+
+_No input parameters required._
 
 ---
 
@@ -398,3 +466,4 @@ Views and modifies global CLI behavior: RPC routing, network selection, and Gas 
 5. **Check existing positions** — Query `get_stake_status`, `get_lending_position`, and `dca_list` before creating new positions to avoid duplicates
 6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only
 7. **DCA lifecycle** — Always preview with `dca_preview` first, list existing orders with `dca_list` to avoid duplicates, and confirm cancellation before calling `dca_cancel`
+8. **Confidential lifecycle** — Always call `confidential_setup` and `confidential_balance` before transactional operations. After receiving a transfer, remind the user to `confidential_rollover` to activate pending balance

@@ -15,6 +15,7 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC) |
 | [lending](./lending/SKILL.md)                         | transaction | Vesu V2 lending: supply, borrow, repay, monitor, auto-rebalance |
 | [dca](./dca/SKILL.md)                                 | transaction | Dollar-Cost Averaging: create, preview, list, cancel recurring orders |
+| [confidential](./confidential/SKILL.md)               | transaction | Tongo Cash: fund, transfer, withdraw, ragequit, rollover (ZK privacy) |
 | [portfolio](./portfolio/SKILL.md)                     | wallet-data | DeFi dashboard + portfolio optimization via rebalancing           |
 | [config](./config/SKILL.md)                           | utility     | RPC, network, gas settings, transaction status                    |
 
@@ -37,7 +38,7 @@ npx skills add ahmetenesdur/starkfi
 
 1. **Authenticate** → `authenticate-wallet` (required first)
 2. **Check funds** → `balance` or `portfolio`
-3. **Execute** → `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, or `dca`
+3. **Execute** → `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, `dca`, or `confidential`
 4. **Verify** → `tx-status` (via `config` skill)
 
 ## Trigger Examples
@@ -59,6 +60,9 @@ npx skills add ahmetenesdur/starkfi
 | "DCA 100 USDC into ETH daily"       | `dca`                 |
 | "Show my active DCA orders"         | `dca`                 |
 | "I'm getting rate limit errors"     | `config`              |
+| "Set up my Tongo account"           | `confidential`        |
+| "Fund 100 USDC confidentially"      | `confidential`        |
+| "Send 50 privately"                 | `confidential`        |
 
 ## License
 

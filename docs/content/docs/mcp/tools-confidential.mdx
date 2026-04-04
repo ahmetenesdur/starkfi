@@ -1,0 +1,108 @@
+---
+title: Confidential Tools
+description: 7 tools for privacy-preserving transfers via Tongo Cash — fund, transfer, withdraw, ragequit, rollover
+---
+
+> **Prerequisite:** Confidential tools require an active authenticated session and Tongo configuration. Call `get_auth_status` first, then `confidential_setup`.
+
+## Recommended Flow
+
+```
+1. confidential_setup     →  One-time credential setup
+2. confidential_balance   →  Check state before operations
+3. confidential_fund      →  Move public tokens to private balance
+4. confidential_transfer  →  Send tokens privately
+5. confidential_rollover  →  Activate received pending balance
+6. confidential_withdraw  →  Convert private balance to public
+7. confidential_ragequit  →  Emergency full exit (if needed)
+```
+
+---
+
+## confidential_setup
+
+Configures Tongo Cash credentials. The private key is stored locally and never sent to the network. Must be called before any other confidential tool.
+
+| Param              | Type   | Required | Description                                            |
+| ------------------ | ------ | -------- | ------------------------------------------------------ |
+| `tongo_key`        | string | Yes      | Tongo private key (kept locally, never sent to network) |
+| `contract_address` | string | Yes      | Tongo contract address on Starknet (`0x…`)             |
+
+> **Important:** This is a **configuration** tool. It writes credentials to local storage, not to the blockchain.
+
+---
+
+## confidential_balance
+
+Returns the confidential account state: active balance, pending balance, nonce, and Tongo address. Call this before fund/transfer/withdraw to verify current state.
+
+_No input parameters required._
+
+This is a **read-only** tool — safe to call without user confirmation.
+
+---
+
+## confidential_fund
+
+Funds the confidential account by converting public ERC-20 tokens into private confidential balance.
+
+| Param      | Type    | Required | Description                                               |
+| ---------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`   | string  | Yes      | Amount to fund (e.g. `100`)                               |
+| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+> **Important:** This is a **transactional** tool. Always confirm with the user before moving funds.
+
+---
+
+## confidential_transfer
+
+Transfers tokens confidentially to another Tongo account. ZK proofs are generated locally and submitted on-chain. Recipient is identified by their elliptic curve public key (x, y), **not** a Starknet address.
+
+| Param         | Type    | Required | Description                                               |
+| ------------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`      | string  | Yes      | Amount to transfer                                         |
+| `recipient_x` | string | Yes      | Recipient public key X coordinate (BigNumberish)          |
+| `recipient_y` | string | Yes      | Recipient public key Y coordinate (BigNumberish)          |
+| `token`       | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate`    | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+> **Important:** This is a **transactional** tool. Always confirm the recipient public key and amount with the user before sending.
+
+---
+
+## confidential_withdraw
+
+Withdraws from confidential account to a public Starknet address. Converts private balance back to public ERC-20 tokens.
+
+| Param      | Type    | Required | Description                                               |
+| ---------- | ------- | -------- | --------------------------------------------------------- |
+| `amount`   | string  | Yes      | Amount to withdraw                                         |
+| `to`       | string  | No       | Recipient Starknet address (default: own wallet)          |
+| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
+| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
+
+> **Important:** This is a **transactional** tool. Always confirm the withdrawal amount and recipient with the user.
+
+---
+
+## confidential_ragequit
+
+Emergency exit — withdraws the entire confidential balance to a public address. Use when you need to exit immediately.
+
+| Param | Type   | Required | Description                                      |
+| ----- | ------ | -------- | ------------------------------------------------ |
+| `to`  | string | No       | Recipient Starknet address (default: own wallet) |
+
+> **Important:** This is a **destructive** tool — it empties the entire confidential balance. Always warn the user and get explicit confirmation.
+
+---
+
+## confidential_rollover
+
+Activates pending confidential balance. Received transfers start as "pending" and must be rolled over to become spendable.
+
+_No input parameters required._
+
+> **Tip:** After confirming a confidential transfer was received, remind the user to call this tool to activate their pending balance.

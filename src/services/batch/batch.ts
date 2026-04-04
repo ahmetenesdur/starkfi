@@ -253,10 +253,7 @@ function addDcaCreateCalls(
 	});
 }
 
-function addDcaCancelCalls(
-	builder: TxBuilder,
-	params: BatchDcaCancelParams
-): void {
+function addDcaCancelCalls(builder: TxBuilder, params: BatchDcaCancelParams): void {
 	if (!params.order_id && !params.order_address) {
 		throw new StarkfiError(
 			ErrorCode.DCA_FAILED,

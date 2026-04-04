@@ -202,7 +202,9 @@ export function registerLendingTools(server: McpServer): number {
 			pool: z.string().describe("Pool name or address"),
 			collateral_token: z.string().describe("Collateral token symbol"),
 			debt_token: z.string().describe("Debt token symbol"),
-			action: z.enum(["borrow", "repay", "deposit", "withdraw"]).describe("Action to simulate"),
+			action: z
+				.enum(["borrow", "repay", "deposit", "withdraw"])
+				.describe("Action to simulate"),
 			amount: z.string().describe("Amount for the action"),
 		},
 		{ readOnlyHint: true, destructiveHint: false },

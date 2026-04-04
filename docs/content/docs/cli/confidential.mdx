@@ -1,0 +1,195 @@
+---
+title: Confidential Commands
+description: Privacy-preserving transfers via Tongo Cash — fund, transfer, withdraw, ragequit, rollover
+---
+
+> **Prerequisite:** All confidential commands require an active authenticated session and Tongo credentials. Run `starkfi auth login` first, then `starkfi conf-setup`.
+
+## Typical Flow
+
+```
+1. starkfi conf-setup --key <KEY> --contract <ADDR>  →  One-time credential setup
+2. starkfi conf-balance                              →  Check state
+3. starkfi conf-fund 100 --token USDC                →  Fund from public balance
+4. starkfi conf-transfer 50 --recipient-x … --recipient-y …  →  Private transfer
+5. starkfi conf-rollover                             →  Activate received balance
+6. starkfi conf-withdraw 25                          →  Withdraw to public
+7. starkfi conf-ragequit                             →  Emergency full exit
+```
+
+---
+
+## conf-setup
+
+Configures Tongo Cash credentials. The private key is stored locally at `~/.local/share/starkfi/confidential.json` with strict `0o600` permissions and is **never sent to the network**. Must be called before any other confidential command.
+
+```bash
+starkfi conf-setup --key <tongo_key> --contract <contract_address>
+```
+
+**Flags:**
+
+| Flag                      | Required | Description                                 |
+| ------------------------- | -------- | ------------------------------------------- |
+| `--key <key>`             | **Yes**  | Tongo private key (kept locally)            |
+| `--contract <address>`    | **Yes**  | Tongo contract address on Starknet (`0x…`)  |
+
+---
+
+## conf-balance
+
+Returns the confidential account state: active balance, pending balance, nonce, and Tongo address.
+
+```bash
+starkfi conf-balance
+starkfi conf-balance --json
+```
+
+**Flags:**
+
+| Flag     | Default | Description       |
+| -------- | ------- | ----------------- |
+| `--json` | `false` | Output raw JSON   |
+
+---
+
+## conf-fund
+
+Funds the confidential account by converting public ERC-20 tokens into private confidential balance.
+
+```bash
+starkfi conf-fund <amount> [flags]
+```
+
+**Arguments:**
+
+| Argument | Description            |
+| -------- | ---------------------- |
+| `amount` | Amount to fund         |
+
+**Flags:**
+
+| Flag              | Default | Description                                 |
+| ----------------- | ------- | ------------------------------------------- |
+| `--token <symbol>`| `USDC`  | Token symbol                                |
+| `--simulate`      | `false` | Estimate fees without executing             |
+| `--json`          | `false` | Output raw JSON                             |
+
+**Examples:**
+
+```bash
+starkfi conf-fund 100
+starkfi conf-fund 50 --token USDC --simulate
+```
+
+---
+
+## conf-transfer
+
+Sends tokens confidentially to another Tongo account. ZK proofs are generated locally and submitted on-chain. Recipient is identified by their elliptic curve public key coordinates (x, y), **not** a Starknet address.
+
+```bash
+starkfi conf-transfer <amount> --recipient-x <x> --recipient-y <y> [flags]
+```
+
+**Arguments:**
+
+| Argument | Description                |
+| -------- | -------------------------- |
+| `amount` | Amount to transfer         |
+
+**Flags:**
+
+| Flag                       | Required | Default | Description                            |
+| -------------------------- | -------- | ------- | -------------------------------------- |
+| `--recipient-x <x>`       | **Yes**  | —       | Recipient public key X coordinate      |
+| `--recipient-y <y>`       | **Yes**  | —       | Recipient public key Y coordinate      |
+| `--token <symbol>`        | No       | `USDC`  | Token symbol                           |
+| `--simulate`              | No       | `false` | Estimate fees without executing        |
+| `--json`                  | No       | `false` | Output raw JSON                        |
+
+**Examples:**
+
+```bash
+starkfi conf-transfer 50 --recipient-x 0xABC --recipient-y 0xDEF
+starkfi conf-transfer 25 --recipient-x 0xABC --recipient-y 0xDEF --simulate
+```
+
+---
+
+## conf-withdraw
+
+Withdraws from confidential account to a public Starknet address. Converts private balance back to public ERC-20 tokens.
+
+```bash
+starkfi conf-withdraw <amount> [flags]
+```
+
+**Arguments:**
+
+| Argument | Description             |
+| -------- | ----------------------- |
+| `amount` | Amount to withdraw      |
+
+**Flags:**
+
+| Flag               | Default      | Description                              |
+| ------------------ | ------------ | ---------------------------------------- |
+| `--to <address>`   | Own wallet   | Recipient Starknet address               |
+| `--token <symbol>` | `USDC`       | Token symbol                             |
+| `--simulate`       | `false`      | Estimate fees without executing          |
+| `--json`           | `false`      | Output raw JSON                          |
+
+**Examples:**
+
+```bash
+starkfi conf-withdraw 100
+starkfi conf-withdraw 50 --to 0x1234… --simulate
+```
+
+---
+
+## conf-ragequit
+
+Emergency exit — withdraws the **entire** confidential balance to a public address. Use only when you need to exit immediately.
+
+```bash
+starkfi conf-ragequit [flags]
+```
+
+**Flags:**
+
+| Flag             | Default    | Description                      |
+| ---------------- | ---------- | -------------------------------- |
+| `--to <address>` | Own wallet | Recipient Starknet address       |
+| `--json`         | `false`    | Output raw JSON                  |
+
+**Examples:**
+
+```bash
+starkfi conf-ragequit
+starkfi conf-ragequit --to 0x1234…
+```
+
+---
+
+## conf-rollover
+
+Activates pending confidential balance. When you receive a confidential transfer, it starts as **pending** and must be rolled over before it becomes spendable.
+
+```bash
+starkfi conf-rollover
+starkfi conf-rollover --json
+```
+
+---
+
+## Key Concepts
+
+| Concept              | Description                                                        |
+| -------------------- | ------------------------------------------------------------------ |
+| **Active balance**   | Spendable confidential tokens                                      |
+| **Pending balance**  | Received transfers waiting for rollover                            |
+| **Ragequit**         | Emergency full withdrawal to a public address                      |
+| **Rollover**         | Converts pending → active balance                                  |
+| **Recipient**        | Identified by elliptic curve point `(x, y)`, not a Starknet address |

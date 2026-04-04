@@ -1,11 +1,11 @@
 ---
 title: Starkzap SDK
-description: Core SDK powering wallets, tokens, staking, DCA, and transaction building
+description: Core SDK powering wallets, tokens, staking, DCA, confidential transfers, and transaction building
 ---
 
 ## Overview
 
-[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, DCA, gas abstraction, and multicall transaction building.
+[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, DCA, confidential transfers, gas abstraction, and multicall transaction building.
 
 StarkFi uses **Starkzap v2.0.0** as a direct dependency.
 
@@ -18,6 +18,7 @@ StarkFi uses **Starkzap v2.0.0** as a direct dependency.
 | Staking              | `wallet.stake()`, `wallet.exitPoolIntent()` | `stake`, `unstake`             |
 | Rewards              | `wallet.claimPoolRewards()`                 | `rewards --claim / --compound` |
 | DCA                  | `wallet.dca()`                              | `dca-create`, `dca-cancel`, `dca-list`, `dca-preview` |
+| Confidential         | `TongoConfidential`                         | `conf-fund`, `conf-transfer`, `conf-withdraw`, `conf-ragequit`, `conf-rollover` |
 | Wallet Deploy        | `wallet.ensureReady()`                      | `deploy`                       |
 | Transaction Building | `wallet.tx()` (TxBuilder)                   | `batch`, `multi-swap`          |
 | Gas Abstraction      | `feeMode: "sponsored"`                      | `config set-gasfree`           |
@@ -95,7 +96,31 @@ const tx = await wallet
 	.send({ feeMode: "sponsored" });
 ```
 
-StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, and lending operations where multiple calls must execute atomically.
+StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, confidential, and lending operations where multiple calls must execute atomically.
+
+### Confidential Transfers (Tongo Cash)
+
+```typescript
+import { TongoConfidential, fromAddress } from "starkzap";
+
+// Initialize
+const tongo = new TongoConfidential({
+	privateKey: tongoKey,
+	contractAddress: contractAddr,
+	provider: wallet.getProvider(),
+});
+
+// State queries
+const address = tongo.address;         // Tongo public address
+const balance = await tongo.balance(); // { active, pending, nonce }
+
+// Transactional operations (return Call[])
+const fundCalls = tongo.fund(amount);            // Fund from public
+const transferCalls = tongo.transfer(amount, to); // Private transfer
+const withdrawCalls = tongo.withdraw(amount, to); // Withdraw to public
+const ragequitCalls = tongo.ragequit(to);         // Emergency exit
+const rolloverCalls = tongo.rollover();           // Activate pending
+```
 
 ### v2 Enhancements
 

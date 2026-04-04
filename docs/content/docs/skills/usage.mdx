@@ -105,6 +105,20 @@ npx starkfi@latest dca-list --status ACTIVE                                # Vie
 npx starkfi@latest dca-cancel abc123                                       # Cancel order
 ```
 
+### Confidential Transfers (Tongo Cash)
+
+Privacy-preserving transfers using ZK proofs on Starknet:
+
+```bash
+npx starkfi@latest conf-setup --key <TONGO_KEY> --contract 0x1234…         # One-time setup
+npx starkfi@latest conf-balance                                           # Check state
+npx starkfi@latest conf-fund 100 --token USDC                              # Fund from public
+npx starkfi@latest conf-transfer 50 --recipient-x 0xABC --recipient-y 0xDEF  # Private transfer
+npx starkfi@latest conf-withdraw 100                                       # Withdraw to public
+npx starkfi@latest conf-ragequit                                           # Emergency exit
+npx starkfi@latest conf-rollover                                           # Activate pending
+```
+
 ## Data Skills
 
 ### Balance

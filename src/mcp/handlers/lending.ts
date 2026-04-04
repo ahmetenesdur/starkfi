@@ -324,17 +324,47 @@ export async function handleQuoteHealth(args: {
 		const debtToken = resolveToken(args.debt_token, chainId);
 		const poolAddr = fromAddress(pool.address);
 
-		const token = args.action === "deposit" || args.action === "withdraw"
-			? collateralToken
-			: debtToken;
+		const token =
+			args.action === "deposit" || args.action === "withdraw" ? collateralToken : debtToken;
 
-		const actionInput = args.action === "repay"
-			? { action: "repay" as const, request: { collateralToken, debtToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
-			: args.action === "deposit"
-				? { action: "deposit" as const, request: { token: collateralToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
-				: args.action === "withdraw"
-					? { action: "withdraw" as const, request: { token: collateralToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } }
-					: { action: "borrow" as const, request: { collateralToken, debtToken, amount: Amount.parse(args.amount, token), poolAddress: poolAddr } };
+		const actionInput =
+			args.action === "repay"
+				? {
+						action: "repay" as const,
+						request: {
+							collateralToken,
+							debtToken,
+							amount: Amount.parse(args.amount, token),
+							poolAddress: poolAddr,
+						},
+					}
+				: args.action === "deposit"
+					? {
+							action: "deposit" as const,
+							request: {
+								token: collateralToken,
+								amount: Amount.parse(args.amount, token),
+								poolAddress: poolAddr,
+							},
+						}
+					: args.action === "withdraw"
+						? {
+								action: "withdraw" as const,
+								request: {
+									token: collateralToken,
+									amount: Amount.parse(args.amount, token),
+									poolAddress: poolAddr,
+								},
+							}
+						: {
+								action: "borrow" as const,
+								request: {
+									collateralToken,
+									debtToken,
+									amount: Amount.parse(args.amount, token),
+									poolAddress: poolAddr,
+								},
+							};
 
 		const quote = await wallet.lending().quoteHealth({
 			action: actionInput,
@@ -344,12 +374,14 @@ export async function handleQuoteHealth(args: {
 		const current = quote.current;
 		const projected = quote.projected;
 
-		const currentHF = current && Number(current.debtValue) > 0
-			? Number(current.collateralValue) / Number(current.debtValue)
-			: null;
-		const projectedHF = projected && Number(projected.debtValue) > 0
-			? Number(projected.collateralValue) / Number(projected.debtValue)
-			: null;
+		const currentHF =
+			current && Number(current.debtValue) > 0
+				? Number(current.collateralValue) / Number(current.debtValue)
+				: null;
+		const projectedHF =
+			projected && Number(projected.debtValue) > 0
+				? Number(projected.collateralValue) / Number(projected.debtValue)
+				: null;
 
 		return jsonResult({
 			success: true,
@@ -359,9 +391,14 @@ export async function handleQuoteHealth(args: {
 			amount: `${args.amount} ${token.symbol}`,
 			currentHealthFactor: currentHF?.toFixed(4) ?? "∞",
 			projectedHealthFactor: projectedHF?.toFixed(4) ?? "∞",
-			riskChange: currentHF && projectedHF
-				? projectedHF > currentHF ? "IMPROVING" : projectedHF < currentHF ? "DECLINING" : "STABLE"
-				: "UNKNOWN",
+			riskChange:
+				currentHF && projectedHF
+					? projectedHF > currentHF
+						? "IMPROVING"
+						: projectedHF < currentHF
+							? "DECLINING"
+							: "STABLE"
+					: "UNKNOWN",
 		});
 	});
 }

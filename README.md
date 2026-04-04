@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, DCA (Dollar-Cost Averaging), portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
+  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to swaps, multi-swap, atomic batch transactions, staking, lending, DCA (Dollar-Cost Averaging), confidential transfers, portfolio management, and gasless transactions — all powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@ npx starkfi@latest --help
 
 Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
 
-- 🤖 **35 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- 🤖 **42 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
 - ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
 - 💸 **Gas Abstraction Built-In** — Pay gas in STRK, ETH, USDC, USDT, or DAI via AVNU Paymaster, or let the developer sponsor gas entirely (gasfree mode)
 - 📊 **Full Portfolio** — Unified view of balances, staking positions, and lending positions with USD values
@@ -40,7 +40,8 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │                                                                                       │
 │  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────┐    │
 │  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │    │
-│  │  (35+    │  │  (35 tools)    │  │ (11 workflows) │  │  (BYOAI · Chat DeFi)    │    │
+│  │  (42+    │  │  (42 tools)    │  │ (12 workflows) │  │  (BYOAI · Chat DeFi)    │    │
+
 │  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │    │
 │  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │    │
 │       │               │                  │             └───────────┬─────────────┘    │
@@ -48,9 +49,9 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 │                       ▼                  ▼                                            │
 │  ┌────────────────────────────────────────────────────────────────────────────────┐   │
 │  │                           Service Layer                                        │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────┐  ┌──────────┐  ┌──────────┐  │   │
-│  │  │  DEX     │  │ Staking  │  │  Vesu  │  │ DCA  │  │  Batch   │  │Portfolio │  │   │
-│  │  │  Swap    │  │ Lifecycle│  │   V2   │  │      │  │ Multicall│  │Dashboard │  │   │
+│  │  ┌────────┐ ┌────────┐ ┌──────┐ ┌─────┐ ┌────────┐ ┌─────────┐ ┌──────────────┐ │   │
+│  │  │  DEX   │ │Staking │ │ Vesu │ │ DCA │ │ Batch  │ │Portfolio│ │ Confidential │ │   │
+│  │  │  Swap  │ │Lifecycl│ │  V2  │ │     │ │Multical│ │Dashboard│ │   Tongo Cash │ │   │
 │  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └───┬──┘  └────┬─────┘  └────┬─────┘  │   │
 │  │       └─────────────┴────────────┴───────────┴──────────┴─────────────┘        │   │
 │  │                     │                                                          │   │
@@ -85,6 +86,7 @@ StarkFi leverages **all core Starkzap modules**:
 | **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step) |
 | **DCA**                              | Dollar-Cost Averaging via AVNU and Ekubo — create, preview, list, and cancel recurring buy orders          |
 | **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + dca-create + send in one transaction           |
+| **Confidential (Tongo Cash)**        | Privacy-preserving transfers via TongoConfidential — fund, transfer, withdraw, ragequit, rollover         |
 | **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                       |
 
 ---
@@ -110,6 +112,20 @@ npx starkfi@latest dca-preview 10 USDC ETH                                     #
 npx starkfi@latest dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D       # Daily DCA
 npx starkfi@latest dca-list --status ACTIVE                                      # View orders
 npx starkfi@latest dca-cancel <order_id>                                         # Cancel order
+```
+
+### 🔒 Confidential Transfers (Tongo Cash)
+
+Privacy-preserving transfers using ZK proofs via Tongo. Amounts are hidden on-chain; recipients are identified by elliptic curve public keys.
+
+```bash
+npx starkfi@latest conf-setup --key <TONGO_KEY> --contract 0x…   # One-time setup
+npx starkfi@latest conf-balance                                  # Check confidential balance
+npx starkfi@latest conf-fund 100 --token USDC                    # Fund confidential account
+npx starkfi@latest conf-transfer 50 --recipient-x 0x… --recipient-y 0x…  # Private transfer
+npx starkfi@latest conf-withdraw 100                              # Withdraw to public balance
+npx starkfi@latest conf-ragequit                                  # Emergency full withdrawal
+npx starkfi@latest conf-rollover                                  # Activate pending balance
 ```
 
 ### ⚛️ Atomic Transaction Batching
@@ -228,7 +244,7 @@ npx starkfi@latest portfolio-rebalance --target "60 ETH, 40 STRK" --simulate
 
 ## AI Integration (MCP)
 
-StarkFi exposes **35 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
+StarkFi exposes **42 MCP tools** via stdio transport, enabling AI assistants to execute DeFi operations.
 
 ```bash
 # Start the MCP server
@@ -237,14 +253,16 @@ npx starkfi@latest mcp-start
 
 ### Tool Categories
 
-| Category          | Tools                                                                                                                                                                                   | Count |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **Auth & Config** | `get_auth_status`, `config_action`                                                                                                                                                      | 2     |
-| **Wallet**        | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`, `rebalance_portfolio`                                                                                 | 6     |
-| **Trade**         | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                                  | 5     |
-| **Staking**       | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                                          | 8     |
-| **Lending**       | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` | 9     |
-| **DCA**           | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`                                                                                                                                   | 4     |
+| Category              | Tools                                                                                                                                                                                   | Count |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Auth & Config**     | `get_auth_status`, `config_action`                                                                                                                                                      | 2     |
+| **Wallet**            | `get_balance`, `get_portfolio`, `deploy_account`, `send_tokens`, `get_tx_status`, `rebalance_portfolio`                                                                                 | 6     |
+| **Trade**             | `get_swap_quote`, `swap_tokens`, `get_multi_swap_quote`, `multi_swap`, `batch_execute`                                                                                                  | 5     |
+| **Staking**           | `list_validators`, `list_pools`, `get_staking_info`, `get_stake_status`, `stake_tokens`, `unstake_tokens`, `claim_rewards`, `compound_rewards`                                          | 8     |
+| **Lending**           | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending` | 9     |
+| **DCA**               | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`                                                                                                                                   | 4     |
+| **Confidential**      | `confidential_setup`, `confidential_balance`, `confidential_fund`, `confidential_transfer`, `confidential_withdraw`, `confidential_ragequit`, `confidential_rollover`                   | 7     |
+| **Health (Lending)**  | `lending_quote_health`                                                                                                                                                                  | 1     |
 
 ### Example — AI Agent Workflow
 
@@ -278,14 +296,14 @@ For the complete tool registry and schemas, see [MCP Documentation](https://docs
 
 ## Agent Skills
 
-StarkFi ships with **11 agent skills** — structured instruction sets that teach AI coding assistants how to use StarkFi without custom prompting.
+StarkFi ships with **12 agent skills** — structured instruction sets that teach AI coding assistants how to use StarkFi without custom prompting.
 
-| Category         | Skills                                                              |
-| ---------------- | ------------------------------------------------------------------- |
-| **Auth**         | `authenticate-wallet`                                               |
-| **Wallet Data**  | `balance`, `portfolio`                                              |
-| **Transactions** | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, `dca` |
-| **Utility**      | `config`                                                            |
+| Category         | Skills                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| **Auth**         | `authenticate-wallet`                                                               |
+| **Wallet Data**  | `balance`, `portfolio`                                                              |
+| **Transactions** | `send`, `trade`, `multi-swap`, `batch`, `staking`, `lending`, `dca`, `confidential` |
+| **Utility**      | `config`                                                                            |
 
 ```bash
 # Install skills for your AI assistant
@@ -362,6 +380,18 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 | `dca-create <amount> <sell> <buy> --per-cycle <n> [--frequency <duration>] [--provider <name>] [--simulate] [--json]` | Create DCA order     |
 | `dca-list [--status <ACTIVE\|CLOSED\|INDEXING>] [--provider <name>] [--page <n>] [--json]`                            | List DCA orders      |
 | `dca-cancel <order_id> [--provider <name>] [--json]`                                                                  | Cancel a DCA order   |
+
+### Confidential Transfers (Tongo Cash)
+
+| Command                                                                        | Description                          |
+| ------------------------------------------------------------------------------ | ------------------------------------ |
+| `conf-setup --key <key> --contract <address>`                                  | Configure Tongo Cash credentials     |
+| `conf-balance [--json]`                                                        | Show confidential balance            |
+| `conf-fund <amount> [--token <symbol>] [--simulate] [--json]`                  | Fund confidential account            |
+| `conf-transfer <amount> --recipient-x <x> --recipient-y <y> [--simulate] [--json]` | Confidential transfer           |
+| `conf-withdraw <amount> [--to <address>] [--token <symbol>] [--simulate] [--json]` | Withdraw to public address      |
+| `conf-ragequit [--to <address>] [--json]`                                      | Emergency full withdrawal            |
+| `conf-rollover [--json]`                                                       | Activate pending balance             |
 
 ### Batching (Multicall)
 
@@ -486,7 +516,7 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 
 ## Error Handling
 
-StarkFi implements a robust error handling system with a custom `StarkfiError` class and **32 specific error codes** organized by domain:
+StarkFi implements a robust error handling system with a custom `StarkfiError` class and **34 specific error codes** organized by domain:
 
 | Domain         | Error Codes                                                                                                                                                                                                                                             |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -494,7 +524,8 @@ StarkFi implements a robust error handling system with a custom `StarkfiError` c
 | **Wallet**     | `WALLET_NOT_DEPLOYED`, `WALLET_NOT_FOUND`, `INSUFFICIENT_BALANCE`                                                                                                                                                                                       |
 | **Network**    | `NETWORK_ERROR`, `RATE_LIMITED`, `TX_FAILED`, `TX_NOT_FOUND`, `PAYMASTER_ERROR`                                                                                                                                                                         |
 | **Validation** | `INVALID_CONFIG`, `INVALID_ADDRESS`, `INVALID_AMOUNT`, `INVALID_ALLOCATION`                                                                                                                                                                             |
-| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `PROVIDER_UNAVAILABLE`, `ALL_PROVIDERS_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `DCA_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
+| **DeFi**       | `SWAP_FAILED`, `NO_ROUTE_FOUND`, `SLIPPAGE_EXCEEDED`, `PROVIDER_UNAVAILABLE`, `ALL_PROVIDERS_FAILED`, `STAKING_FAILED`, `LENDING_FAILED`, `DCA_FAILED`, `CONFIDENTIAL_FAILED`, `POOL_NOT_FOUND`, `EXIT_NOT_READY`, `VALIDATOR_NOT_FOUND`, `MONITOR_FAILED`, `REBALANCE_FAILED` |
+| **Confidential** | `CONFIDENTIAL_NOT_CONFIGURED`                                                                                                                                                                                                                                              |
 | **System**     | `SIMULATION_FAILED`, `BATCH_LIMIT_EXCEEDED`, `UNKNOWN`                                                                                                                                                                                                  |
 
 All network operations include **automatic retry with exponential backoff** (500ms base, max 2 retries). Parallel operations use a **sliding-window concurrency pool** to prevent RPC rate-limiting.

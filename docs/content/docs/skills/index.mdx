@@ -1,6 +1,6 @@
 ---
 title: Agent Skills
-description: 11 pre-packaged multi-step workflows for AI agents — install in one command
+description: 12 pre-packaged multi-step workflows for AI agents — install in one command
 ---
 
 ## What Are Skills?
@@ -11,7 +11,7 @@ Unlike MCP tools (which are individual function calls), skills orchestrate **mul
 
 ## Installation
 
-Install all 11 StarkFi skills into your AI assistant with a single command:
+Install all 12 StarkFi skills into your AI assistant with a single command:
 
 ```bash
 npx skills add ahmetenesdur/starkfi
@@ -38,6 +38,7 @@ This uses [Vercel's Skills CLI](https://skills.sh) to add the skills directly to
 | **staking**             | transaction | Stake, unstake, claim, compound rewards               |
 | **lending**             | transaction | Vesu V2: supply, borrow, repay, monitor, auto-rebalance |
 | **dca**                 | transaction | DCA: preview, create, list, cancel recurring buy orders  |
+| **confidential**        | transaction | Tongo Cash: fund, transfer, withdraw, ragequit, rollover (ZK privacy) |
 | **portfolio**           | wallet-data | DeFi dashboard + portfolio optimization via rebalancing  |
 | **config**              | utility     | RPC, network, gas settings, transaction status        |
 
@@ -75,6 +76,9 @@ Your AI agent automatically selects the right skill based on what you say:
 | "DCA 100 USDC into ETH daily"   | `dca`                 |
 | "Show my active DCA orders"     | `dca`                 |
 | "I'm getting rate limit errors" | `config`              |
+| "Set up my Tongo account"       | `confidential`        |
+| "Fund 100 USDC confidentially"  | `confidential`        |
+| "Send 50 tokens privately"      | `confidential`        |
 
 ## Skill Structure
 

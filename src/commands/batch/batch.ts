@@ -121,8 +121,18 @@ export function registerBatchCommand(program: Command): void {
 		.option("--stake <args>", 'Stake tokens: "50 STRK karnot" (repeatable)', collect, [])
 		.option("--supply <args>", 'Supply to Vesu: "200 USDC 0xPool" (repeatable)', collect, [])
 		.option("--send <args>", 'Send tokens: "10 STRK 0xAddr" (repeatable)', collect, [])
-		.option("--dca-create <args>", 'Create DCA order: "100 STRK USDC 10 P1D" (repeatable)', collect, [])
-		.option("--dca-cancel <args>", 'Cancel DCA order: "orderId [provider]" (repeatable)', collect, [])
+		.option(
+			"--dca-create <args>",
+			'Create DCA order: "100 STRK USDC 10 P1D" (repeatable)',
+			collect,
+			[]
+		)
+		.option(
+			"--dca-cancel <args>",
+			'Cancel DCA order: "orderId [provider]" (repeatable)',
+			collect,
+			[]
+		)
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -152,8 +162,12 @@ Minimum 2 operations required. Each flag can be repeated.`
 					...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
 					...(opts.supply as string[]).map((s: string) => parseOperation("supply", s)),
 					...(opts.send as string[]).map((s: string) => parseOperation("send", s)),
-					...(opts.dcaCreate as string[]).map((s: string) => parseOperation("dca-create", s)),
-					...(opts.dcaCancel as string[]).map((s: string) => parseOperation("dca-cancel", s)),
+					...(opts.dcaCreate as string[]).map((s: string) =>
+						parseOperation("dca-create", s)
+					),
+					...(opts.dcaCancel as string[]).map((s: string) =>
+						parseOperation("dca-cancel", s)
+					),
 				];
 
 				if (operations.length < 2) {

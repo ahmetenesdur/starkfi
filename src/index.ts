@@ -58,6 +58,15 @@ import {
 	registerDcaCancelCommand,
 	registerDcaPreviewCommand,
 } from "./commands/dca/dca.js";
+import {
+	registerConfSetupCommand,
+	registerConfBalanceCommand,
+	registerConfFundCommand,
+	registerConfTransferCommand,
+	registerConfWithdrawCommand,
+	registerConfRagequitCommand,
+	registerConfRolloverCommand,
+} from "./commands/confidential/confidential.js";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -263,6 +272,15 @@ registerDcaCreateCommand(program);
 registerDcaListCommand(program);
 registerDcaCancelCommand(program);
 registerDcaPreviewCommand(program);
+
+// ── Confidential ──
+registerConfSetupCommand(program);
+registerConfBalanceCommand(program);
+registerConfFundCommand(program);
+registerConfTransferCommand(program);
+registerConfWithdrawCommand(program);
+registerConfRagequitCommand(program);
+registerConfRolloverCommand(program);
 
 registerLendPoolsCommand(program);
 registerLendSupplyCommand(program);

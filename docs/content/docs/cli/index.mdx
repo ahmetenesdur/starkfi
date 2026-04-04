@@ -41,7 +41,7 @@ starkfi status
 starkfi auth logout
 ```
 
-> **Important:** Authentication is required before executing any wallet, trading, staking, lending, DCA, or batch commands. The session persists across restarts.
+> **Important:** Authentication is required before executing any wallet, trading, staking, lending, DCA, confidential, or batch commands. The session persists across restarts.
 
 ## Command Groups
 
@@ -53,6 +53,7 @@ starkfi auth logout
 | **Staking**        | `stake`, `unstake`, `rewards`, `pools`, `validators`, `stake-status`                                   | Staking operations             |
 | **Lending**        | `lend-pools`, `lend-supply`, `lend-withdraw`, `lend-borrow`, `lend-repay`, `lend-close`, `lend-status`, `lend-monitor`, `lend-auto` | Vesu V2 lending                |
 | **DCA**            | `dca-preview`, `dca-create`, `dca-list`, `dca-cancel`                                                  | Dollar-Cost Averaging          |
+| **Confidential**   | `conf-setup`, `conf-balance`, `conf-fund`, `conf-transfer`, `conf-withdraw`, `conf-ragequit`, `conf-rollover` | Tongo Cash (ZK privacy)  |
 | **Portfolio**      | `portfolio`, `portfolio-rebalance`                                                                                                   | DeFi dashboard & optimization  |
 | **Operations**     | `batch`                                                                                                | Atomic multicall               |
 | **Configuration**  | `config`                                                                                               | RPC, network, gas settings     |

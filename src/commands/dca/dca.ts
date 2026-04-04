@@ -31,7 +31,9 @@ export function registerDcaCreateCommand(program: Command): void {
 		)
 		.action(async (amount: string, sellToken: string, buyToken: string, opts) => {
 			if (!opts.perCycle) {
-				console.error("--per-cycle <amount> is required. This sets the amount sold each cycle.");
+				console.error(
+					"--per-cycle <amount> is required. This sets the amount sold each cycle."
+				);
 				process.exit(1);
 			}
 

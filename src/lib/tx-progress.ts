@@ -2,10 +2,7 @@ import type { Tx } from "starkzap";
 
 export type TxProgressCallback = (status: string) => void;
 
-export async function waitWithProgress(
-	tx: Tx,
-	onProgress?: TxProgressCallback
-): Promise<void> {
+export async function waitWithProgress(tx: Tx, onProgress?: TxProgressCallback): Promise<void> {
 	if (!onProgress) {
 		await tx.wait();
 		return;
@@ -21,8 +18,7 @@ export async function waitWithProgress(
 			const label = execution ? `${finality} (${execution})` : finality;
 			onProgress(label);
 
-			const accepted =
-				finality === "ACCEPTED_ON_L2" || finality === "ACCEPTED_ON_L1";
+			const accepted = finality === "ACCEPTED_ON_L2" || finality === "ACCEPTED_ON_L1";
 			const failed = execution === "REVERTED";
 
 			if (accepted) {

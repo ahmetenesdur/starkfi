@@ -80,3 +80,4 @@ npx starkfi@latest send 100 USDC 0x07b2... --simulate
 - Use `balance` to verify funds before sending.
 - Use `config` to set a custom RPC if experiencing rate limits.
 - Use `trade` if the user needs to swap tokens before sending.
+- Use `confidential` for privacy-preserving transfers (hidden amounts, ZK proofs).

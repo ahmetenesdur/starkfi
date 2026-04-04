@@ -84,8 +84,15 @@ export async function autoRebalanceLending(
 	const repayUSD = debtUSD - collUSD / targetHF;
 	const addCollUSD = targetHF * debtUSD - collUSD;
 
-	const repayAmount = repayUSD > 0 ? repayUSD / (debtUSD / Number(Amount.fromRaw(health.debtValue, debtToken).toUnit())) : 0;
-	const addCollAmount = addCollUSD > 0 ? addCollUSD / (collUSD / Number(Amount.fromRaw(health.collateralValue, collateralToken).toUnit())) : 0;
+	const repayAmount =
+		repayUSD > 0
+			? repayUSD / (debtUSD / Number(Amount.fromRaw(health.debtValue, debtToken).toUnit()))
+			: 0;
+	const addCollAmount =
+		addCollUSD > 0
+			? addCollUSD /
+				(collUSD / Number(Amount.fromRaw(health.collateralValue, collateralToken).toUnit()))
+			: 0;
 
 	let action: "repay" | "add-collateral";
 
@@ -121,9 +128,25 @@ export async function autoRebalanceLending(
 	const poolAddr = fromAddress(pool.address);
 	const parsedAmount = Amount.parse(amountStr, executeTokenObj);
 
-	const actionInput = action === "repay"
-		? { action: "repay" as const, request: { collateralToken, debtToken, amount: parsedAmount, poolAddress: poolAddr } }
-		: { action: "deposit" as const, request: { token: collateralToken, amount: parsedAmount, poolAddress: poolAddr } };
+	const actionInput =
+		action === "repay"
+			? {
+					action: "repay" as const,
+					request: {
+						collateralToken,
+						debtToken,
+						amount: parsedAmount,
+						poolAddress: poolAddr,
+					},
+				}
+			: {
+					action: "deposit" as const,
+					request: {
+						token: collateralToken,
+						amount: parsedAmount,
+						poolAddress: poolAddr,
+					},
+				};
 
 	const quote = await wallet.lending().quoteHealth({
 		action: actionInput,
@@ -132,9 +155,8 @@ export async function autoRebalanceLending(
 
 	const projected = quote.projected;
 	const projectedDebt = projected ? Number(projected.debtValue) : 0;
-	const estimatedNewHF = projected && projectedDebt > 0
-		? Number(projected.collateralValue) / projectedDebt
-		: 9999;
+	const estimatedNewHF =
+		projected && projectedDebt > 0 ? Number(projected.collateralValue) / projectedDebt : 9999;
 
 	if (params.simulate) {
 		return {

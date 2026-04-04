@@ -18,10 +18,7 @@ export function registerDcaTools(server: McpServer): number {
 				.describe("Amount to sell per cycle (e.g. '10', '0.5')"),
 			sell_token: z.string().describe("Token to sell (e.g. 'STRK', 'ETH')"),
 			buy_token: z.string().describe("Token to buy (e.g. 'USDC', 'ETH')"),
-			provider: z
-				.enum(["avnu", "ekubo"])
-				.optional()
-				.describe("DCA provider (default: avnu)"),
+			provider: z.enum(["avnu", "ekubo"]).optional().describe("DCA provider (default: avnu)"),
 		},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handlePreviewDcaCycle)
@@ -31,24 +28,17 @@ export function registerDcaTools(server: McpServer): number {
 		"dca_create",
 		"Create a recurring Dollar-Cost Averaging (DCA) order. Periodically swaps a fixed amount of sell_token into buy_token at the specified frequency.",
 		{
-			sell_amount: z
-				.string()
-				.describe("Total amount to sell across all cycles (e.g. '100')"),
+			sell_amount: z.string().describe("Total amount to sell across all cycles (e.g. '100')"),
 			sell_token: z.string().describe("Token to sell (e.g. 'STRK', 'ETH')"),
 			buy_token: z.string().describe("Token to buy (e.g. 'USDC', 'ETH')"),
-			amount_per_cycle: z
-				.string()
-				.describe("Amount to sell per cycle (e.g. '10')"),
+			amount_per_cycle: z.string().describe("Amount to sell per cycle (e.g. '10')"),
 			frequency: z
 				.string()
 				.optional()
 				.describe(
 					"ISO 8601 duration between cycles (default: 'P1D'=daily). Examples: 'PT12H'=12hrs, 'P1W'=weekly"
 				),
-			provider: z
-				.enum(["avnu", "ekubo"])
-				.optional()
-				.describe("DCA provider (default: avnu)"),
+			provider: z.enum(["avnu", "ekubo"]).optional().describe("DCA provider (default: avnu)"),
 			simulate: z
 				.boolean()
 				.optional()
@@ -66,10 +56,7 @@ export function registerDcaTools(server: McpServer): number {
 				.enum(["ACTIVE", "CLOSED", "INDEXING"])
 				.optional()
 				.describe("Filter orders by status"),
-			provider: z
-				.enum(["avnu", "ekubo"])
-				.optional()
-				.describe("Filter by DCA provider"),
+			provider: z.enum(["avnu", "ekubo"]).optional().describe("Filter by DCA provider"),
 			page: z.number().optional().describe("Page number (0-based)"),
 			size: z.number().optional().describe("Page size (default: provider default)"),
 		},
@@ -81,18 +68,12 @@ export function registerDcaTools(server: McpServer): number {
 		"dca_cancel",
 		"Cancel an active DCA order by its ID or contract address.",
 		{
-			order_id: z
-				.string()
-				.optional()
-				.describe("DCA order ID to cancel"),
+			order_id: z.string().optional().describe("DCA order ID to cancel"),
 			order_address: z
 				.string()
 				.optional()
 				.describe("DCA order contract address (alternative to order_id)"),
-			provider: z
-				.enum(["avnu", "ekubo"])
-				.optional()
-				.describe("DCA provider of the order"),
+			provider: z.enum(["avnu", "ekubo"]).optional().describe("DCA provider of the order"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleCancelDcaOrder)

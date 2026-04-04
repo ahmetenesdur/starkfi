@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 32 typed error codes, retry logic, and error recovery patterns
+description: 34 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
@@ -34,7 +34,7 @@ The `toJSON()` method ensures errors are consistently serialized in MCP response
 
 ## Error Codes
 
-StarkFi defines 32 typed error codes organized by domain:
+StarkFi defines 34 typed error codes organized by domain:
 
 ### Authentication & Session
 
@@ -90,6 +90,13 @@ StarkFi defines 32 typed error codes organized by domain:
 | Code              | When                              | Resolution                                      |
 | ----------------- | --------------------------------- | ----------------------------------------------- |
 | `DCA_FAILED`      | DCA order operation error         | Check token pair, amount, and provider status   |
+
+### Confidential
+
+| Code                          | When                              | Resolution                                      |
+| ----------------------------- | --------------------------------- | ----------------------------------------------- |
+| `CONFIDENTIAL_FAILED`         | Confidential transfer error       | Check balance, credentials, and retry           |
+| `CONFIDENTIAL_NOT_CONFIGURED` | Tongo credentials not set up      | Run `starkfi conf-setup`                        |
 
 ### Infrastructure
 
