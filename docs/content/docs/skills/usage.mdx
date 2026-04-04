@@ -39,7 +39,7 @@ npx starkfi@latest multi-swap "0.1 ETH>USDC, 200 USDT>DAI" --simulate
 
 ### Batch (Multicall)
 
-Combine different operation types — swaps, staking, lending, and sends — in one atomic transaction:
+Combine different operation types — swaps, staking, lending (supply, borrow, repay, withdraw), sends, and DCA orders — in one atomic transaction:
 
 ```bash
 npx starkfi@latest batch \
@@ -48,7 +48,7 @@ npx starkfi@latest batch \
   --simulate
 ```
 
-Requires at least 2 operations. Each flag (`--swap`, `--stake`, `--supply`, `--send`) can be repeated.
+Requires at least 2 operations. Each flag (`--swap`, `--stake`, `--supply`, `--send`, `--borrow`, `--repay`, `--withdraw`, `--dca-create`, `--dca-cancel`) can be repeated.
 
 ### Staking
 

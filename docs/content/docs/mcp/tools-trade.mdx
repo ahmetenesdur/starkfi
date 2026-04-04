@@ -84,7 +84,7 @@ Each swap object: `{ amount, from_token, to_token }`
 
 ## batch_execute
 
-Execute a batch of mixed operations (swap + stake + supply + send) atomically in a single Starknet multicall.
+Execute a batch of mixed operations (swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel) atomically in a single Starknet multicall.
 
 | Param        | Type    | Required | Description                                   |
 | ------------ | ------- | -------- | --------------------------------------------- |
@@ -99,5 +99,10 @@ Each operation has a `type` and `params`:
 | `stake`  | `amount`, `token`, `pool` or `validator` | `{ "type": "stake", "params": { "amount": "50", "token": "STRK", "validator": "karnot" } }`  |
 | `supply` | `amount`, `token`, `pool`                | `{ "type": "supply", "params": { "amount": "200", "token": "USDC", "pool": "Prime" } }`      |
 | `send`   | `amount`, `token`, `to`                  | `{ "type": "send", "params": { "amount": "10", "token": "STRK", "to": "0x04a3..." } }`       |
+| `borrow` | `collateral_amount`, `collateral_token`, `borrow_amount`, `borrow_token`, `pool` | `{ "type": "borrow", "params": { "collateral_amount": "0.5", "collateral_token": "ETH", "borrow_amount": "500", "borrow_token": "USDC", "pool": "Prime" } }` |
+| `repay`  | `amount`, `token`, `collateral_token`, `pool` | `{ "type": "repay", "params": { "amount": "100", "token": "USDC", "collateral_token": "ETH", "pool": "Prime" } }` |
+| `withdraw` | `amount`, `token`, `pool`              | `{ "type": "withdraw", "params": { "amount": "200", "token": "USDC", "pool": "Prime" } }`    |
+| `dca-create` | `sell_amount`, `sell_token`, `buy_token`, `amount_per_cycle`, `frequency?` | `{ "type": "dca-create", "params": { "sell_amount": "1000", "sell_token": "USDC", "buy_token": "ETH", "amount_per_cycle": "10" } }` |
+| `dca-cancel` | `order_id`, `provider?`              | `{ "type": "dca-cancel", "params": { "order_id": "abc123" } }`                                |
 
 > **Note:** Minimum 2 operations required per batch. Each operation is executed atomically — if any fails, the entire batch reverts.

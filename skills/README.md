@@ -11,7 +11,7 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [send](./send/SKILL.md)                               | transaction | Transfer tokens to a Starknet address                             |
 | [trade](./trade/SKILL.md)                             | transaction | Swap tokens via Fibrous (default), AVNU, or Ekubo         |
 | [multi-swap](./multi-swap/SKILL.md)                   | transaction | Multiple swaps in one transaction (up to 3)                       |
-| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send + DCA in one multicall       |
+| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send + borrow + repay + withdraw + DCA in one multicall |
 | [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC) |
 | [lending](./lending/SKILL.md)                         | transaction | Vesu V2 lending: supply, borrow, repay, monitor, auto-rebalance |
 | [dca](./dca/SKILL.md)                                 | transaction | Dollar-Cost Averaging: create, preview, list, cancel recurring orders |
@@ -51,6 +51,7 @@ npx skills add ahmetenesdur/starkfi
 | "Swap 100 USDC for ETH"             | `trade`               |
 | "Swap USDC to ETH and USDT to STRK" | `multi-swap`          |
 | "Swap ETH and then stake STRK"      | `batch`               |
+| "Withdraw from lending and swap"    | `batch`               |
 | "Stake 1000 STRK with Karnot"       | `staking`             |
 | "Supply 500 USDC to Prime pool"     | `lending`             |
 | "Is my position safe?"              | `lending`             |

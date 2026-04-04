@@ -305,11 +305,11 @@ Executes 2-3 token swaps in a single transaction. Each pair uses Fibrous by defa
 
 #### `batch_execute`
 
-Executes multiple DeFi operations (swap, stake, supply, send) in a single Starknet multicall. Minimum 2 operations.
+Executes multiple DeFi operations (swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel) in a single Starknet multicall. Minimum 2 operations.
 
 | Parameter    | Type                                      | Required | Description                                                                                                                                                                                                                                                  |
 | ------------ | ----------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `operations` | array of `{ type, params }` (min 2 items) | **Yes**  | Each operation has a `type` (`swap`, `stake`, `supply`, `send`, `dca-create`, `dca-cancel`) and a `params` record. **swap**: `{amount, from_token, to_token}`. **stake**: `{amount, token?, pool? or validator?}`. **supply**: `{amount, token, pool}`. **send**: `{amount, token, to}`. **dca-create**: `{sell_token, buy_token, sell_amount, amount_per_cycle, frequency?, provider?}`. **dca-cancel**: `{order_id?, order_address?, provider?}`. |
+| `operations` | array of `{ type, params }` (min 2 items) | **Yes**  | Each operation has a `type` (`swap`, `stake`, `supply`, `send`, `borrow`, `repay`, `withdraw`, `dca-create`, `dca-cancel`) and a `params` record. **swap**: `{amount, from_token, to_token}`. **stake**: `{amount, token?, pool? or validator?}`. **supply**: `{amount, token, pool}`. **send**: `{amount, token, to}`. **borrow**: `{collateral_amount, collateral_token, borrow_amount, borrow_token, pool}`. **repay**: `{amount, token, collateral_token, pool}`. **withdraw**: `{amount, token, pool}`. **dca-create**: `{sell_token, buy_token, sell_amount, amount_per_cycle, frequency?, provider?}`. **dca-cancel**: `{order_id?, order_address?, provider?}`. |
 | `simulate`   | boolean                                   | No       | Set `true` to estimate fees without executing                                                                                                                                                                                                                |
 
 #### `stake_tokens`

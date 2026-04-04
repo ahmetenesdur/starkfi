@@ -7,12 +7,12 @@ description: Combine multiple DeFi operations into a single atomic transaction
 
 ## Overview
 
-The `batch` command lets you combine multiple operations — swaps, staking, lending, and sends — into a single atomic Starknet transaction using multicall. All operations succeed together or revert together.
+The `batch` command lets you combine multiple operations — swaps, staking, lending (supply, borrow, repay, withdraw), sends, and DCA orders — into a single atomic Starknet transaction using multicall. All operations succeed together or revert together.
 
 ## Usage
 
 ```bash
-starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [--dca-create "..."] [--dca-cancel "..."] [flags]
+starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [--borrow "..."] [--repay "..."] [--withdraw "..."] [--dca-create "..."] [--dca-cancel "..."] [flags]
 ```
 
 At least **2 operations** are required per batch. Each flag can be repeated.
@@ -25,6 +25,9 @@ At least **2 operations** are required per batch. Each flag can be repeated.
 | `--stake "<amount> <token> <validator>"` | Stake tokens                    |
 | `--supply "<amount> <token> <pool>"`     | Supply to lending pool          |
 | `--send "<amount> <token> <recipient>"`  | Send tokens                     |
+| `--borrow "<col_amt> <col_token> <bor_amt> <bor_token> <pool>"` | Borrow from lending pool |
+| `--repay "<amount> <token> <col_token> <pool>"` | Repay lending debt       |
+| `--withdraw "<amount> <token> <pool>"`   | Withdraw from lending pool      |
 | `--dca-create "<amount> <sell> <buy> <perCycle> [frequency]"` | Create DCA order   |
 | `--dca-cancel "<orderId>"`             | Cancel DCA order                |
 | `--simulate`                             | Estimate fees without executing |
@@ -56,6 +59,30 @@ At least **2 operations** are required per batch. Each flag can be repeated.
 --send "<amount> <token> <recipient>"
 ```
 
+### Borrow (Lending)
+
+```bash
+--borrow "<collateral_amount> <collateral_token> <borrow_amount> <borrow_token> <pool>"
+```
+
+Example: `--borrow "0.5 ETH 500 USDC Prime"`
+
+### Repay (Lending)
+
+```bash
+--repay "<amount> <token> <collateral_token> <pool>"
+```
+
+Example: `--repay "100 USDC ETH Prime"`
+
+### Withdraw (Lending)
+
+```bash
+--withdraw "<amount> <token> <pool>"
+```
+
+Example: `--withdraw "200 USDC Prime"`
+
 ### DCA Create
 
 ```bash
@@ -78,13 +105,28 @@ starkfi batch \
   --stake "100 STRK karnot"
 ```
 
-Three operations combined:
+Withdraw from lending and swap — atomically:
 
 ```bash
 starkfi batch \
-  --swap "50 USDC ETH" \
-  --stake "200 STRK karnot" \
-  --send "10 STRK 0x04a3...abcd"
+  --withdraw "200 USDC Prime" \
+  --swap "200 USDC ETH"
+```
+
+Repay debt and stake with remaining tokens:
+
+```bash
+starkfi batch \
+  --repay "100 USDC ETH Prime" \
+  --stake "50 STRK karnot"
+```
+
+Borrow and swap in a single transaction:
+
+```bash
+starkfi batch \
+  --borrow "0.5 ETH 500 USDC Prime" \
+  --swap "250 USDC STRK"
 ```
 
 ## How It Works

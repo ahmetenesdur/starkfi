@@ -17,7 +17,16 @@ import { validateAddress } from "../../lib/validation.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import { resolveNetwork } from "../../lib/resolve-network.js";
 
-export type BatchOperationType = "swap" | "stake" | "supply" | "send" | "dca-create" | "dca-cancel";
+export type BatchOperationType =
+	| "swap"
+	| "stake"
+	| "supply"
+	| "send"
+	| "dca-create"
+	| "dca-cancel"
+	| "borrow"
+	| "repay"
+	| "withdraw";
 
 export interface BatchSwapParams {
 	amount: string;
@@ -60,6 +69,27 @@ export interface BatchDcaCancelParams {
 	provider?: string;
 }
 
+export interface BatchBorrowParams {
+	collateral_amount: string;
+	collateral_token: string;
+	borrow_amount: string;
+	borrow_token: string;
+	pool: string;
+}
+
+export interface BatchRepayParams {
+	amount: string;
+	token: string;
+	collateral_token: string;
+	pool: string;
+}
+
+export interface BatchWithdrawParams {
+	amount: string;
+	token: string;
+	pool: string;
+}
+
 export type BatchParams =
 	| BatchSwapParams
 	| BatchStakeParams
@@ -67,6 +97,9 @@ export type BatchParams =
 	| BatchSendParams
 	| BatchDcaCreateParams
 	| BatchDcaCancelParams
+	| BatchBorrowParams
+	| BatchRepayParams
+	| BatchWithdrawParams
 	| Record<string, string>;
 
 export interface BatchOperation {
@@ -128,6 +161,15 @@ export async function buildBatch(
 				break;
 			case "dca-cancel":
 				addDcaCancelCalls(builder, op.params as BatchDcaCancelParams);
+				break;
+			case "borrow":
+				await addBorrowCalls(builder, op.params as BatchBorrowParams, wallet, chainId);
+				break;
+			case "repay":
+				await addRepayCalls(builder, op.params as BatchRepayParams, wallet, chainId);
+				break;
+			case "withdraw":
+				await addWithdrawCalls(builder, op.params as BatchWithdrawParams, wallet, chainId);
 				break;
 			default:
 				throw new StarkfiError(
@@ -268,6 +310,59 @@ function addDcaCancelCalls(builder: TxBuilder, params: BatchDcaCancelParams): vo
 	});
 }
 
+async function addBorrowCalls(
+	builder: TxBuilder,
+	params: BatchBorrowParams,
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<void> {
+	const collateralToken = resolveToken(params.collateral_token, chainId);
+	const debtToken = resolveToken(params.borrow_token, chainId);
+	const pool = await resolvePoolAddress(wallet, params.pool);
+
+	builder.lendBorrow({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse(params.borrow_amount, debtToken),
+		collateralAmount: Amount.parse(params.collateral_amount, collateralToken),
+		poolAddress: fromAddress(pool.address),
+	});
+}
+
+async function addRepayCalls(
+	builder: TxBuilder,
+	params: BatchRepayParams,
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<void> {
+	const collateralToken = resolveToken(params.collateral_token, chainId);
+	const debtToken = resolveToken(params.token, chainId);
+	const pool = await resolvePoolAddress(wallet, params.pool);
+
+	builder.lendRepay({
+		collateralToken,
+		debtToken,
+		amount: Amount.parse(params.amount, debtToken),
+		poolAddress: fromAddress(pool.address),
+	});
+}
+
+async function addWithdrawCalls(
+	builder: TxBuilder,
+	params: BatchWithdrawParams,
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<void> {
+	const token = resolveToken(params.token, chainId);
+	const pool = await resolvePoolAddress(wallet, params.pool);
+
+	builder.lendWithdraw({
+		token,
+		amount: Amount.parse(params.amount, token),
+		poolAddress: fromAddress(pool.address),
+	});
+}
+
 function formatOpSummary(op: BatchOperation): string {
 	const p = op.params;
 	switch (op.type) {
@@ -294,6 +389,18 @@ function formatOpSummary(op: BatchOperation): string {
 		case "dca-cancel": {
 			const s = p as BatchDcaCancelParams;
 			return `dca-cancel ${s.order_id ?? s.order_address ?? "unknown"}`;
+		}
+		case "borrow": {
+			const s = p as BatchBorrowParams;
+			return `borrow ${s.borrow_amount} ${s.borrow_token.toUpperCase()} (collateral: ${s.collateral_amount} ${s.collateral_token.toUpperCase()})`;
+		}
+		case "repay": {
+			const s = p as BatchRepayParams;
+			return `repay ${s.amount} ${s.token.toUpperCase()}`;
+		}
+		case "withdraw": {
+			const s = p as BatchWithdrawParams;
+			return `withdraw ${s.amount} ${s.token.toUpperCase()}`;
 		}
 		default:
 			return `${op.type}: ${JSON.stringify(p)}`;

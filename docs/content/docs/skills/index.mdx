@@ -34,7 +34,7 @@ This uses [Vercel's Skills CLI](https://skills.sh) to add the skills directly to
 | **send**                | transaction | Transfer tokens to a Starknet address                 |
 | **trade**               | transaction | Swap tokens via Fibrous aggregation                   |
 | **multi-swap**          | transaction | Multiple swaps in one transaction (up to 3 pairs)     |
-| **batch**               | transaction | Combine swap + stake + supply + send + DCA in one multicall |
+| **batch**               | transaction | Combine swap + stake + supply + send + borrow + repay + withdraw + DCA in one multicall |
 | **staking**             | transaction | Stake, unstake, claim, compound rewards               |
 | **lending**             | transaction | Vesu V2: supply, borrow, repay, monitor, auto-rebalance |
 | **dca**                 | transaction | DCA: preview, create, list, cancel recurring buy orders  |
@@ -67,6 +67,7 @@ Your AI agent automatically selects the right skill based on what you say:
 | "Swap 100 USDC for ETH"         | `trade`               |
 | "Swap USDC→ETH and USDT→STRK"   | `multi-swap`          |
 | "Swap ETH then stake STRK"      | `batch`               |
+| "Withdraw from lending and swap" | `batch`              |
 | "Stake 1000 STRK with Karnot"   | `staking`             |
 | "Supply 500 USDC to Prime pool" | `lending`             |
 | "Is my position safe?"          | `lending`             |

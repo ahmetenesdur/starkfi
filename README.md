@@ -85,7 +85,7 @@ StarkFi leverages **all core Starkzap modules**:
 | **Gasless Transactions (Paymaster)** | Paymaster integration with 5 gas tokens (STRK, ETH, USDC, USDT, DAI) + developer-sponsored gasfree mode    |
 | **Staking**                          | Multi-token staking lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) — stake, claim, compound, unstake (2-step) |
 | **DCA**                              | Dollar-Cost Averaging via AVNU and Ekubo — create, preview, list, and cancel recurring buy orders          |
-| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + dca-create + send in one transaction           |
+| **TxBuilder**                        | Atomic multicall batching — combine swap + stake + supply + send + borrow + repay + withdraw + dca in one transaction  |
 | **Confidential (Tongo Cash)**        | Privacy-preserving transfers via TongoConfidential — fund, transfer, withdraw, ragequit, rollover         |
 | **ERC-20 Tokens**                    | Token presets, balance queries, transfers, approvals                                                       |
 
@@ -137,7 +137,9 @@ npx starkfi@latest batch \
   --swap "100 USDC ETH" \
   --stake "50 STRK karnot" \
   --supply "200 USDC Prime" \
-  --send "10 STRK 0xAddr"
+  --send "10 STRK 0xAddr" \
+  --borrow "0.5 ETH 500 USDC Prime" \
+  --withdraw "200 USDC Prime"
 ```
 
 ### 🥩 Multi-Token Staking Lifecycle
@@ -189,7 +191,7 @@ npx starkfi@latest config set-network mainnet   # Switch back
 | --------------------- | ------------- | ------------------------------------------------------------ |
 | **Lending (Vesu V2)** | ✅            | Pools, supply, borrow, monitor, auto-rebalance               |
 | **Staking**           | ✅            | Multi-token — STRK, WBTC, tBTC, SolvBTC, LBTC                |
-| **Batch**             | ✅            | All batch operations (supply, stake, send, dca-create, dca-cancel) |
+| **Batch**             | ✅            | All batch operations (supply, borrow, repay, withdraw, stake, send, dca) |
 | **Portfolio**         | ✅            | Balances, staking positions, lending positions               |
 | **Wallet (Send)**     | ✅            | Token transfers and simulation                               |
 | **Swap**              | Mainnet only  | Fibrous (default), AVNU, Ekubo — selectable via `--provider` |
@@ -397,7 +399,7 @@ npx starkfi@latest trade 10 STRK ETH               # Execute
 
 | Command                                                                     | Description                  |
 | --------------------------------------------------------------------------- | ---------------------------- |
-| `batch [--simulate] --swap "..." --stake "..." --supply "..." --send "..." --dca-create "..." --dca-cancel "..."` | Atomic multicall (min 2 ops) |
+| `batch [--simulate] --swap "..." --stake "..." --supply "..." --send "..." --borrow "..." --repay "..." --withdraw "..." --dca-create "..." --dca-cancel "..."` | Atomic multicall (min 2 ops) |
 
 ### Staking
 
@@ -477,15 +479,16 @@ StarkFi has a dedicated **[Telegram bot](https://github.com/ahmetenesdur/starkfi
 
 **BYOAI Model** — each user provides their own API key (OpenAI, Claude, or Gemini). No shared keys, no centralized billing.
 
-| Feature       | Description                                               |
-| ------------- | --------------------------------------------------------- |
-| **Swap**      | Token trading via Fibrous (default), AVNU, or Ekubo       |
-| **Stake**     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)     |
-| **Lend**      | Supply, borrow, repay, withdraw, close on Vesu V2         |
-| **DCA**       | Dollar-Cost Averaging with recurring buy orders            |
-| **Portfolio** | Balances with USD valuations and position health          |
-| **Batch**     | Combine swap + stake + supply + send in one transaction   |
-| **Gas Modes** | Gasless (pay in ERC-20) and gasfree (developer-sponsored) |
+| Feature           | Description                                                         |
+| ----------------- | ------------------------------------------------------------------- |
+| **Swap**          | Token trading via Fibrous (default), AVNU, or Ekubo                 |
+| **Stake**         | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)               |
+| **Lend**          | Supply, borrow, repay, withdraw, close on Vesu V2                   |
+| **DCA**           | Dollar-Cost Averaging with recurring buy orders (AVNU, Ekubo)        |
+| **Confidential**  | Privacy-preserving transfers via Tongo Cash (ZK proofs)              |
+| **Portfolio**     | Balances with USD valuations and position health                    |
+| **Batch**         | Combine swap + stake + supply + send + borrow + repay + withdraw + DCA in one transaction |
+| **Gas Modes**     | Gasless (pay in ERC-20) and gasfree (developer-sponsored)           |
 
 ```bash
 git clone https://github.com/ahmetenesdur/starkfi-telegram-bot.git

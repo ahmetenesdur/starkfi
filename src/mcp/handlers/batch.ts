@@ -1,4 +1,8 @@
-import { buildBatch, type BatchOperation } from "../../services/batch/batch.js";
+import {
+	buildBatch,
+	type BatchOperation,
+	type BatchOperationType,
+} from "../../services/batch/batch.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { withWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
@@ -6,13 +10,13 @@ import { resolveChainId } from "../../lib/resolve-network.js";
 import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 
 export async function handleBatchExecute(args: {
-	operations: { type: "swap" | "stake" | "supply" | "send"; params: Record<string, string> }[];
+	operations: { type: string; params: Record<string, string> }[];
 	simulate?: boolean;
 }) {
 	return withWallet(async ({ session, wallet }) => {
 		const chainId = resolveChainId(session);
 		const operations: BatchOperation[] = args.operations.map((op) => ({
-			type: op.type,
+			type: op.type as BatchOperationType,
 			params: op.params,
 		}));
 

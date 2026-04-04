@@ -11,14 +11,16 @@ The [StarkFi Telegram Bot](https://t.me/starkfi_bot) lets you interact with Star
 
 ## Features
 
-| Feature   | Description                                                   |
-| --------- | ------------------------------------------------------------- |
-| Swap      | DEX-aggregated trading via Fibrous                            |
-| Stake     | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)         |
-| Lend      | Supply, borrow, repay, withdraw, close on Vesu V2             |
-| Portfolio | Balances with USD valuations and position health              |
-| Batch     | Combine swap + stake + supply + send in one transaction       |
-| Gas Modes | Gasless (pay in ERC-20) and gasfree (sponsored) via Paymaster |
+| Feature        | Description                                                   |
+| -------------- | ------------------------------------------------------------- |
+| Swap           | DEX-aggregated trading via Fibrous, AVNU, or Ekubo            |
+| Stake          | Multi-token staking (STRK, WBTC, tBTC, SolvBTC, LBTC)         |
+| Lend           | Supply, borrow, repay, withdraw, close on Vesu V2             |
+| DCA            | Dollar-Cost Averaging with recurring buy orders (AVNU, Ekubo)  |
+| Confidential   | Privacy-preserving transfers via Tongo Cash (ZK proofs)        |
+| Portfolio      | Balances with USD valuations and position health              |
+| Batch          | Combine swap + stake + supply + borrow + repay + withdraw + send + DCA in one transaction |
+| Gas Modes      | Gasless (pay in ERC-20) and gasfree (sponsored) via Paymaster |
 
 ## How It Works
 
@@ -54,14 +56,17 @@ Each user gets a dedicated MCP child process with an isolated home directory. Th
 
 After setup and auth, send messages in any language. The AI handles the rest.
 
-| Message                  | What Happens                                  |
-| ------------------------ | --------------------------------------------- |
-| "What's my balance?"     | Returns token balances with USD values        |
-| "Swap 0.1 ETH to USDC"   | Gets a quote, asks for confirmation, executes |
-| "Stake 100 STRK"         | Lists validators, user picks one, stakes      |
-| "Supply 0.5 ETH on Vesu" | Lists lending pools, user picks one, supplies |
-| "Send 50 USDC to 0x04…"  | Confirms recipient, executes transfer         |
-| "Swap + stake in one tx" | Batch operation — multiple actions combined   |
+| Message                                    | What Happens                                  |
+| ------------------------------------------ | --------------------------------------------- |
+| "What's my balance?"                        | Returns token balances with USD values        |
+| "Swap 0.1 ETH to USDC"                      | Gets a quote, asks for confirmation, executes |
+| "Stake 100 STRK"                             | Lists validators, user picks one, stakes      |
+| "Supply 0.5 ETH on Vesu"                     | Lists lending pools, user picks one, supplies |
+| "Borrow 100 USDC and swap to STRK"           | Batch borrow + swap in one transaction        |
+| "Send 50 USDC to 0x04…"                      | Confirms recipient, executes transfer         |
+| "Buy 10 USDC of ETH every day"               | Creates a DCA recurring buy order             |
+| "Fund 100 USDC to my confidential account"   | Funds tokens into private balance (ZK)        |
+| "Swap + stake in one tx"                     | Batch operation — multiple actions combined   |
 
 ## BYOK Model
 

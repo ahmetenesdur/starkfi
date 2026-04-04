@@ -92,18 +92,28 @@ export function registerTradeTools(server: McpServer): number {
 
 	server.tool(
 		"batch_execute",
-		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap (via best provider), stake, supply, send. Requires at least 2 operations.",
+		"Execute multiple DeFi operations in a single Starknet transaction (multicall). Supports: swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel. Requires at least 2 operations.",
 		{
 			operations: z
 				.array(
 					z.object({
 						type: z
-							.enum(["swap", "stake", "supply", "send"])
+							.enum([
+								"swap",
+								"stake",
+								"supply",
+								"send",
+								"borrow",
+								"repay",
+								"withdraw",
+								"dca-create",
+								"dca-cancel",
+							])
 							.describe("Operation type"),
 						params: z
 							.record(z.string(), z.string())
 							.describe(
-								"Operation params. swap: {amount, from_token, to_token}. stake: {amount, token?, pool? or validator?}. supply: {amount, token, pool}. send: {amount, token, to}."
+								"Operation params. swap: {amount, from_token, to_token}. stake: {amount, token?, pool? or validator?}. supply: {amount, token, pool}. send: {amount, token, to}. borrow: {collateral_amount, collateral_token, borrow_amount, borrow_token, pool}. repay: {amount, token, collateral_token, pool}. withdraw: {amount, token, pool}. dca-create: {sell_amount, sell_token, buy_token, amount_per_cycle, frequency?}. dca-cancel: {order_id, provider?}."
 							),
 					})
 				)

@@ -1,6 +1,6 @@
 ---
 name: batch
-description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply, token sends, and DCA orders into one multicall. Use this skill when the user wants to batch, combine, bundle, or chain multiple diverse operations together in one atomic transaction, such as "swap ETH and then stake STRK" or "swap and send in one go" or "create a DCA order and stake". Also trigger when the user mentions multicall, combining operations, doing multiple things at once, or wants to save gas by bundling actions — even if they don't use the word "batch".
+description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply/borrow/repay/withdraw, token sends, and DCA orders into one multicall. Use this skill when the user wants to batch, combine, bundle, or chain multiple diverse operations together in one atomic transaction, such as "swap ETH and then stake STRK" or "withdraw from lending and swap" or "repay debt and stake" or "swap and send in one go" or "create a DCA order and stake". Also trigger when the user mentions multicall, combining operations, doing multiple things at once, or wants to save gas by bundling actions — even if they don't use the word "batch".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Batch Execute
 
-Bundle multiple diverse DeFi operations into a single Starknet multicall transaction. Supports combining **swaps**, **staking**, **lending supply**, **token sends**, and **DCA orders** — all executed atomically in one on-chain call.
+Bundle multiple diverse DeFi operations into a single Starknet multicall transaction. Supports combining **swaps**, **staking**, **lending supply/borrow/repay/withdraw**, **token sends**, and **DCA orders** — all executed atomically in one on-chain call.
 
 ## Prerequisites
 
@@ -41,8 +41,11 @@ Bundle multiple diverse DeFi operations into a single Starknet multicall transac
 npx starkfi@latest batch [--simulate] [--json] \
   --swap "<amount> <from> <to>" \
   --stake "<amount> <token> <validator_or_pool>" \
-  --supply "<amount> <token> <pool_address>" \
+  --supply "<amount> <token> <pool>" \
   --send "<amount> <token> <recipient>" \
+  --borrow "<col_amt> <col_token> <bor_amt> <bor_token> <pool>" \
+  --repay "<amount> <token> <col_token> <pool>" \
+  --withdraw "<amount> <token> <pool>" \
   --dca-create "<amount> <sell> <buy> <perCycle> [frequency]" \
   --dca-cancel "<orderId>"
 ```
@@ -53,8 +56,11 @@ npx starkfi@latest batch [--simulate] [--json] \
 | ---------- | ------------------------------------------ | ------------------------------- |
 | `--swap`   | `"<amount> <from> <to>"`                   | `--swap "100 USDC ETH"`         |
 | `--stake`  | `"<amount> <token> <validator_or_0xPool>"` | `--stake "500 STRK Karnot"`     |
-| `--supply` | `"<amount> <token> <0xPool>"`              | `--supply "100 USDC 0x04a3..."` |
+| `--supply` | `"<amount> <token> <pool>"`                | `--supply "100 USDC Prime"`     |
 | `--send`       | `"<amount> <token> <0xRecipient>"`         | `--send "10 STRK 0x07b2..."`    |
+| `--borrow`     | `"<col_amt> <col_token> <bor_amt> <bor_token> <pool>"` | `--borrow "0.5 ETH 500 USDC Prime"` |
+| `--repay`      | `"<amount> <token> <col_token> <pool>"`    | `--repay "100 USDC ETH Prime"`  |
+| `--withdraw`   | `"<amount> <token> <pool>"`                | `--withdraw "200 USDC Prime"`   |
 | `--dca-create` | `"<amount> <sell> <buy> <perCycle> [freq]"` | `--dca-create "1000 USDC ETH 10 P1D"` |
 | `--dca-cancel` | `"<orderId>"`                              | `--dca-cancel "abc123"`         |
 
@@ -68,6 +74,9 @@ npx starkfi@latest batch [--simulate] [--json] \
 | `--stake`    | string | Stake operation (repeatable)          | No\*     |
 | `--supply`   | string | Lending supply operation (repeatable) | No\*     |
 | `--send`       | string | Token transfer operation (repeatable) | No\*     |
+| `--borrow`     | string | Borrow from lending pool (repeatable) | No\*     |
+| `--repay`      | string | Repay lending debt (repeatable)       | No\*     |
+| `--withdraw`   | string | Withdraw from lending pool (repeatable) | No\*   |
 | `--dca-create` | string | Create DCA order (repeatable)         | No\*     |
 | `--dca-cancel` | string | Cancel DCA order (repeatable)         | No\*     |
 | `--simulate` | flag   | Estimate fees without broadcasting    | No       |
@@ -86,15 +95,32 @@ npx starkfi@latest batch --swap "100 USDC ETH" --stake "500 STRK Karnot"
 npx starkfi@latest tx-status <hash>
 ```
 
-**User:** "Batch: swap 50 USDT to STRK, supply 100 USDC and send 10 STRK"
+**User:** "Withdraw my USDC from Prime lending and swap it to ETH"
+
+```bash
+npx starkfi@latest status
+npx starkfi@latest balance
+npx starkfi@latest batch --withdraw "200 USDC Prime" --swap "200 USDC ETH"
+npx starkfi@latest tx-status <hash>
+```
+
+**User:** "Repay my USDC debt on Prime and stake STRK"
+
+```bash
+npx starkfi@latest status
+npx starkfi@latest balance
+npx starkfi@latest batch --repay "100 USDC ETH Prime" --stake "50 STRK karnot"
+npx starkfi@latest tx-status <hash>
+```
+
+**User:** "Borrow USDC using ETH as collateral and swap half to STRK"
 
 ```bash
 npx starkfi@latest status
 npx starkfi@latest balance
 npx starkfi@latest batch \
-  --swap "50 USDT STRK" \
-  --supply "100 USDC 0x04a3..." \
-  --send "10 STRK 0x07b2..."
+  --borrow "0.5 ETH 500 USDC Prime" \
+  --swap "250 USDC STRK"
 npx starkfi@latest tx-status <hash>
 ```
 

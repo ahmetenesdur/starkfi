@@ -102,7 +102,7 @@ src/
 
 Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. Cross-service composition happens only in dedicated orchestrators:
 
-- **`batch`** service composes swap + stake + supply + send + dca-create + dca-cancel operations
+- **`batch`** service composes swap + stake + supply + borrow + repay + withdraw + send + dca-create + dca-cancel operations
 - **`portfolio`** service aggregates data from tokens, staking, and lending services
 
 ### Tool → Handler → Service (MCP)

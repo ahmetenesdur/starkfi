@@ -106,6 +106,57 @@ function parseOperation(type: string, raw: string): BatchOperation {
 				},
 			};
 		}
+		case "borrow": {
+			if (parts.length < 5) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --borrow format: "${raw}". Expected: "0.5 ETH 500 USDC Prime"`
+				);
+			}
+			return {
+				type: "borrow",
+				params: {
+					collateral_amount: parts[0],
+					collateral_token: parts[1],
+					borrow_amount: parts[2],
+					borrow_token: parts[3],
+					pool: parts[4],
+				},
+			};
+		}
+		case "repay": {
+			if (parts.length < 4) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --repay format: "${raw}". Expected: "100 USDC ETH Prime"`
+				);
+			}
+			return {
+				type: "repay",
+				params: {
+					amount: parts[0],
+					token: parts[1],
+					collateral_token: parts[2],
+					pool: parts[3],
+				},
+			};
+		}
+		case "withdraw": {
+			if (parts.length < 3) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --withdraw format: "${raw}". Expected: "200 USDC Prime"`
+				);
+			}
+			return {
+				type: "withdraw",
+				params: {
+					amount: parts[0],
+					token: parts[1],
+					pool: parts[2],
+				},
+			};
+		}
 		default:
 			throw new StarkfiError(ErrorCode.INVALID_CONFIG, `Unknown operation type: ${type}`);
 	}
@@ -119,8 +170,21 @@ export function registerBatchCommand(program: Command): void {
 		)
 		.option("--swap <args>", 'Swap tokens: "100 USDC ETH" (repeatable)', collect, [])
 		.option("--stake <args>", 'Stake tokens: "50 STRK karnot" (repeatable)', collect, [])
-		.option("--supply <args>", 'Supply to Vesu: "200 USDC 0xPool" (repeatable)', collect, [])
+		.option("--supply <args>", 'Supply to Vesu: "200 USDC Prime" (repeatable)', collect, [])
 		.option("--send <args>", 'Send tokens: "10 STRK 0xAddr" (repeatable)', collect, [])
+		.option(
+			"--borrow <args>",
+			'Borrow from Vesu: "0.5 ETH 500 USDC Prime" (repeatable)',
+			collect,
+			[]
+		)
+		.option("--repay <args>", 'Repay Vesu debt: "100 USDC ETH Prime" (repeatable)', collect, [])
+		.option(
+			"--withdraw <args>",
+			'Withdraw from Vesu: "200 USDC Prime" (repeatable)',
+			collect,
+			[]
+		)
 		.option(
 			"--dca-create <args>",
 			'Create DCA order: "100 STRK USDC 10 P1D" (repeatable)',
@@ -140,16 +204,20 @@ export function registerBatchCommand(program: Command): void {
 			`
 Examples:
   $ starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"
-  $ starkfi batch --swap "100 USDC ETH" --supply "200 USDC 0xABC" --simulate
-  $ starkfi batch --swap "50 USDC ETH" --dca-create "100 STRK USDC 10 P1D"
+  $ starkfi batch --withdraw "200 USDC Prime" --swap "200 USDC ETH"
+  $ starkfi batch --borrow "0.5 ETH 500 USDC Prime" --swap "250 USDC STRK"
+  $ starkfi batch --repay "100 USDC ETH Prime" --stake "50 STRK karnot"
 
 Flag formats:
-  --swap       "<amount> <from> <to>"                      e.g. "0.5 ETH USDC"
-  --stake      "<amount> <token> <validator>"              e.g. "50 STRK karnot"
-  --supply     "<amount> <token> <pool>"                   e.g. "200 USDC 0xABC..."
-  --send       "<amount> <token> <address>"                e.g. "10 STRK 0x04a3..."
-  --dca-create "<total> <sell> <buy> <perCycle> [freq]"    e.g. "100 STRK USDC 10 P1D"
-  --dca-cancel "<orderId> [provider]"                      e.g. "abc123 avnu"
+  --swap       "<amount> <from> <to>"                                   e.g. "0.5 ETH USDC"
+  --stake      "<amount> <token> <validator>"                           e.g. "50 STRK karnot"
+  --supply     "<amount> <token> <pool>"                                e.g. "200 USDC Prime"
+  --send       "<amount> <token> <address>"                             e.g. "10 STRK 0x04a3..."
+  --borrow     "<col_amt> <col_token> <bor_amt> <bor_token> <pool>"     e.g. "0.5 ETH 500 USDC Prime"
+  --repay      "<amount> <token> <col_token> <pool>"                    e.g. "100 USDC ETH Prime"
+  --withdraw   "<amount> <token> <pool>"                                e.g. "200 USDC Prime"
+  --dca-create "<total> <sell> <buy> <perCycle> [freq]"                  e.g. "100 STRK USDC 10 P1D"
+  --dca-cancel "<orderId> [provider]"                                   e.g. "abc123 avnu"
 
 Minimum 2 operations required. Each flag can be repeated.`
 		)
@@ -162,6 +230,11 @@ Minimum 2 operations required. Each flag can be repeated.`
 					...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
 					...(opts.supply as string[]).map((s: string) => parseOperation("supply", s)),
 					...(opts.send as string[]).map((s: string) => parseOperation("send", s)),
+					...(opts.borrow as string[]).map((s: string) => parseOperation("borrow", s)),
+					...(opts.repay as string[]).map((s: string) => parseOperation("repay", s)),
+					...(opts.withdraw as string[]).map((s: string) =>
+						parseOperation("withdraw", s)
+					),
 					...(opts.dcaCreate as string[]).map((s: string) =>
 						parseOperation("dca-create", s)
 					),
@@ -173,7 +246,7 @@ Minimum 2 operations required. Each flag can be repeated.`
 				if (operations.length < 2) {
 					throw new StarkfiError(
 						ErrorCode.INVALID_AMOUNT,
-						"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--dca-create/--dca-cancel options."
+						"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--borrow/--repay/--withdraw/--dca-create/--dca-cancel options."
 					);
 				}
 
