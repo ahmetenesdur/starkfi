@@ -107,7 +107,7 @@ ${chalk.bold.hex(MINT)("Quick Start")}
   ${dim("$")} ${white('starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"')}   ${dim("# Multicall")}
 
   ${dim("Run")} ${white("starkfi <command> --help")} ${dim("for detailed flags and examples.")}
-  ${dim("Docs →")} ${chalk.hex(BLUE).underline("https://github.com/ahmetenesdur/starkfi")}
+  ${dim("Docs →")} ${chalk.hex(BLUE).underline("https://docs.starkfi.app/docs")}
 `;
 
 const COMMAND_GROUPS: Record<string, string[]> = {
