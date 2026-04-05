@@ -47,6 +47,8 @@ Privacy-preserving token transfers using ZK proofs on Starknet. Amounts are hidd
 
 ## Setup (One-Time)
 
+The user first needs a Tongo Private Key. They can generate or export this key through the [Tongo Cash](https://tongo.cash/) or refer to the [Tongo Documentation](https://docs.tongo.cash/protocol/contracts.html).
+
 ```bash
 npx starkfi@latest conf-setup --key <TONGO_PRIVATE_KEY> --contract 0x1234…
 ```
@@ -103,17 +105,17 @@ npx starkfi@latest conf-rollover [--json]
 
 ## Parameters
 
-| Parameter        | Type   | Description                              | Required   |
-| ---------------- | ------ | ---------------------------------------- | ---------- |
-| `amount`         | number | Amount for fund/transfer/withdraw        | Yes        |
-| `--key`          | string | Tongo private key (setup only)           | Yes (setup)|
-| `--contract`     | string | Tongo contract address                   | Yes (setup)|
-| `--recipient-x`  | string | Recipient public key X coordinate        | Yes (transfer) |
-| `--recipient-y`  | string | Recipient public key Y coordinate        | Yes (transfer) |
-| `--token`        | string | Token symbol (default: `USDC`)           | No         |
-| `--to`           | string | Recipient Starknet address               | No         |
-| `--simulate`     | flag   | Estimate fees without broadcasting       | No         |
-| `--json`         | flag   | Output as JSON                           | No         |
+| Parameter       | Type   | Description                        | Required       |
+| --------------- | ------ | ---------------------------------- | -------------- |
+| `amount`        | number | Amount for fund/transfer/withdraw  | Yes            |
+| `--key`         | string | Tongo private key (setup only)     | Yes (setup)    |
+| `--contract`    | string | Tongo contract address             | Yes (setup)    |
+| `--recipient-x` | string | Recipient public key X coordinate  | Yes (transfer) |
+| `--recipient-y` | string | Recipient public key Y coordinate  | Yes (transfer) |
+| `--token`       | string | Token symbol (default: `USDC`)     | No             |
+| `--to`          | string | Recipient Starknet address         | No             |
+| `--simulate`    | flag   | Estimate fees without broadcasting | No             |
+| `--json`        | flag   | Output as JSON                     | No             |
 
 ## Examples
 
@@ -168,12 +170,12 @@ npx starkfi@latest tx-status <hash>
 
 ## Error Handling
 
-| Error                           | Action                                                     |
-| ------------------------------- | ---------------------------------------------------------- |
-| `CONFIDENTIAL_NOT_CONFIGURED`   | Run `conf-setup` with valid Tongo key and contract address.|
-| `CONFIDENTIAL_FAILED`           | Check balance, credentials, and retry.                     |
-| `Insufficient balance`          | Check `conf-balance` for active balance before operations. |
-| `Not authenticated`             | Run `authenticate-wallet` skill first.                     |
+| Error                         | Action                                                      |
+| ----------------------------- | ----------------------------------------------------------- |
+| `CONFIDENTIAL_NOT_CONFIGURED` | Run `conf-setup` with valid Tongo key and contract address. |
+| `CONFIDENTIAL_FAILED`         | Check balance, credentials, and retry.                      |
+| `Insufficient balance`        | Check `conf-balance` for active balance before operations.  |
+| `Not authenticated`           | Run `authenticate-wallet` skill first.                      |
 
 ## Related Skills
 

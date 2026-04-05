@@ -23,16 +23,19 @@ description: Privacy-preserving transfers via Tongo Cash — fund, transfer, wit
 
 Configures Tongo Cash credentials. The private key is stored locally at `~/.local/share/starkfi/confidential.json` with strict `0o600` permissions and is **never sent to the network**. Must be called before any other confidential command.
 
+> **How to get a Tongo Key?**
+> You can generate or export your confidential Tongo private key through the [Tongo Cash](https://tongo.cash/) or refer to the [Tongo Documentation](https://docs.tongo.cash/protocol/contracts.html) for more details. Keep this key completely separate from your Starknet wallet key; treat it as sensitive data.
+
 ```bash
 starkfi conf-setup --key <tongo_key> --contract <contract_address>
 ```
 
 **Flags:**
 
-| Flag                      | Required | Description                                 |
-| ------------------------- | -------- | ------------------------------------------- |
-| `--key <key>`             | **Yes**  | Tongo private key (kept locally)            |
-| `--contract <address>`    | **Yes**  | Tongo contract address on Starknet (`0x…`)  |
+| Flag                   | Required | Description                                |
+| ---------------------- | -------- | ------------------------------------------ |
+| `--key <key>`          | **Yes**  | Tongo private key (kept locally)           |
+| `--contract <address>` | **Yes**  | Tongo contract address on Starknet (`0x…`) |
 
 ---
 
@@ -47,9 +50,9 @@ starkfi conf-balance --json
 
 **Flags:**
 
-| Flag     | Default | Description       |
-| -------- | ------- | ----------------- |
-| `--json` | `false` | Output raw JSON   |
+| Flag     | Default | Description     |
+| -------- | ------- | --------------- |
+| `--json` | `false` | Output raw JSON |
 
 ---
 
@@ -63,17 +66,17 @@ starkfi conf-fund <amount> [flags]
 
 **Arguments:**
 
-| Argument | Description            |
-| -------- | ---------------------- |
-| `amount` | Amount to fund         |
+| Argument | Description    |
+| -------- | -------------- |
+| `amount` | Amount to fund |
 
 **Flags:**
 
-| Flag              | Default | Description                                 |
-| ----------------- | ------- | ------------------------------------------- |
-| `--token <symbol>`| `USDC`  | Token symbol                                |
-| `--simulate`      | `false` | Estimate fees without executing             |
-| `--json`          | `false` | Output raw JSON                             |
+| Flag               | Default | Description                     |
+| ------------------ | ------- | ------------------------------- |
+| `--token <symbol>` | `USDC`  | Token symbol                    |
+| `--simulate`       | `false` | Estimate fees without executing |
+| `--json`           | `false` | Output raw JSON                 |
 
 **Examples:**
 
@@ -94,19 +97,19 @@ starkfi conf-transfer <amount> --recipient-x <x> --recipient-y <y> [flags]
 
 **Arguments:**
 
-| Argument | Description                |
-| -------- | -------------------------- |
-| `amount` | Amount to transfer         |
+| Argument | Description        |
+| -------- | ------------------ |
+| `amount` | Amount to transfer |
 
 **Flags:**
 
-| Flag                       | Required | Default | Description                            |
-| -------------------------- | -------- | ------- | -------------------------------------- |
-| `--recipient-x <x>`       | **Yes**  | —       | Recipient public key X coordinate      |
-| `--recipient-y <y>`       | **Yes**  | —       | Recipient public key Y coordinate      |
-| `--token <symbol>`        | No       | `USDC`  | Token symbol                           |
-| `--simulate`              | No       | `false` | Estimate fees without executing        |
-| `--json`                  | No       | `false` | Output raw JSON                        |
+| Flag                | Required | Default | Description                       |
+| ------------------- | -------- | ------- | --------------------------------- |
+| `--recipient-x <x>` | **Yes**  | —       | Recipient public key X coordinate |
+| `--recipient-y <y>` | **Yes**  | —       | Recipient public key Y coordinate |
+| `--token <symbol>`  | No       | `USDC`  | Token symbol                      |
+| `--simulate`        | No       | `false` | Estimate fees without executing   |
+| `--json`            | No       | `false` | Output raw JSON                   |
 
 **Examples:**
 
@@ -127,18 +130,18 @@ starkfi conf-withdraw <amount> [flags]
 
 **Arguments:**
 
-| Argument | Description             |
-| -------- | ----------------------- |
-| `amount` | Amount to withdraw      |
+| Argument | Description        |
+| -------- | ------------------ |
+| `amount` | Amount to withdraw |
 
 **Flags:**
 
-| Flag               | Default      | Description                              |
-| ------------------ | ------------ | ---------------------------------------- |
-| `--to <address>`   | Own wallet   | Recipient Starknet address               |
-| `--token <symbol>` | `USDC`       | Token symbol                             |
-| `--simulate`       | `false`      | Estimate fees without executing          |
-| `--json`           | `false`      | Output raw JSON                          |
+| Flag               | Default    | Description                     |
+| ------------------ | ---------- | ------------------------------- |
+| `--to <address>`   | Own wallet | Recipient Starknet address      |
+| `--token <symbol>` | `USDC`     | Token symbol                    |
+| `--simulate`       | `false`    | Estimate fees without executing |
+| `--json`           | `false`    | Output raw JSON                 |
 
 **Examples:**
 
@@ -159,10 +162,10 @@ starkfi conf-ragequit [flags]
 
 **Flags:**
 
-| Flag             | Default    | Description                      |
-| ---------------- | ---------- | -------------------------------- |
-| `--to <address>` | Own wallet | Recipient Starknet address       |
-| `--json`         | `false`    | Output raw JSON                  |
+| Flag             | Default    | Description                |
+| ---------------- | ---------- | -------------------------- |
+| `--to <address>` | Own wallet | Recipient Starknet address |
+| `--json`         | `false`    | Output raw JSON            |
 
 **Examples:**
 
@@ -186,10 +189,10 @@ starkfi conf-rollover --json
 
 ## Key Concepts
 
-| Concept              | Description                                                        |
-| -------------------- | ------------------------------------------------------------------ |
-| **Active balance**   | Spendable confidential tokens                                      |
-| **Pending balance**  | Received transfers waiting for rollover                            |
-| **Ragequit**         | Emergency full withdrawal to a public address                      |
-| **Rollover**         | Converts pending → active balance                                  |
-| **Recipient**        | Identified by elliptic curve point `(x, y)`, not a Starknet address |
+| Concept             | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| **Active balance**  | Spendable confidential tokens                                       |
+| **Pending balance** | Received transfers waiting for rollover                             |
+| **Ragequit**        | Emergency full withdrawal to a public address                       |
+| **Rollover**        | Converts pending → active balance                                   |
+| **Recipient**       | Identified by elliptic curve point `(x, y)`, not a Starknet address |

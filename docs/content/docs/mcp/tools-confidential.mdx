@@ -23,10 +23,13 @@ description: 7 tools for privacy-preserving transfers via Tongo Cash — fund, t
 
 Configures Tongo Cash credentials. The private key is stored locally and never sent to the network. Must be called before any other confidential tool.
 
-| Param              | Type   | Required | Description                                            |
-| ------------------ | ------ | -------- | ------------------------------------------------------ |
+> **Tip: Obtaining a Tongo Key**
+> Users can generate or export their confidential Tongo private key through the [Tongo Cash](https://tongo.cash/) or refer to the [Tongo Documentation](https://docs.tongo.cash/protocol/contracts.html) for more details. Keep this key completely separate from your Starknet wallet key.
+
+| Param              | Type   | Required | Description                                             |
+| ------------------ | ------ | -------- | ------------------------------------------------------- |
 | `tongo_key`        | string | Yes      | Tongo private key (kept locally, never sent to network) |
-| `contract_address` | string | Yes      | Tongo contract address on Starknet (`0x…`)             |
+| `contract_address` | string | Yes      | Tongo contract address on Starknet (`0x…`)              |
 
 > **Important:** This is a **configuration** tool. It writes credentials to local storage, not to the blockchain.
 
@@ -62,9 +65,9 @@ Transfers tokens confidentially to another Tongo account. ZK proofs are generate
 
 | Param         | Type    | Required | Description                                               |
 | ------------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`      | string  | Yes      | Amount to transfer                                         |
-| `recipient_x` | string | Yes      | Recipient public key X coordinate (BigNumberish)          |
-| `recipient_y` | string | Yes      | Recipient public key Y coordinate (BigNumberish)          |
+| `amount`      | string  | Yes      | Amount to transfer                                        |
+| `recipient_x` | string  | Yes      | Recipient public key X coordinate (BigNumberish)          |
+| `recipient_y` | string  | Yes      | Recipient public key Y coordinate (BigNumberish)          |
 | `token`       | string  | No       | Token symbol (default: `USDC`)                            |
 | `simulate`    | boolean | No       | Set `true` to estimate fees without sending a transaction |
 
@@ -78,7 +81,7 @@ Withdraws from confidential account to a public Starknet address. Converts priva
 
 | Param      | Type    | Required | Description                                               |
 | ---------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`   | string  | Yes      | Amount to withdraw                                         |
+| `amount`   | string  | Yes      | Amount to withdraw                                        |
 | `to`       | string  | No       | Recipient Starknet address (default: own wallet)          |
 | `token`    | string  | No       | Token symbol (default: `USDC`)                            |
 | `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
