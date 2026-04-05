@@ -64,7 +64,7 @@ export function registerWalletTools(server: McpServer): number {
 
 	server.tool(
 		"get_portfolio",
-		"Get complete DeFi portfolio overview: all token balances (with USD values), staking positions, and lending positions in one call.",
+		"Get complete DeFi portfolio overview: all token balances (with USD values), staking positions, lending positions, DCA orders, and confidential Tongo balances in one call.",
 		{},
 		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetPortfolio)

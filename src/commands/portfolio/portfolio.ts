@@ -89,6 +89,45 @@ export function registerPortfolioCommand(program: Command): void {
 					console.log("  No lending positions found.\n");
 				}
 
+				console.log(`\n  DCA Orders (Active)\n`);
+
+				if (portfolio.dca && portfolio.dca.length > 0) {
+					console.log(
+						formatTable(
+							["ID", "Order Address", "Provider", "Status", "Frequency", "Trades"],
+							portfolio.dca.map((d) => [
+								d.id,
+								d.orderAddress,
+								d.provider,
+								d.status,
+								d.frequency,
+								d.trades,
+							])
+						)
+					);
+				} else {
+					console.log("  No active DCA orders found.\n");
+				}
+
+				console.log(`\n  Confidential Tongo Balance\n`);
+
+				if (portfolio.confidential) {
+					console.log(
+						formatTable(
+							["Tongo Address", "Active Balance", "Pending Balance"],
+							[
+								[
+									portfolio.confidential.address.slice(0, 16) + "…",
+									portfolio.confidential.activeBalance,
+									portfolio.confidential.pendingBalance,
+								],
+							]
+						)
+					);
+				} else {
+					console.log("  Tongo Cash not configured or no balance found.\n");
+				}
+
 				console.log();
 				console.log(
 					formatResult({
@@ -100,6 +139,7 @@ export function registerPortfolioCommand(program: Command): void {
 						tokens: portfolio.balances.length,
 						stakingPositions: portfolio.staking.length,
 						lendingPositions: portfolio.lending.length,
+						dcaOrders: portfolio.dca?.length ?? 0,
 					})
 				);
 				console.log();

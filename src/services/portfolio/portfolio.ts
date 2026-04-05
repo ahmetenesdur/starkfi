@@ -9,6 +9,9 @@ import { getVesuPools, getPoolMarkets } from "../vesu/pools.js";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { runConcurrent } from "../../lib/concurrency.js";
 import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
+import { listDcaOrders } from "../dca/dca.js";
+import { getConfidentialState, createTongoInstance } from "../confidential/confidential.js";
+import { loadTongoConfig } from "../confidential/config.js";
 
 export interface PortfolioBalance {
 	symbol: string;
@@ -34,12 +37,29 @@ export interface PortfolioLending {
 	supplied: string;
 }
 
+export interface PortfolioDca {
+	id: string;
+	orderAddress: string;
+	provider: string;
+	status: string;
+	frequency: string;
+	trades: string;
+}
+
+export interface PortfolioConfidential {
+	address: string;
+	activeBalance: string;
+	pendingBalance: string;
+}
+
 export interface PortfolioData {
 	address: string;
 	network: string;
 	balances: PortfolioBalance[];
 	staking: PortfolioStaking[];
 	lending: PortfolioLending[];
+	dca: PortfolioDca[];
+	confidential: PortfolioConfidential | null;
 	totalUsdValue: number;
 }
 
@@ -49,15 +69,20 @@ export async function getPortfolio(
 	session: Session
 ): Promise<PortfolioData> {
 	const chainId = resolveChainId(session);
-	const [balancesResult, stakingResult, lendingResult] = await Promise.allSettled([
-		fetchBalancesWithUsd(wallet, chainId),
-		fetchStaking(sdk, wallet, session),
-		fetchLending(wallet, chainId),
-	]);
+	const [balancesResult, stakingResult, lendingResult, dcaResult, confResult] =
+		await Promise.allSettled([
+			fetchBalancesWithUsd(wallet, chainId),
+			fetchStaking(sdk, wallet, session),
+			fetchLending(wallet, chainId),
+			fetchDca(wallet),
+			fetchConfidential(wallet, chainId),
+		]);
 
 	const balances = balancesResult.status === "fulfilled" ? balancesResult.value : [];
 	const staking = stakingResult.status === "fulfilled" ? stakingResult.value : [];
 	const lending = lendingResult.status === "fulfilled" ? lendingResult.value : [];
+	const dca = dcaResult.status === "fulfilled" ? dcaResult.value : [];
+	const confidential = confResult.status === "fulfilled" ? confResult.value : null;
 
 	const balanceUsd = balances.reduce((sum, b) => sum + b.usdValue, 0);
 	const stakingUsd = staking.reduce((sum, s) => sum + s.usdValue, 0);
@@ -68,6 +93,8 @@ export async function getPortfolio(
 		balances,
 		staking,
 		lending,
+		dca,
+		confidential,
 		totalUsdValue: balanceUsd + stakingUsd,
 	};
 }
@@ -177,4 +204,51 @@ async function fetchLending(
 	}
 
 	return results;
+}
+
+async function fetchDca(wallet: WalletInterface): Promise<PortfolioDca[]> {
+	try {
+		const result = await listDcaOrders(wallet as StarkZapWallet, { status: "ACTIVE" });
+		return result.content.map((o) => ({
+			id: o.id.slice(0, 8),
+			orderAddress: o.orderAddress.toString(),
+			provider: o.providerId,
+			status: o.status,
+			frequency: o.frequency,
+			trades: `${o.executedTradesCount}/${o.iterations}`,
+		}));
+	} catch {
+		return [];
+	}
+}
+
+async function fetchConfidential(
+	wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<PortfolioConfidential | null> {
+	try {
+		const config = loadTongoConfig();
+		if (!config) return null;
+
+		const tongo = createTongoInstance(wallet as StarkZapWallet, config);
+		const state = await getConfidentialState(tongo);
+
+		const activeUnits = "balance" in state ? BigInt(state.balance) : 0n;
+		const pendingUnits = "pending" in state ? BigInt(state.pending) : 0n;
+
+		const formatUsdc = (num: bigint) => {
+			const s = num.toString().padStart(7, "0");
+			const intPart = s.slice(0, -6) || "0";
+			const fracPart = s.slice(-6).replace(/0+$/, "");
+			return fracPart ? `${intPart}.${fracPart}` : intPart;
+		};
+
+		return {
+			address: state.address,
+			activeBalance: `${formatUsdc(activeUnits)} USDC`,
+			pendingBalance: `${formatUsdc(pendingUnits)} USDC`,
+		};
+	} catch {
+		return null;
+	}
 }

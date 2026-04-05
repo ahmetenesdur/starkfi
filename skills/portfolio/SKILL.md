@@ -71,11 +71,13 @@ npx starkfi@latest portfolio-rebalance --target "<allocation>" [--slippage <n>] 
 
 ## Dashboard Sections
 
-The portfolio displays three sections:
+The portfolio displays five sections:
 
 1. **Token Balances** — STRK, ETH, and all ERC-20 tokens with non-zero balances and their USD values.
 2. **Staking Positions** — Active stakes across all validators/pools with pending rewards. Shows unpooling amounts and cooldown dates when exit intents are active.
 3. **Lending Positions** — Active Vesu V2 positions: supplied and borrowed amounts with pool details.
+4. **DCA Orders** — Active Dollar-Cost Averaging recurring swap orders.
+5. **Confidential Tongo Balance** — Private active and pending balances under Tongo Cash.
 
 ## Examples
 

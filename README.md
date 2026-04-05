@@ -187,7 +187,7 @@ Consolidated view of all DeFi positions in one call.
 
 ```bash
 npx starkfi@latest portfolio
-# → Token Balances (USD), Staking Positions, Lending Positions, Total Value
+# → Token Balances (USD), Staking Positions, Lending Positions, DCA Orders, Confidential Balance, Total Value
 ```
 
 ### 📈 Portfolio Optimization
@@ -470,6 +470,8 @@ See [`starkfi-telegram-bot/`](https://github.com/ahmetenesdur/starkfi-telegram-b
 | **Auth Server** | [Hono](https://hono.dev/) v4.12.7 + [Privy TEE](https://privy.io/)                                   |
 | **DEX Routing** | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) |
 | **Lending**     | [Vesu](https://vesu.io/) V2 Protocol                                                                 |
+| **DCA**         | [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/)                                                |
+| **Confidential**| [Tongo Cash](https://tongo.cash/)                                                                    |
 | **Gas**         | [AVNU](https://avnu.fi/) Paymaster                                                                   |
 
 ---
