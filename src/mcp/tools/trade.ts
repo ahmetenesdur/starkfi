@@ -113,7 +113,7 @@ export function registerTradeTools(server: McpServer): number {
 						params: z
 							.record(z.string(), z.string())
 							.describe(
-								"Operation params. swap: {amount, from_token, to_token}. stake: {amount, token?, pool? or validator?}. supply: {amount, token, pool}. send: {amount, token, to}. borrow: {collateral_amount, collateral_token, borrow_amount, borrow_token, pool}. repay: {amount, token, collateral_token, pool}. withdraw: {amount, token, pool}. dca-create: {sell_amount, sell_token, buy_token, amount_per_cycle, frequency?}. dca-cancel: {order_id, provider?}."
+								"Operation params. swap: {amount, from_token, to_token}. stake: {amount, token?, pool? or validator?}. supply: {amount, token, pool}. send: {amount, token, to}. borrow: {collateral_amount, collateral_token, borrow_amount, borrow_token, pool}. repay: {amount, token, collateral_token, pool}. withdraw: {amount, token, pool}. dca-create: {sell_amount, sell_token, buy_token, amount_per_cycle, frequency?}. dca-cancel: {order_id?, order_address?, provider?}."
 							),
 					})
 				)

@@ -64,7 +64,7 @@ npx starkfi@latest dca-list [--status <ACTIVE|CLOSED|INDEXING>] [--provider <avn
 ### Cancel a DCA Order
 
 ```bash
-npx starkfi@latest dca-cancel <order_id> [--provider <avnu|ekubo>] [--json]
+npx starkfi@latest dca-cancel <order_id_or_address> [--provider <avnu|ekubo>] [--json]
 ```
 
 ## Parameters
@@ -74,6 +74,7 @@ npx starkfi@latest dca-cancel <order_id> [--provider <avnu|ekubo>] [--json]
 | `amount`      | string | Total sell amount (create) or per-cycle amount (preview) | **Yes** |
 | `sell_token`  | string | Token to sell (e.g. `STRK`, `ETH`)           | **Yes**  |
 | `buy_token`   | string | Token to buy (e.g. `USDC`, `ETH`)            | **Yes**  |
+| `order_id_or_address` | string | The UUID OR on-chain contract address (`0x...`) from `dca-list` | **Yes** (cancel) |
 | `--per-cycle` | string | Amount to sell per cycle                      | **Yes** (create) |
 | `--frequency` | string | ISO 8601 duration (default: `P1D`=daily)     | No       |
 | `--provider`  | string | DCA provider: `avnu` (default) or `ekubo`    | No       |
@@ -113,7 +114,7 @@ npx starkfi@latest dca-list --status ACTIVE --json
 
 ```bash
 npx starkfi@latest dca-list --status ACTIVE
-npx starkfi@latest dca-cancel <order_id>
+npx starkfi@latest dca-cancel <order_id_or_address>
 npx starkfi@latest tx-status <hash>
 ```
 

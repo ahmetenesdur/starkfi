@@ -144,6 +144,7 @@ export function registerDcaListCommand(program: Command): void {
 							{
 								orders: result.content.map((o) => ({
 									id: o.id,
+									orderAddress: o.orderAddress.toString(),
 									provider: o.providerId,
 									status: o.status,
 									sellToken: o.sellTokenAddress.toString(),
@@ -168,15 +169,14 @@ export function registerDcaListCommand(program: Command): void {
 
 				console.log(
 					formatTable(
-						["ID", "Provider", "Status", "Frequency", "Trades", "Start", "End"],
+						["ID", "Order Address", "Provider", "Status", "Frequency", "Trades"],
 						result.content.map((o) => [
-							o.id.slice(0, 10) + "…",
+							o.id.slice(0, 8),
+							o.orderAddress.toString(),
 							o.providerId,
 							o.status,
 							o.frequency,
 							`${o.executedTradesCount}/${o.iterations}`,
-							o.startDate.toLocaleDateString(),
-							o.endDate.toLocaleDateString(),
 						])
 					)
 				);
@@ -200,7 +200,7 @@ export function registerDcaCancelCommand(program: Command): void {
 			"after",
 			"\nExamples:\n  $ starkfi dca-cancel abc123\n  $ starkfi dca-cancel abc123 --provider avnu"
 		)
-		.action(async (orderId: string, opts) => {
+		.action(async (orderIdOrAddress: string, opts) => {
 			const spinner = createSpinner("Cancelling DCA order...").start();
 
 			try {
@@ -209,15 +209,18 @@ export function registerDcaCancelCommand(program: Command): void {
 
 				await wallet.ensureReady({ deploy: "if_needed" });
 
+				const isAddress = orderIdOrAddress.startsWith("0x");
+
 				const result = await dcaService.cancelDcaOrder(wallet, {
-					orderId,
+					orderId: isAddress ? undefined : orderIdOrAddress,
+					orderAddress: isAddress ? orderIdOrAddress : undefined,
 					provider: opts.provider,
 				});
 
 				spinner.succeed("DCA order cancelled");
 				outputResult(
 					{
-						orderId,
+						orderId: orderIdOrAddress,
 						txHash: result.hash,
 						explorer: result.explorerUrl,
 					},

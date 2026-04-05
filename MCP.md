@@ -168,7 +168,7 @@ Creates a recurring DCA order that automatically executes swaps at regular inter
 
 #### `dca_list`
 
-Lists the user's DCA orders with optional filtering by status and provider.
+Lists the user's DCA orders with optional filtering by status and provider. Each order in the response includes both `id` (UUID) and `orderAddress` (on-chain contract address) — use either to cancel.
 
 | Parameter  | Type   | Required | Description                                                |
 | ---------- | ------ | -------- | ---------------------------------------------------------- |
@@ -178,13 +178,13 @@ Lists the user's DCA orders with optional filtering by status and provider.
 
 #### `dca_cancel`
 
-Cancels an active DCA order. Requires either the order ID or order address.
+Cancels an active DCA order. Use the order UUID or on-chain contract address from `dca_list`. At least one identifier is required.
 
-| Parameter       | Type    | Required | Description                                               |
-| --------------- | ------- | -------- | --------------------------------------------------------- |
-| `order_id`      | string  | No*      | DCA order ID (from `dca_list`)                            |
-| `order_address` | string  | No*      | DCA order contract address (`0x...`)                      |
-| `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`                           |
+| Parameter       | Type    | Required | Description                                                                |
+| --------------- | ------- | -------- | -------------------------------------------------------------------------- |
+| `order_id`      | string  | No*      | DCA order UUID (the `id` field from `dca_list`)                            |
+| `order_address` | string  | No*      | DCA order on-chain contract address (the `orderAddress` field from `dca_list`) |
+| `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`                                            |
 
 \*At least one of `order_id` or `order_address` is required.
 

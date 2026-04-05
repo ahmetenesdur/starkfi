@@ -66,13 +66,18 @@ export function registerDcaTools(server: McpServer): number {
 
 	server.tool(
 		"dca_cancel",
-		"Cancel an active DCA order by its ID or contract address.",
+		"Cancel an active DCA order. Use the order_id (UUID from dca_list) or order_address (on-chain contract address from dca_list). At least one is required.",
 		{
-			order_id: z.string().optional().describe("DCA order ID to cancel"),
+			order_id: z
+				.string()
+				.optional()
+				.describe("DCA order UUID (the 'id' field from dca_list)"),
 			order_address: z
 				.string()
 				.optional()
-				.describe("DCA order contract address (alternative to order_id)"),
+				.describe(
+					"DCA order on-chain contract address (the 'orderAddress' field from dca_list)"
+				),
 			provider: z.enum(["avnu", "ekubo"]).optional().describe("DCA provider of the order"),
 		},
 		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },

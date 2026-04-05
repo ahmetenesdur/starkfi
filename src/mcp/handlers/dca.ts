@@ -87,6 +87,7 @@ export async function handleListDcaOrders(args: {
 		return jsonResult({
 			orders: result.content.map((o) => ({
 				id: o.id,
+				orderAddress: o.orderAddress.toString(),
 				provider: o.providerId,
 				status: o.status,
 				sellToken: o.sellTokenAddress.toString(),

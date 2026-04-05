@@ -95,7 +95,7 @@ function parseOperation(type: string, raw: string): BatchOperation {
 			if (parts.length < 1 || !parts[0]) {
 				throw new StarkfiError(
 					ErrorCode.INVALID_AMOUNT,
-					`Invalid --dca-cancel format: "${raw}". Expected: "orderId [provider]"`
+					`Invalid --dca-cancel format: "${raw}". Expected: "orderIdOrAddress [provider]"`
 				);
 			}
 			return {
@@ -193,7 +193,7 @@ export function registerBatchCommand(program: Command): void {
 		)
 		.option(
 			"--dca-cancel <args>",
-			'Cancel DCA order: "orderId [provider]" (repeatable)',
+			'Cancel DCA order: "orderIdOrAddress [provider]" (repeatable)',
 			collect,
 			[]
 		)
@@ -217,7 +217,7 @@ Flag formats:
   --repay      "<amount> <token> <col_token> <pool>"                    e.g. "100 USDC ETH Prime"
   --withdraw   "<amount> <token> <pool>"                                e.g. "200 USDC Prime"
   --dca-create "<total> <sell> <buy> <perCycle> [freq]"                  e.g. "100 STRK USDC 10 P1D"
-  --dca-cancel "<orderId> [provider]"                                   e.g. "abc123 avnu"
+  --dca-cancel "<orderIdOrAddress> [provider]"                          e.g. "0x123... avnu"
 
 Minimum 2 operations required. Each flag can be repeated.`
 		)

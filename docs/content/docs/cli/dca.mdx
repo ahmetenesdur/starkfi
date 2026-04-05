@@ -12,7 +12,7 @@ description: Dollar-Cost Averaging — create, preview, list, and cancel recurri
 2. starkfi dca-create 1000 USDC ETH \
      --per-cycle 10 --frequency P1D    →  Create daily DCA order
 3. starkfi dca-list --status ACTIVE    →  Monitor active orders
-4. starkfi dca-cancel <orderId>        →  Cancel when done
+4. starkfi dca-cancel <order_id_or_address> → Cancel when done
 ```
 
 ---
@@ -124,17 +124,17 @@ starkfi dca-list --provider ekubo --json  # Ekubo orders as JSON
 
 ## dca-cancel
 
-Cancels an active DCA order.
+Cancels an active DCA order using its ID (UUID) or its on-chain contract address (`0x...`).
 
 ```bash
-starkfi dca-cancel <orderId> [flags]
+starkfi dca-cancel <order_id_or_address> [flags]
 ```
 
 **Arguments:**
 
 | Argument  | Description                 |
 | --------- | --------------------------- |
-| `orderId` | DCA order ID (from `dca-list`) |
+| `order_id_or_address` | DCA order UUID from `dca-list` or on-chain contract address (`0x...`) |
 
 **Flags:**
 
@@ -146,8 +146,9 @@ starkfi dca-cancel <orderId> [flags]
 **Examples:**
 
 ```bash
-starkfi dca-cancel abc123
-starkfi dca-cancel abc123 --provider ekubo
+starkfi dca-cancel 1fd90ab7-34bf-42b8-afa0-011daf6f15ba  # Using UUID
+starkfi dca-cancel 0x123...                              # Using address
+starkfi dca-cancel 0x123... --provider ekubo
 ```
 
 ---

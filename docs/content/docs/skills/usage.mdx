@@ -102,7 +102,8 @@ Set up and manage recurring buy orders:
 npx starkfi@latest dca-preview 10 USDC ETH                                # Preview one cycle
 npx starkfi@latest dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D # Daily DCA
 npx starkfi@latest dca-list --status ACTIVE                                # View orders
-npx starkfi@latest dca-cancel abc123                                       # Cancel order
+npx starkfi@latest dca-cancel 1fd90ab7-34bf-42b8-afa0-011daf6f15ba         # Cancel using ID
+npx starkfi@latest dca-cancel 0x123...                                     # Cancel using address
 ```
 
 ### Confidential Transfers (Tongo Cash)
