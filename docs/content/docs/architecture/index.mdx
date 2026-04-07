@@ -8,41 +8,41 @@ description: System architecture, module design, and key patterns
 StarkFi follows a layered architecture with four entry points that share a common service layer:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                     StarkFi                                         │
-│                                                                                     │
-│  ┌──────────┐  ┌───────────────-┐  ┌────────────────┐  ┌─────────────────────────┐  │
-│  │   CLI    │  │  MCP Server    │  │ Agent Skills   │  │    Telegram Bot         │  │
-│  │  (42+    │  │  (42 tools)    │  │ (12 workflows) │  │  (BYOAI · Chat DeFi)    │  │
-│  │ commands)│  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude /      │  │
-│  └────┬─────┘  └──────┬─────────┘  └─────┬──────────┘  │  Gemini                 │  │
-│       │               │                  │             └───────────┬─────────────┘  │
-│       └───────────────┼──────────────────┼─────────────────────────┘                │
-│                       ▼                  ▼                                          │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                           Service Layer                                      │   │
-│  │  ┌────────┐  ┌────────┐  ┌──────┐  ┌─────┐  ┌────────┐  ┌────────┐  ┌────────────┐  │   │
-│  │  │  DEX   │  │Staking │  │ Vesu │  │ DCA │  │ Batch  │  │Portfoli│  │Confidential│  │   │
-│  │  │  Swap  │  │Lifecycl│  │  V2  │  │     │  │Multical│  │Dashboard│  │ Tongo Cash │  │   │
-│  │  └────┬─────┘  └────┬─────┘  └───┬────┘  └───┬──┘  └────┬─────┘  └────┬─────┘  │   │
-│  │       └─────────────┴────────────┴───────────┴──────────┴─────────────┘        │   │
-│  │                       │                                                      │   │
-│  │       ┌───────────────┴───────────────────────────┐                          │   │
-│  │       │       Starkzap SDK (starkzap v2.0.0)      │                          │   │
-│  │       │  Wallet · TxBuilder · Tokens · Paymaster  │                          │   │
-│  │       └───────────────┬───────────────────────────┘                          │   │
-│  └───────────────────────┼──────────────────────────────────────────────────────┘   │
-│                          ▼                                                          │
-│  ┌──────────────────────────────────────┐  ┌──────────────────────┐                 │
-│  │  Auth Server (Hono + Privy TEE)      │  │  AVNU Paymaster      │                 │
-│  │  Email OTP · Wallet · Sign · Gas     │  │  Gas Abstraction     │                 │
-│  └──────────────────────────────────────┘  └──────────────────────┘                 │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     StarkFi                                                       │
+│                                                                                                   │
+│  ┌───────────┐  ┌───────────────-┐  ┌────────────────┐  ┌───────────────────────────┐             │
+│  │   CLI     │  │  MCP Server    │  │ Agent Skills   │  │       Telegram Bot        │             │
+│  │  (42+     │  │  (42 tools)    │  │ (12 workflows) │  │  (BYOAI · Chat DeFi)      │             │
+│  │ commands) │  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude / Gemini │             │
+│  └────┬──────┘  └──────┬─────────┘  └─────┬──────────┘  └───────────┬───────────────┘             │
+│       │                │                  │                         │                             │
+│       └────────────────┴──────────────────┼─────────────────────────┘                             │
+│                                           ▼                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                                Service Layer                                                │  │
+│  │  ┌────────┐  ┌──────────┐  ┌──────┐  ┌─────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │  │
+│  │  │  DEX   │  │Staking   │  │ Vesu │  │ DCA │  │  Batch   │  │Portfolio │  │ Confidential │  │  │
+│  │  │  Swap  │  │Lifecycle │  │  V2  │  │     │  │ Multical │  │Dashboard │  │  Tongo Cash  │  │  │
+│  │  └────┬───┘  └────┬─────┘  └───┬──┘  └──┬──┘  └─────┬────┘  └────┬─────┘  └──────┬───────┘  │  │
+│  │       └───────────┴────────────┴────────┴───────────┴────────────┴───────────────┘          │  │
+│  │                                         │                                                   │  │
+│  │                     ┌───────────────────┴───────────────────────┐                           │  │
+│  │                     │       Starkzap SDK (starkzap v2.0.0)      │                           │  │
+│  │                     │  Wallet · TxBuilder · Tokens · Paymaster  │                           │  │
+│  │                     └────────┬──────────────────────────────────┘                           │  │
+│  └──────────────────────────────┼──────────────────────────────────────────────────────────────┘  │
+│                                 ▼                                                                 │
+│  ┌───────────────────────────────────┐  ┌────────────────────┐                                    │
+│  │  Auth Server (Hono + Privy TEE)   │  │  AVNU Paymaster    │                                    │
+│  │  Email OTP · Wallet · Sign · Gas  │  │  Gas Abstraction   │                                    │
+│  └───────────────────────────────────┘  └────────────────────┘                                    │
+└─────────────────────────────┬─────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-                    ┌──────────────────┐
-                    │  Starknet (L2)   │
-                    └──────────────────┘
+                    ┌─────────────────┐
+                    │  Starknet (L2)  │
+                    └─────────────────┘
 ```
 
 ## Directory Structure
@@ -141,15 +141,15 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 
 ## Tech Stack
 
-| Layer                 | Technology                                                                           | Version         |
-| --------------------- | ------------------------------------------------------------------------------------ | --------------- |
-| **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                        | v2.0.0          |
-| **CLI Framework**     | [Commander.js](https://github.com/tj/commander.js)                                   | v14.0.3         |
-| **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)             | v1.27.1         |
-| **Schema Validation** | [Zod](https://zod.dev/)                                                              | v4.3.6          |
-| **Auth Server**       | [Hono](https://hono.dev/) + [Privy TEE](https://privy.io/)                           | v4.12.7         |
+| Layer                 | Technology                                                                                           | Version         |
+| --------------------- | ---------------------------------------------------------------------------------------------------- | --------------- |
+| **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                                        | v2.0.0          |
+| **CLI Framework**     | [Commander.js](https://github.com/tj/commander.js)                                                   | v14.0.3         |
+| **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)                             | v1.27.1         |
+| **Schema Validation** | [Zod](https://zod.dev/)                                                                              | v4.3.6          |
+| **Auth Server**       | [Hono](https://hono.dev/) + [Privy TEE](https://privy.io/)                                           | v4.12.7         |
 | **DEX Routing**       | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) | —               |
-| **Lending Protocol**  | [Vesu](https://vesu.io/) V2                                                          | —               |
-| **Gas Abstraction**   | [AVNU](https://avnu.fi/) Paymaster                                                   | —               |
-| **Terminal UI**       | [Chalk](https://github.com/chalk/chalk) + [Ora](https://github.com/sindresorhus/ora) | v5.6.2 / v9.3.0 |
-| **TypeScript**        | [TypeScript](https://www.typescriptlang.org/) (strict mode)                          | v5.9.3          |
+| **Lending Protocol**  | [Vesu](https://vesu.io/) V2                                                                          | —               |
+| **Gas Abstraction**   | [AVNU](https://avnu.fi/) Paymaster                                                                   | —               |
+| **Terminal UI**       | [Chalk](https://github.com/chalk/chalk) + [Ora](https://github.com/sindresorhus/ora)                 | v5.6.2 / v9.3.0 |
+| **TypeScript**        | [TypeScript](https://www.typescriptlang.org/) (strict mode)                                          | v5.9.3          |
