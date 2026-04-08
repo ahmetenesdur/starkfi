@@ -1,4 +1,4 @@
 {
 	"title": "Architecture",
-	"pages": ["index", "error-handling", "auth-server", "contributing"]
+	"pages": ["index", "security", "error-handling", "auth-server", "contributing"]
 }

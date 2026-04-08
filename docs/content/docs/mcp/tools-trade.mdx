@@ -106,3 +106,7 @@ Each operation has a `type` and `params`:
 | `dca-cancel` | `order_id`, `provider?`              | `{ "type": "dca-cancel", "params": { "order_id": "abc123" } }`                                |
 
 > **Note:** Minimum 2 operations required per batch. Each operation is executed atomically — if any fails, the entire batch reverts.
+
+---
+
+> **CLI equivalent:** [Trading Commands](/docs/cli/trading) and [Batch Command](/docs/cli/batch)

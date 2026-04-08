@@ -1,469 +1,129 @@
-# Model Context Protocol (MCP) Integration
+# Model Context Protocol (MCP) — Tool Reference
 
-StarkFi operates as a fully-featured Model Context Protocol (MCP) server. By executing `npx starkfi@latest mcp-start` over the `stdio` transport layer, AI development environments such as Cursor, Claude Desktop, and Antigravity can interact with the Starknet blockchain and execute decentralized finance operations through natural language commands.
+StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude Desktop, Antigravity) connect and discover all tools with JSON schemas automatically.
 
-## Client Configuration
-
-To integrate StarkFi into your AI environment, configure your MCP client settings file (e.g., `.cursor/mcp.json`, `claude_desktop_config.json`, or `~/.gemini/antigravity/mcp_config.json`) with the following definition:
+## Setup
 
 ```json
 {
-	"mcpServers": {
-		"starkfi": {
-			"command": "npx",
-			"args": ["-y", "starkfi@latest", "mcp-start"]
-		}
-	}
+  "mcpServers": {
+    "starkfi": {
+      "command": "npx",
+      "args": ["-y", "starkfi@latest", "mcp-start"]
+    }
+  }
 }
+
 ```
 
-**Authentication Requirement:** The StarkFi CLI must be authenticated locally (via `npx starkfi@latest auth login`) before the MCP server can execute any state-mutating transactions on behalf of the user.
+> **Prerequisite:** Authenticate via `npx starkfi@latest auth login` before the MCP server can execute transactions.
 
-## Tool Registry
-
-Upon initialization, the StarkFi server dynamically provisions **42 tool schemas** to the connected AI client. Tools are organized into domain-specific registration modules (`src/mcp/tools/`): **auth** (2), **wallet** (6), **trade** (5), **staking** (8), **lending** (10), **dca** (4), and **confidential** (7).
+→ **[Full Setup Guide](https://docs.starkfi.app/docs/mcp/setup)**
 
 ---
 
-### Read-Only Tools
-
-These tools do not mutate blockchain state and are safe to call without user confirmation.
-
-#### `get_auth_status`
-
-Validates the active CLI session and verifies Fibrous API connectivity.
-
-_No input parameters required._
-
-#### `get_balance`
-
-Retrieves STRK, ETH, and specified ERC-20 token balances for the authenticated wallet.
-
-| Parameter | Type   | Required | Description                                                                     |
-| --------- | ------ | -------- | ------------------------------------------------------------------------------- |
-| `token`   | string | No       | Specific token symbol (e.g. `STRK`, `ETH`, `USDC`). Omit to fetch all balances. |
-
-#### `get_tx_status`
-
-Queries the Starknet sequencer for transaction status and execution receipts.
-
-| Parameter | Type   | Required | Description                |
-| --------- | ------ | -------- | -------------------------- |
-| `hash`    | string | **Yes**  | Transaction hash (`0x...`) |
-
-#### `get_portfolio`
-
-Returns a complete DeFi portfolio: all token balances with USD values, staking positions, and lending positions in one call.
-
-_No input parameters required._
-
-#### `get_swap_quote`
-
-Calculates swap routing via Fibrous (default). Returns the expected output amount and quote details. Optionally specify a different provider or use `auto` to race all providers for best price. Always call this **before** `swap_tokens` so the user can review the expected output.
-
-| Parameter    | Type   | Required | Description                                          |
-| ------------ | ------ | -------- | ---------------------------------------------------- |
-| `amount`     | string | **Yes**  | Amount to swap (e.g. `0.1`, `100`)                   |
-| `from_token` | string | **Yes**  | Source token symbol to sell (e.g. `ETH`, `USDC`)     |
-| `to_token`   | string | **Yes**  | Destination token symbol to buy (e.g. `STRK`, `DAI`) |
-| `provider`   | string | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all). |
-
-#### `get_multi_swap_quote`
-
-Calculates routing for 2-3 swap pairs at once. Each pair uses Fibrous by default, or specify a different provider.
-
-| Parameter  | Type                                                    | Required | Description                     |
-| ---------- | ------------------------------------------------------- | -------- | ------------------------------- |
-| `swaps`    | array of `{ amount, from_token, to_token }` (2-3 items) | **Yes**  | Array of swap pairs (2-3 items) |
-| `provider` | string                                                  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all per pair). |
-
-#### `list_validators`
-
-Enumerates all officially recognized Starknet staking validators.
-
-_No input parameters required._
-
-#### `list_pools`
-
-Enumerates available delegation pools for a validator, including multi-token pools.
-
-| Parameter   | Type   | Required | Description                                                                            |
-| ----------- | ------ | -------- | -------------------------------------------------------------------------------------- |
-| `validator` | string | **Yes**  | Validator name (e.g. `Karnot`, `Kakarot`) or staker address. Supports partial matches. |
-
-#### `get_staking_info`
-
-Retrieves specific user staked balances, unclaimed rewards, and active cooldown periods.
-
-| Parameter | Type   | Required | Description                             |
-| --------- | ------ | -------- | --------------------------------------- |
-| `pool`    | string | **Yes**  | Staking pool contract address (`0x...`) |
-
-#### `get_stake_status`
-
-Generates a consolidated staking dashboard across validators. Accepts an optional target validator name to filter the view.
-
-| Parameter   | Type   | Required | Description                                                          |
-| ----------- | ------ | -------- | -------------------------------------------------------------------- |
-| `validator` | string | No       | Optional validator name or staker address to strictly filter results |
-
-#### `list_lending_pools`
-
-Enumerates active Vesu V2 lending pools — assets (with APY/APR), supported pairs, and pool addresses.
-
-| Parameter | Type   | Required | Description                                             |
-| --------- | ------ | -------- | ------------------------------------------------------- |
-| `name`    | string | No       | Filter pools by name (partial match). Omit to list all. |
-
-#### `get_lending_position`
-
-Retrieves the user's supplied yield, outstanding debt, Health Factor, and Risk Level for a specific pool.
-
-| Parameter          | Type   | Required | Description                                                                 |
-| ------------------ | ------ | -------- | --------------------------------------------------------------------------- |
-| `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`)               |
-| `collateral_token` | string | **Yes**  | Collateral token symbol (e.g. `ETH`, `STRK`)                                |
-| `borrow_token`     | string | No       | Borrow token symbol (e.g. `USDC`, `USDT`). Optional for supply-only checks. |
-
-#### `lending_quote_health`
-
-Simulates the impact of a lending action (borrow, repay, deposit, withdraw) on position health factor **without executing**. Returns current and projected health.
-
-| Parameter          | Type   | Required | Description                                                   |
-| ------------------ | ------ | -------- | ------------------------------------------------------------- |
-| `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `collateral_token` | string | **Yes**  | Collateral token symbol (e.g. `ETH`, `STRK`)                  |
-| `debt_token`       | string | **Yes**  | Debt token symbol (e.g. `USDC`, `USDT`)                       |
-| `action`           | enum   | **Yes**  | Action to simulate: `borrow`, `repay`, `deposit`, `withdraw`  |
-| `amount`           | string | **Yes**  | Amount for the action (e.g. `100`, `0.5`)                     |
-
----
-
-### DCA (Dollar-Cost Averaging) Tools
-
-#### `dca_preview`
-
-Previews a single DCA cycle by estimating the swap output for one execution. Always call this **before** `dca_create` so the user can review the expected output per cycle.
-
-| Parameter       | Type   | Required | Description                                               |
-| --------------- | ------ | -------- | --------------------------------------------------------- |
-| `sell_token`    | string | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                        |
-| `buy_token`     | string | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                         |
-| `amount`        | string | **Yes**  | Amount to sell per cycle (e.g. `10`, `100`)                |
-| `provider`      | string | No       | DCA provider: `avnu` (default) or `ekubo`                 |
-
-#### `dca_create`
-
-Creates a recurring DCA order that automatically executes swaps at regular intervals. Only call this **after** previewing with `dca_preview`.
-
-| Parameter        | Type    | Required | Description                                               |
-| ---------------- | ------- | -------- | --------------------------------------------------------- |
-| `sell_token`     | string  | **Yes**  | Token to sell (e.g. `USDC`, `ETH`)                        |
-| `buy_token`      | string  | **Yes**  | Token to buy (e.g. `STRK`, `ETH`)                         |
-| `amount`         | string  | **Yes**  | Total amount to sell across all cycles                     |
-| `amount_per_cycle` | string | **Yes** | Amount sold per cycle (e.g. `10`)                         |
-| `frequency`      | string  | No       | ISO 8601 duration (default: `P1D`). E.g. `PT12H`, `P1W`  |
-| `provider`       | string  | No       | DCA provider: `avnu` (default) or `ekubo`                 |
-| `simulate`       | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `dca_list`
-
-Lists the user's DCA orders with optional filtering by status and provider. Each order in the response includes both `id` (UUID) and `orderAddress` (on-chain contract address) — use either to cancel.
-
-| Parameter  | Type   | Required | Description                                                |
-| ---------- | ------ | -------- | ---------------------------------------------------------- |
-| `status`   | string | No       | Filter by status: `ACTIVE`, `CLOSED`, or `INDEXING`        |
-| `provider` | string | No       | Filter by provider: `avnu` or `ekubo`                      |
-| `page`     | number | No       | Page number for pagination (default: `0`)                  |
-
-#### `dca_cancel`
-
-Cancels an active DCA order. Use the order UUID or on-chain contract address from `dca_list`. At least one identifier is required.
-
-| Parameter       | Type    | Required | Description                                                                |
-| --------------- | ------- | -------- | -------------------------------------------------------------------------- |
-| `order_id`      | string  | No*      | DCA order UUID (the `id` field from `dca_list`)                            |
-| `order_address` | string  | No*      | DCA order on-chain contract address (the `orderAddress` field from `dca_list`) |
-| `provider`      | string  | No       | DCA provider: `avnu` or `ekubo`                                            |
-
-\*At least one of `order_id` or `order_address` is required.
-
----
-
-### Confidential Transfer Tools (Tongo Cash)
-
-Privacy-preserving transfers using ZK proofs via Tongo. Amounts are hidden on-chain; recipients are identified by elliptic curve public keys (x, y), not Starknet addresses.
-
-#### `confidential_setup`
-
-Configures Tongo Cash credentials. The private key is stored locally and never sent to the network. Must be called before any other confidential operations.
-
-| Parameter          | Type   | Required | Description                                            |
-| ------------------ | ------ | -------- | ------------------------------------------------------ |
-| `tongo_key`        | string | **Yes**  | Tongo private key (kept locally, never sent to network) |
-| `contract_address` | string | **Yes**  | Tongo contract address on Starknet (`0x…`)             |
-
-#### `confidential_balance`
-
-Returns the confidential account state: active balance, pending balance, nonce, and Tongo address. Call this before fund/transfer/withdraw to verify state.
-
-_No input parameters required._
-
-#### `confidential_fund`
-
-Funds the confidential account by converting public ERC-20 tokens into private confidential balance.
-
-| Parameter  | Type    | Required | Description                                               |
-| ---------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`   | string  | **Yes**  | Amount to fund (e.g. `100`)                               |
-| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
-| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `confidential_transfer`
-
-Transfers tokens confidentially to another Tongo account. Generates ZK proofs locally and submits on-chain. Recipient is identified by elliptic curve point (x, y), NOT a Starknet address.
-
-| Parameter     | Type    | Required | Description                                               |
-| ------------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`      | string  | **Yes**  | Amount to transfer                                         |
-| `recipient_x` | string  | **Yes**  | Recipient public key X coordinate (BigNumberish)          |
-| `recipient_y` | string  | **Yes**  | Recipient public key Y coordinate (BigNumberish)          |
-| `token`       | string  | No       | Token symbol (default: `USDC`)                            |
-| `simulate`    | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `confidential_withdraw`
-
-Withdraws from confidential account to a public Starknet address. Converts private balance back to public ERC-20 tokens.
-
-| Parameter  | Type    | Required | Description                                               |
-| ---------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`   | string  | **Yes**  | Amount to withdraw                                         |
-| `to`       | string  | No       | Recipient Starknet address (default: own wallet)          |
-| `token`    | string  | No       | Token symbol (default: `USDC`)                            |
-| `simulate` | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `confidential_ragequit`
-
-Emergency exit — withdraws the entire confidential balance to a public address. Use when you need to exit immediately.
-
-| Parameter | Type   | Required | Description                                      |
-| --------- | ------ | -------- | ------------------------------------------------ |
-| `to`      | string | No       | Recipient Starknet address (default: own wallet) |
-
-#### `confidential_rollover`
-
-Activates pending confidential balance. Received transfers start as "pending" and must be rolled over to become spendable.
-
-_No input parameters required._
-
----
-
-### Transactional Tools
-
-These tools construct and broadcast transactions. The connecting AI client is strictly responsible for prompting the user for explicit confirmation before execution. All transactional tools accept an optional `simulate` parameter — when set to `true`, the tool estimates fees and validates the transaction without broadcasting.
-
-#### `deploy_account`
-
-Deploys the associated smart contract account to the Starknet network (idempotent operation).
-
-_No input parameters required._
-
-#### `swap_tokens`
-
-Broadcasts a token swap transaction via Fibrous (default) or a specified provider. Only call this **after** showing the user a quote via `get_swap_quote`.
-
-| Parameter    | Type    | Required | Description                                               |
-| ------------ | ------- | -------- | --------------------------------------------------------- |
-| `amount`     | string  | **Yes**  | Amount to swap (e.g. `0.1`, `100`)                        |
-| `from_token` | string  | **Yes**  | Source token symbol to sell (e.g. `ETH`, `STRK`)          |
-| `to_token`   | string  | **Yes**  | Destination token symbol to buy (e.g. `USDC`, `DAI`)      |
-| `slippage`   | number  | No       | Slippage tolerance in % (default: `1`)                    |
-| `provider`   | string  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all). |
-| `simulate`   | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `send_tokens`
-
-Broadcasts a standard token transfer transaction for STRK, ETH, or ERC-20 assets. Pre-checks balance.
-
-| Parameter   | Type    | Required | Description                                               |
-| ----------- | ------- | -------- | --------------------------------------------------------- |
-| `amount`    | string  | **Yes**  | Amount to send (e.g. `0.1`, `100`)                        |
-| `token`     | string  | **Yes**  | Token symbol (e.g. `STRK`, `ETH`, `USDC`)                 |
-| `recipient` | string  | **Yes**  | Recipient Starknet address (`0x...`)                      |
-| `simulate`  | boolean | No       | Set `true` to estimate fees without sending a transaction |
-
-#### `multi_swap`
-
-Executes 2-3 token swaps in a single transaction. Each pair uses Fibrous by default. Call `get_multi_swap_quote` first to preview.
-
-| Parameter  | Type                                                    | Required | Description                                   |
-| ---------- | ------------------------------------------------------- | -------- | --------------------------------------------- |
-| `swaps`    | array of `{ amount, from_token, to_token }` (2-3 items) | **Yes**  | Array of swap pairs (2-3 items)               |
-| `slippage` | number                                                  | No       | Slippage tolerance in % (default: `1`)        |
-| `provider` | string                                                  | No       | Swap provider: `fibrous` (default), `avnu`, `ekubo`, or `auto` (race all per pair). |
-| `simulate` | boolean                                                 | No       | Set `true` to estimate fees without executing |
-
-#### `batch_execute`
-
-Executes multiple DeFi operations (swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel) in a single Starknet multicall. Minimum 2 operations.
-
-| Parameter    | Type                                      | Required | Description                                                                                                                                                                                                                                                  |
-| ------------ | ----------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `operations` | array of `{ type, params }` (min 2 items) | **Yes**  | Each operation has a `type` (`swap`, `stake`, `supply`, `send`, `borrow`, `repay`, `withdraw`, `dca-create`, `dca-cancel`) and a `params` record. **swap**: `{amount, from_token, to_token}`. **stake**: `{amount, token?, pool? or validator?}`. **supply**: `{amount, token, pool}`. **send**: `{amount, token, to}`. **borrow**: `{collateral_amount, collateral_token, borrow_amount, borrow_token, pool}`. **repay**: `{amount, token, collateral_token, pool}`. **withdraw**: `{amount, token, pool}`. **dca-create**: `{sell_token, buy_token, sell_amount, amount_per_cycle, frequency?, provider?}`. **dca-cancel**: `{order_id?, order_address?, provider?}`. |
-| `simulate`   | boolean                                   | No       | Set `true` to estimate fees without executing                                                                                                                                                                                                                |
-
-#### `stake_tokens`
-
-Executes multi-token smart delegation (STRK, WBTC, tBTC, SolvBTC, LBTC). Auto-detects whether the user needs to enter the pool or add to an existing delegation.
-
-| Parameter | Type   | Required | Description                                                                         |
-| --------- | ------ | -------- | ----------------------------------------------------------------------------------- |
-| `amount`  | string | **Yes**  | Amount to stake (e.g. `100`, `0.01`)                                                |
-| `pool`    | string | **Yes**  | Staking pool contract address (`0x...`)                                             |
-| `token`   | string | No       | Token symbol to stake (default: `STRK`). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC |
-
-#### `unstake_tokens`
-
-Manages the strict two-step Starknet unstaking lifecycle. Step 1: call with `action="intent"` to start cooldown. Step 2: call with `action="exit"` to complete withdrawal.
-
-| Parameter | Type                   | Required          | Description                                                           |
-| --------- | ---------------------- | ----------------- | --------------------------------------------------------------------- |
-| `action`  | `"intent"` or `"exit"` | **Yes**           | `intent` starts unstaking, `exit` completes withdrawal after cooldown |
-| `pool`    | string                 | **Yes**           | Staking pool contract address (`0x...`)                               |
-| `amount`  | string                 | Only for `intent` | Amount to unstake                                                     |
-| `token`   | string                 | No                | Token symbol (default: `STRK`). Must match the pool's token.          |
-
-#### `claim_rewards`
-
-Extracts earned rewards from a staking pool to the user's wallet.
-
-| Parameter | Type   | Required | Description                             |
-| --------- | ------ | -------- | --------------------------------------- |
-| `pool`    | string | **Yes**  | Staking pool contract address (`0x...`) |
-
-#### `compound_rewards`
-
-Atomically claims staking rewards and re-stakes them into the same pool in a single transaction (compound interest).
-
-| Parameter | Type   | Required | Description                             |
-| --------- | ------ | -------- | --------------------------------------- |
-| `pool`    | string | **Yes**  | Staking pool contract address (`0x...`) |
-
-#### `supply_assets`
-
-Deposits specified assets into a Vesu V2 pool to generate yield.
-
-| Parameter | Type   | Required | Description                                                   |
-| --------- | ------ | -------- | ------------------------------------------------------------- |
-| `pool`    | string  | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `amount`  | string  | **Yes**  | Amount to supply (e.g. `100`, `0.5`)                          |
-| `token`   | string  | **Yes**  | Token symbol to supply (e.g. `STRK`, `ETH`, `USDC`)           |
-| `simulate`| boolean | No       | Set `true` to estimate fees without sending a transaction     |
-
-#### `withdraw_assets`
-
-Redeems supplied assets from a Vesu V2 lending pool.
-
-| Parameter | Type   | Required | Description                                                   |
-| --------- | ------ | -------- | ------------------------------------------------------------- |
-| `pool`    | string  | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `amount`  | string  | **Yes**  | Amount to withdraw (e.g. `100`, `0.5`)                        |
-| `token`   | string  | **Yes**  | Token symbol to withdraw (e.g. `STRK`, `ETH`, `USDC`)         |
-| `simulate`| boolean | No       | Set `true` to estimate fees without sending a transaction     |
-
-#### `borrow_assets`
-
-Executes an atomic collateral deposit and subsequent asset borrow against a Vesu V2 pool. Supports using previously supplied earn positions as collateral.
-
-| Parameter           | Type    | Required | Description                                                               |
-| ------------------- | ------- | -------- | ------------------------------------------------------------------------- |
-| `pool`              | string  | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`)             |
-| `collateral_amount` | string  | **Yes**  | Collateral amount to deposit (e.g. `1000`)                                |
-| `collateral_token`  | string  | **Yes**  | Collateral token symbol (e.g. `STRK`, `ETH`)                              |
-| `borrow_amount`     | string  | **Yes**  | Amount to borrow (e.g. `100`)                                             |
-| `borrow_token`      | string  | **Yes**  | Token to borrow (e.g. `USDC`, `USDT`)                                     |
-| `use_supplied`      | boolean | No       | Set `true` to use previously supplied earn position as collateral via multicall |
-| `simulate`          | boolean | No       | Set `true` to estimate fees without sending a transaction                 |
-
-#### `repay_debt`
-
-Processes the repayment of borrowed assets against an existing Vesu V2 position.
-
-| Parameter          | Type   | Required | Description                                                                             |
-| ------------------ | ------ | -------- | --------------------------------------------------------------------------------------- |
-| `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`)                           |
-| `amount`           | string | **Yes**  | Amount to repay (e.g. `50`, `100`)                                                      |
-| `token`            | string | **Yes**  | Token to repay (e.g. `USDC`, `USDT`)                                                    |
-| `collateral_token` | string  | **Yes**  | Collateral token of the position (e.g. `ETH`, `STRK`). Needed to identify the position. |
-| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction                               |
-
-#### `close_position`
-
-Atomically closes an active Vesu V2 lending position. Repays all outstanding debt and withdraws all collateral in a single unified execution.
-
-| Parameter          | Type   | Required | Description                                                   |
-| ------------------ | ------ | -------- | ------------------------------------------------------------- |
-| `pool`             | string | **Yes**  | Pool name (e.g. `Prime`, `Re7`) or contract address (`0x...`) |
-| `collateral_token` | string  | **Yes**  | Collateral token symbol of the position (e.g. `STRK`, `ETH`)  |
-| `debt_token`       | string  | **Yes**  | Borrowed token symbol of the position (e.g. `USDC`, `USDT`)   |
-| `simulate`         | boolean | No       | Set `true` to estimate fees without sending a transaction     |
-
-#### `monitor_lending_position`
-
-Monitors health factors across lending positions. Returns alerts and actionable recommendations when health factor drops below configurable thresholds.
-
-| Parameter           | Type   | Required | Description                                                                      |
-| ------------------- | ------ | -------- | -------------------------------------------------------------------------------- |
-| `pool`              | string | No       | Pool name or address. Omit to scan all pools for active borrow positions.         |
-| `collateral_token`  | string | No       | Collateral token symbol. Required when specifying a pool.                         |
-| `borrow_token`      | string | No       | Debt token symbol. Required when specifying a pool.                               |
-| `warning_threshold` | number | No       | Custom warning threshold (default: `1.3`).                                        |
-
-#### `auto_rebalance_lending`
-
-Automatically adjusts a lending position to restore health factor via debt repayment or additional collateral. Supports simulation mode.
-
-| Parameter              | Type    | Required | Description                                                              |
-| ---------------------- | ------- | -------- | ------------------------------------------------------------------------ |
-| `pool`                 | string  | **Yes**  | Pool name or address                                                     |
-| `collateral_token`     | string  | **Yes**  | Collateral token symbol                                                  |
-| `borrow_token`         | string  | **Yes**  | Debt token symbol                                                        |
-| `strategy`             | enum    | No       | `repay`, `add-collateral`, or `auto` (default: `auto`)                   |
-| `target_health_factor` | number  | No       | Target health factor (default: `1.3`)                                    |
-| `simulate`             | boolean | No       | Set `true` to preview adjustment without executing                       |
-
-#### `rebalance_portfolio`
-
-Rebalances a portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction via Fibrous (default).
-
-| Parameter   | Type    | Required | Description                                                       |
-| ----------- | ------- | -------- | ----------------------------------------------------------------- |
-| `target`    | string  | **Yes**  | Target allocation, e.g. `"50 ETH, 30 USDC, 20 STRK"`             |
-| `slippage`  | number  | No       | Slippage tolerance % (default: `1`)                               |
-| `simulate`  | boolean | No       | Set `true` to preview plan without executing                      |
-
----
-
-### Configuration Utilities
-
-#### `config_action`
-
-Views and modifies global CLI behavior: RPC routing, network selection, and Gas Abstraction. Network changes take effect immediately — no re-authentication required.
-
-| Parameter | Type   | Required | Description                                                                                                                               |
-| --------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`  | enum   | **Yes**  | One of: `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`                                                 |
-| `value`   | string | No       | `set-gasfree`: `on`/`off`. `set-gas-token`: symbol (`USDC`, `ETH`) or `reset`/`off`. `set-rpc`: URL string. `set-network`: `mainnet`/`sepolia` (instant switch, overrides session). |
+## Tool Registry (42 Tools)
+
+### Auth & Config (2)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `get_auth_status` | read | Session status and API health |
+| `config_action` | write | Manage RPC, network, gas settings (`list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`) |
+
+### Wallet (6)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `get_balance` | read | Token balances (STRK, ETH, ERC-20) |
+| `get_portfolio` | read | Full DeFi dashboard with USD values |
+| `get_tx_status` | read | Transaction status and receipt |
+| `deploy_account` | write | Deploy smart account (idempotent) |
+| `send_tokens` | write | Transfer tokens to an address |
+| `rebalance_portfolio` | write | Rebalance to target allocation via batch swaps |
+
+### Trade (5)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `get_swap_quote` | read | Swap quote (Fibrous/AVNU/Ekubo/auto) |
+| `swap_tokens` | write | Execute swap |
+| `get_multi_swap_quote` | read | Multi-pair quote (2-3 pairs) |
+| `multi_swap` | write | Execute multi-pair swap |
+| `batch_execute` | write | Atomic multicall (swap + stake + lend + send + DCA, min 2 ops) |
+
+### Staking (8)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `list_validators` | read | All Starknet validators |
+| `list_pools` | read | Pools for a validator |
+| `get_staking_info` | read | User staked balance and rewards |
+| `get_stake_status` | read | Staking dashboard across validators |
+| `stake_tokens` | write | Stake (STRK, WBTC, tBTC, SolvBTC, LBTC) |
+| `unstake_tokens` | write | Unstake (2-step: intent → exit) |
+| `claim_rewards` | write | Claim staking rewards |
+| `compound_rewards` | write | Claim + re-stake atomically |
+
+### Lending (10)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `list_lending_pools` | read | Vesu V2 pools with APY/APR |
+| `get_lending_position` | read | Position health, yield, and debt |
+| `lending_quote_health` | read | Simulate action impact on health factor |
+| `supply_assets` | write | Supply to lending pool |
+| `withdraw_assets` | write | Withdraw from lending pool |
+| `borrow_assets` | write | Borrow with collateral |
+| `repay_debt` | write | Repay outstanding debt |
+| `close_position` | write | Atomic repay + withdraw |
+| `monitor_lending_position` | read | Health factor monitoring with alerts |
+| `auto_rebalance_lending` | write | Auto-rebalance risky positions |
+
+### DCA (4)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `dca_preview` | read | Preview single DCA cycle |
+| `dca_create` | write | Create recurring buy order |
+| `dca_list` | read | List DCA orders |
+| `dca_cancel` | write | Cancel DCA order |
+
+### Confidential (7)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `confidential_setup` | write | Configure Tongo Cash credentials (local-only) |
+| `confidential_balance` | read | Confidential account state |
+| `confidential_fund` | write | Fund from public → confidential |
+| `confidential_transfer` | write | Private transfer (ZK proof) |
+| `confidential_withdraw` | write | Withdraw to public address |
+| `confidential_ragequit` | write | Emergency full withdrawal |
+| `confidential_rollover` | write | Activate pending balance |
 
 ---
 
 ## Agent Best Practices
 
-1. **Always quote before executing** — Call `get_swap_quote` before `swap_tokens`, `get_multi_swap_quote` before `multi_swap`, and `dca_preview` before `dca_create`
-2. **Use simulation for transparency** — Set `simulate: true` on any transactional tool to preview fees before executing
-3. **Confirm with the user** — Never execute a transactional tool without explicit user confirmation
-4. **Use `get_auth_status` first** — Verify the session is active before attempting any wallet operations
-5. **Check existing positions** — Query `get_stake_status`, `get_lending_position`, and `dca_list` before creating new positions to avoid duplicates
-6. **Network awareness** — Use `config_action` with `set-network` to switch between `mainnet` and `sepolia`. Lending, staking, batch, portfolio, and wallet tools are fully network-aware. Swap tools (`swap_tokens`, `multi_swap`, `rebalance_portfolio`) are mainnet-only
-7. **DCA lifecycle** — Always preview with `dca_preview` first, list existing orders with `dca_list` to avoid duplicates, and confirm cancellation before calling `dca_cancel`
-8. **Confidential lifecycle** — Always call `confidential_setup` and `confidential_balance` before transactional operations. After receiving a transfer, remind the user to `confidential_rollover` to activate pending balance
+1. **Always quote before executing** — `get_swap_quote` → `swap_tokens`, `dca_preview` → `dca_create`
+2. **Use simulation** — Set `simulate: true` on any write tool to preview fees
+3. **Confirm with user** — Never execute write tools without explicit user confirmation
+4. **Check auth first** — Call `get_auth_status` before any wallet operations
+5. **Check existing positions** — Query before creating to avoid duplicates
+6. **Confidential lifecycle** — Always `confidential_setup` → `confidential_balance` → action. Remind recipients to `confidential_rollover`
+
+---
+
+## Full Documentation
+
+| Resource | Link |
+| --- | --- |
+| MCP Overview | [docs.starkfi.app/docs/mcp](https://docs.starkfi.app/docs/mcp) |
+| Tool Schemas (Auth) | [docs.starkfi.app/docs/mcp/tools-auth](https://docs.starkfi.app/docs/mcp/tools-auth) |
+| Tool Schemas (Wallet) | [docs.starkfi.app/docs/mcp/tools-wallet](https://docs.starkfi.app/docs/mcp/tools-wallet) |
+| Tool Schemas (Trade) | [docs.starkfi.app/docs/mcp/tools-trade](https://docs.starkfi.app/docs/mcp/tools-trade) |
+| Tool Schemas (Staking) | [docs.starkfi.app/docs/mcp/tools-staking](https://docs.starkfi.app/docs/mcp/tools-staking) |
+| Tool Schemas (Lending) | [docs.starkfi.app/docs/mcp/tools-lending](https://docs.starkfi.app/docs/mcp/tools-lending) |
+| Tool Schemas (DCA) | [docs.starkfi.app/docs/mcp/tools-dca](https://docs.starkfi.app/docs/mcp/tools-dca) |
+| Tool Schemas (Confidential) | [docs.starkfi.app/docs/mcp/tools-confidential](https://docs.starkfi.app/docs/mcp/tools-confidential) |
+| Security Model | [docs.starkfi.app/docs/architecture/security](https://docs.starkfi.app/docs/architecture/security) |

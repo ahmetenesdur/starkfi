@@ -365,7 +365,7 @@
 								></div>
 							</div>
 							<div class="text-[12px] text-zinc-600 font-mono tracking-wider">
-								starkfi v0.6.2
+								starkfi v0.6.3
 							</div>
 							<!-- Spacer for balance -->
 							<div class="w-16"></div>
@@ -713,15 +713,9 @@
 						</div>
 
 						<!-- Feature Card 11 — Confidential Transfers -->
-						<div
-							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
-						>
-							<div
-								class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
-							>
-								<span class="material-symbols-outlined text-pastel-mint text-2xl"
-									>security</span
-								>
+						<div class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default">
+							<div class="size-12 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-transparent border border-white/10 flex items-center justify-center mb-8">
+								<span class="material-symbols-outlined text-pastel-mint text-2xl">visibility_off</span>
 							</div>
 							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
 								Confidential Transfers
@@ -729,6 +723,19 @@
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								Powered by Tongo Cash. Execute anonymous and untraceable ERC-20 transfers
 								using Zero-Knowledge (ZK) proofs completely locally.
+							</p>
+						</div>
+
+						<!-- Feature Card 12 — Secure Authentication -->
+						<div class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default">
+							<div class="size-12 rounded-xl bg-gradient-to-br from-pastel-lavender/20 to-transparent border border-white/10 flex items-center justify-center mb-8">
+								<span class="material-symbols-outlined text-pastel-lavender text-2xl">vpn_key</span>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								Secure Authentication
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								Email OTP login powered by Privy TEE. Private keys are derived and encrypted entirely locally &mdash; never transmitted over the network.
 							</p>
 						</div>					
 					</div>
@@ -867,25 +874,16 @@
 											>
 											with best validator...
 										</p>
-										<div
-											class="p-4 bg-black/40 rounded-xl border border-white/10 font-mono text-[12px] text-zinc-400 flex flex-col gap-2 shadow-inner"
-										>
-											<div
-										class="flex flex-wrap justify-between items-center gap-2 text-zinc-600 text-[10px] tracking-wider font-bold mb-1"
-									>
-										<span>MULTICALL STATUS</span>
-										<span
-											class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded"
-											>ACCEPTED_ON_L2</span
-										>
-									</div>
-											<div class="flex items-center gap-2">
-												<span class="text-zinc-500">❯</span> BATCH TX: 2
-												operations
+										<div class="p-4 bg-black/40 rounded-xl border border-white/10 font-mono text-[12px] text-zinc-400 flex flex-col gap-2 shadow-inner">
+											<div class="flex flex-wrap justify-between items-center gap-2 text-zinc-600 text-[10px] tracking-wider font-bold mb-1">
+												<span>MULTICALL STATUS</span>
+												<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">ACCEPTED_ON_L2</span>
 											</div>
 											<div class="flex items-center gap-2">
-												<span class="text-zinc-500">❯</span> GAS: Gasless
-										via Paymaster
+												<span class="text-zinc-500">❯</span> BATCH TX: 2 operations
+											</div>
+											<div class="flex items-center gap-2">
+												<span class="text-zinc-500">❯</span> GAS: Gasless via Paymaster
 											</div>
 										</div>
 									</div>

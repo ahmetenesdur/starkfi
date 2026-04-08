@@ -3,13 +3,28 @@ title: Configuration
 description: Customize network, RPC endpoint, and gas payment settings
 ---
 
-## View Current Settings
+## Overview
+
+StarkFi stores configuration settings locally using [env-paths](https://github.com/sindresorhus/env-paths). All settings persist across terminal restarts and apply to both CLI and MCP server.
 
 ```bash
 starkfi config list
 ```
 
-Shows your current network, RPC endpoint, gas mode, and gas token. If nothing has been configured, you'll see default values.
+> For the full list of subcommands and flags, see the [CLI Config Reference](/docs/cli/config).
+
+---
+
+## Quick Reference
+
+| What you want to do | Command |
+| --- | --- |
+| See all settings | `starkfi config list` |
+| Switch to testnet | `starkfi config set-network sepolia` |
+| Use a custom RPC | `starkfi config set-rpc <url>` |
+| Pay gas in USDC | `starkfi config set-gas-token USDC` |
+| Let the developer pay gas | `starkfi config set-gasfree on` |
+| Reset everything | `starkfi config reset` |
 
 ---
 
@@ -22,34 +37,7 @@ starkfi config set-network mainnet    # Production (default)
 starkfi config set-network sepolia    # Testnet
 ```
 
-Network switching is **instant** — no re-login required. The config setting overrides the network that was active when you authenticated.
-
-`config list` shows the effective network with its source:
-
-```
-network    sepolia (config override, session: mainnet)
-feeMode    gasless (pays STRK via Paymaster)
-```
-
-> **How it works:** StarkFi resolves the network at runtime using a priority chain: `config.network` (user override) → `session.network` (login default). This means you can authenticate once on mainnet and freely switch to sepolia and back without re-authenticating.
-
----
-
-## Custom RPC
-
-Set a custom Starknet RPC endpoint:
-
-```bash
-starkfi config set-rpc https://starknet-mainnet.g.alchemy.com/v2/YOUR_KEY
-```
-
-Check the current RPC:
-
-```bash
-starkfi config get-rpc
-```
-
-> **Tip:** Use a custom RPC if you're hitting rate limits on the default Starkzap endpoint, or if you need higher throughput for batch operations.
+Network switching is **instant** — no re-login required. StarkFi resolves the network at runtime using a priority chain: `config.network` (user override) → `session.network` (login default).
 
 ---
 
@@ -90,33 +78,7 @@ starkfi config set-gas-token reset    # Revert to default (STRK)
 
 > **Important:** Gasfree and Gasless modes are mutually exclusive. Enabling one clears the other. Use `starkfi config list` to verify your current mode.
 
----
-
-## Reset All Settings
-
-Clear all custom configuration and revert to defaults:
-
-```bash
-starkfi config reset
-```
-
-This removes custom RPC URL, network override, gas token, and gasfree mode settings in one command. After reset, the network reverts to whatever was set during authentication.
-
----
-
-## MCP Server Configuration
-
-When using the MCP server, the same settings are available through the `config_action` tool:
-
-```json
-{ "action": "set-gasfree", "value": "on" }
-{ "action": "set-gas-token", "value": "USDC" }
-{ "action": "set-network", "value": "mainnet" }
-{ "action": "reset" }
-{ "action": "list" }
-```
-
-All 7 subcommands work identically in both CLI and MCP: `list`, `reset`, `set-rpc`, `get-rpc`, `set-network`, `set-gasfree`, `set-gas-token`.
+For the technical details of how gas abstraction works, see [AVNU Paymaster](/docs/integrations/paymaster).
 
 ---
 
@@ -128,3 +90,17 @@ These environment variables override configuration for advanced use cases:
 | ------------------------ | -------------------------------------------------------------------- | ---------------- |
 | `STARKFI_API_URL`        | StarkFi auth server URL                                              | Built-in default |
 | `AVNU_PAYMASTER_API_KEY` | API key for AVNU Paymaster (optional, for authenticated access) | —                |
+
+---
+
+## MCP Server Configuration
+
+When using the MCP server with AI agents, the same settings are available through the `config_action` tool. See [Auth & Config Tools](/docs/mcp/tools-auth) for the full API reference.
+
+---
+
+## See Also
+
+- **[CLI Config Reference](/docs/cli/config)** — Full subcommand reference with all flags
+- **[AVNU Paymaster](/docs/integrations/paymaster)** — Technical details of gas abstraction
+- **[Auth & Config Tools](/docs/mcp/tools-auth)** — MCP tool equivalent for AI agents

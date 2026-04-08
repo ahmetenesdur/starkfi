@@ -1,47 +1,9 @@
 ---
 title: CLI Overview
-description: All StarkFi CLI commands at a glance — installation, authentication, and usage
+description: All 41 StarkFi CLI commands at a glance — grouped by feature area
 ---
 
-## Installation
-
-No global install required — run everything via `npx`:
-
-```bash
-npx starkfi@latest <command> [arguments] [flags]
-```
-
-Or install globally:
-
-```bash
-npm install -g starkfi@latest
-starkfi <command> [arguments] [flags]
-```
-
-### Requirements
-
-- **Node.js** v18 or later
-- **StarkFi Auth Server** running (required for authentication and transaction signing)
-
-## Authentication (Required First)
-
-Before using any command, authenticate with your email:
-
-```bash
-# Step 1: Request OTP
-starkfi auth login user@example.com
-
-# Step 2: Verify OTP (check your email)
-starkfi auth verify user@example.com 123456
-
-# Check session status
-starkfi status
-
-# Logout
-starkfi auth logout
-```
-
-> **Important:** Authentication is required before executing any wallet, trading, staking, lending, DCA, confidential, or batch commands. The session persists across restarts.
+> **Before you begin:** [Install StarkFi](/docs/installation) and [authenticate your wallet](/docs/authentication) before using CLI commands.
 
 ## Command Groups
 

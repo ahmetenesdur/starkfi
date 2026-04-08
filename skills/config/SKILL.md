@@ -1,6 +1,6 @@
 ---
 name: config
-description: View and modify StarkFi CLI configuration — set custom RPC URLs, switch networks, manage gas settings, and check transaction status. Use this skill when the user mentions RPC, rate limits, network settings, gas mode, gas token, configuration, settings, preferences, or wants to check a transaction hash. Also trigger when the user wants to customize their setup, troubleshoot connection issues, switch between mainnet and testnet, change how gas is paid, or verify whether a transaction succeeded — even if they don't say "config".
+description: View and modify StarkFi CLI configuration — set custom RPC URLs, switch networks, manage gas settings, and check transaction status. Use this skill when the user mentions RPC, rate limits, network settings, gas mode, gas token, configuration, settings, preferences, or wants to check a transaction hash. Also trigger when the user wants to customize their setup, troubleshoot connection issues, fix errors, switch between mainnet and testnet, change how gas is paid, enable free gas, "gas fees too high", "not working", verify whether a transaction succeeded, or check tx status — even if they don't say "config".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:

@@ -1,0 +1,206 @@
+---
+title: Security Architecture
+description: How StarkFi protects your keys, transactions, and data across CLI, MCP, and Telegram Bot
+---
+
+## Overview
+
+StarkFi follows a **zero-trust** security architecture — private keys never leave their secure environment, all transactions require simulation before execution, and every data layer enforces strict isolation.
+
+This page covers the security model across all four entry points: CLI, MCP Server, Agent Skills, and Telegram Bot.
+
+---
+
+## Key Isolation
+
+### TEE (Trusted Execution Environment)
+
+Private keys are generated and stored inside Privy's Trusted Execution Environment. Neither the CLI, the auth server, nor the MCP server can access raw key material.
+
+```
+CLI / MCP → Auth Server → Privy TEE
+                              ↓
+                    Sign inside TEE
+                              ↓
+                    Return signature only
+```
+
+The **Auth Server** acts as a proxy — it forwards signing requests to the TEE and returns only the resulting signature. The server itself never holds or processes private keys.
+
+### Confidential Key Storage
+
+Tongo Cash private keys are stored locally with strict permissions:
+
+| Property        | Value                                          |
+| --------------- | ---------------------------------------------- |
+| **Location**    | `~/.local/share/starkfi/confidential.json`     |
+| **Permissions** | `0o600` (owner read/write only)                |
+| **Network**     | Never transmitted — all ZK proofs are local    |
+
+The key is used only for local ZK proof generation. It is **never sent** to the auth server, MCP server, or any external endpoint.
+
+---
+
+## Authentication Security
+
+### JWT Authorization
+
+All authenticated endpoints require a valid JWT token:
+
+| Property         | Value                        |
+| ---------------- | ---------------------------- |
+| **Issued on**    | Successful OTP verification  |
+| **Expiry**       | 7 days                       |
+| **Expiry Buffer**| 5 minutes (prevents mid-request failures) |
+| **Storage**      | Local `session.json` via XDG-compliant paths  |
+
+### Rate Limiting
+
+| Endpoint Type     | Limit          |
+| ----------------- | -------------- |
+| Auth endpoints    | 5 req/min/IP   |
+| Signing endpoints | 30 req/min/IP  |
+
+### Session Lifecycle
+
+```
+Login → OTP → Verify → JWT issued → Session saved locally
+                                          ↓
+                        Auto-cleared on expiry or manual logout
+```
+
+Sessions persist across terminal restarts. Expired sessions are automatically detected and cleared — users are prompted to re-authenticate.
+
+---
+
+## Transaction Security
+
+### Mandatory Simulation
+
+Every transactional operation passes through `sendWithPreflight()`, which executes a dry-run simulation before submitting to the network:
+
+```
+User request → Build transaction → Simulate (dry-run)
+                                        ↓
+                              Simulation passes? → Execute on-chain
+                              Simulation fails?  → Return error (no gas spent)
+```
+
+This catches reverts, insufficient balances, and invalid parameters **before** spending gas.
+
+### Quote-First Policy
+
+All DeFi operations follow a **quote → confirm → execute** pattern:
+
+| Step | CLI | MCP |
+| --- | --- | --- |
+| 1. Quote/Preview | `trade 0.1 ETH USDC --simulate` | `get_swap_quote` |
+| 2. User confirms | User reviews output | Agent asks user |
+| 3. Execute | `trade 0.1 ETH USDC` | `swap_tokens` |
+
+This applies to swaps, staking, lending, DCA, and batch operations. AI agents are instructed via system prompts to **never skip the quote step**.
+
+---
+
+## MCP Security Model
+
+### Tool Sandboxing
+
+The MCP server enforces security through multiple mechanisms:
+
+| Mechanism | How It Works |
+| --- | --- |
+| **Zod Schema Validation** | Every tool input is validated against a strict Zod schema before execution |
+| **Tool Hints** | Each tool is annotated with `readOnlyHint` or `destructiveHint` to guide AI behavior |
+| **Error Boundary** | `withErrorHandling()` wraps every handler — errors are caught, sanitized, and returned as structured JSON |
+| **Session Requirement** | All wallet operations verify `get_auth_status` before proceeding |
+
+### Tool Hint Classification
+
+| Hint | Tools | Behavior |
+| --- | --- | --- |
+| `readOnlyHint: true` | `get_balance`, `get_swap_quote`, `list_validators`, `dca_list`, `confidential_balance` | Safe to call without user confirmation |
+| `destructiveHint: true` | `swap_tokens`, `send_tokens`, `stake_tokens`, `confidential_ragequit` | **Always** require explicit user confirmation |
+
+---
+
+## Telegram Bot Security
+
+### API Key Encryption
+
+User-provided AI API keys are encrypted at rest using AES-256-GCM:
+
+| Property          | Value                          |
+| ----------------- | ------------------------------ |
+| **Algorithm**     | AES-256-GCM                    |
+| **IV**            | 12-byte random per encryption  |
+| **Auth Tag**      | 16-byte GCM authentication tag |
+| **Key Derivation**| Direct hex decode of `BOT_ENCRYPTION_SECRET` (64-char hex = 32 bytes) |
+| **Storage**       | SQLite database (WAL mode)     |
+
+Messages containing API keys are **automatically deleted** from the Telegram chat after processing.
+
+### Per-User MCP Isolation
+
+Each Telegram user gets a **dedicated MCP child process** with an isolated environment:
+
+```
+User A → McpProcessPool → Child Process A (isolated XDG home)
+User B → McpProcessPool → Child Process B (isolated XDG home)
+```
+
+| Property | Value |
+| --- | --- |
+| **Transport** | stdio (stdin/stdout) |
+| **Isolation** | Separate `XDG_DATA_HOME` per user |
+| **Cleanup** | 5-minute idle timeout → auto-kill |
+| **Cross-contamination** | Impossible — no shared state between users |
+
+### Rate Limiting
+
+The bot enforces per-user rate limiting using a token bucket algorithm:
+
+| Setting        | Value          |
+| -------------- | -------------- |
+| Max tokens     | 5              |
+| Refill rate    | 1 token/second |
+| Burst capacity | 5 messages     |
+
+---
+
+## Error Masking
+
+Sensitive information is filtered from error messages before they reach users or AI agents:
+
+| Data Type | How It's Masked |
+| --- | --- |
+| **Private keys** | Never included in error payloads |
+| **JWT tokens** | Stripped from error context |
+| **Internal paths** | Replaced with generic messages |
+| **Cairo hex errors** | Decoded to user-friendly messages via `parseStarknetError()` |
+
+Both CLI (`formatError()`) and MCP (`withErrorHandling()`) use the same error sanitization pipeline, ensuring consistent security regardless of the entry point.
+
+---
+
+## Security Checklist
+
+| ✅ | Security Property |
+| --- | --- |
+| ✅ | Private keys never leave TEE |
+| ✅ | Tongo keys stored locally with 0o600 permissions |
+| ✅ | All transactions simulated before execution |
+| ✅ | JWT-based auth with 7-day expiry + 5-min buffer |
+| ✅ | API keys encrypted with AES-256-GCM at rest |
+| ✅ | Per-user MCP process isolation in Telegram Bot |
+| ✅ | Rate limiting on auth (5/min) and signing (30/min) |
+| ✅ | Sensitive data masked in all error outputs |
+
+---
+
+## See Also
+
+- **[Auth Server](/docs/architecture/auth-server)** — Detailed server endpoints, middleware, and setup
+- **[Error Handling](/docs/architecture/error-handling)** — 35 typed error codes and retry logic
+- **[AVNU Paymaster](/docs/integrations/paymaster)** — Gas abstraction security model
+- **[Telegram Bot](/docs/integrations/telegram-bot)** — Bot setup and BYOK model

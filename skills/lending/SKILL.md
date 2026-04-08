@@ -1,6 +1,6 @@
 ---
 name: lending
-description: Manage Vesu V2 lending positions on Starknet — supply assets, borrow against collateral, repay debt, withdraw, close positions, monitor health factors, and auto-rebalance risky positions. Use this skill when the user mentions lending, borrowing, supplying collateral, Vesu, interest, health factor, liquidation, monitoring positions, auto-rebalancing, protecting against liquidation, or DeFi yield from lending protocols.
+description: Manage Vesu V2 lending positions on Starknet — supply assets, borrow against collateral, repay debt, withdraw, close positions, monitor health factors, and auto-rebalance risky positions. Use this skill when the user mentions lending, borrowing, supplying collateral, Vesu, earn interest, health factor, liquidation risk, monitoring positions, auto-rebalancing, protecting against liquidation, "my position is risky", "health factor low", or DeFi yield from lending protocols — even if they don't say "lending" explicitly.
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:

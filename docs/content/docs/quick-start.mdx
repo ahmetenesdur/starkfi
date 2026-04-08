@@ -77,6 +77,36 @@ See everything in one dashboard — token balances, staking positions, lending p
 starkfi portfolio
 ```
 
+## 7. Set Up a DCA Order
+
+Preview a daily buy of ETH with USDC, then create the recurring order:
+
+```bash
+# Preview one cycle
+starkfi dca-preview 10 USDC ETH
+
+# Create daily DCA: 10 USDC/day, 1000 USDC total
+starkfi dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D
+
+# Check active orders
+starkfi dca-list --status ACTIVE
+```
+
+## 8. Send a Confidential Transfer
+
+Privacy-preserving transfers via Tongo Cash (requires one-time setup):
+
+```bash
+# One-time: configure credentials
+starkfi conf-setup --key <TONGO_KEY> --contract <CONTRACT_ADDR>
+
+# Fund your confidential account
+starkfi conf-fund 100 --token USDC
+
+# Check your confidential balance
+starkfi conf-balance
+```
+
 ## What's Next?
 
 You've covered the basics. Here's where to go from here:
@@ -88,3 +118,7 @@ You've covered the basics. Here's where to go from here:
 | Customize network, RPC, or gas settings | [Configuration](/docs/configuration) |
 | Use pre-built AI workflows              | [Agent Skills](/docs/skills)         |
 | Understand the system design            | [Architecture](/docs/architecture)   |
+| Set up DCA recurring buys              | [DCA Commands](/docs/cli/dca)        |
+| Use confidential transfers             | [Confidential Commands](/docs/cli/confidential) |
+| Understand gas abstraction             | [AVNU Paymaster](/docs/integrations/paymaster) |
+

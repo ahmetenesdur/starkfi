@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 34 typed error codes, retry logic, and error recovery patterns
+description: 35 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
@@ -34,7 +34,7 @@ The `toJSON()` method ensures errors are consistently serialized in MCP response
 
 ## Error Codes
 
-StarkFi defines 34 typed error codes organized by domain:
+StarkFi defines 35 typed error codes organized by domain:
 
 ### Authentication & Session
 
@@ -210,3 +210,10 @@ MCP handlers return errors as structured JSON, allowing AI clients to parse and 
 ### Simulation Before Execution
 
 Transaction commands support `--simulate` (CLI) or simulation parameters (MCP) to catch errors before they cost gas. Always simulate first when the outcome is uncertain.
+
+---
+
+## See Also
+
+- **[Security Architecture](/docs/architecture/security)** — Transaction security model and error masking
+- **[Architecture Overview](/docs/architecture)** — System design and design patterns

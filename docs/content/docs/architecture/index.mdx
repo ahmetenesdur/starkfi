@@ -7,43 +7,102 @@ description: System architecture, module design, and key patterns
 
 StarkFi follows a layered architecture with four entry points that share a common service layer:
 
-```
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                     StarkFi                                                       │
-│                                                                                                   │
-│  ┌───────────┐  ┌───────────────-┐  ┌────────────────┐  ┌───────────────────────────┐             │
-│  │   CLI     │  │  MCP Server    │  │ Agent Skills   │  │       Telegram Bot        │             │
-│  │  (42+     │  │  (42 tools)    │  │ (12 workflows) │  │  (BYOAI · Chat DeFi)      │             │
-│  │ commands) │  │ stdio transport│  │ npx starkfi    │  │  OpenAI / Claude / Gemini │             │
-│  └────┬──────┘  └──────┬─────────┘  └─────┬──────────┘  └───────────┬───────────────┘             │
-│       │                │                  │                         │                             │
-│       └────────────────┴──────────────────┼─────────────────────────┘                             │
-│                                           ▼                                                       │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │                                Service Layer                                                │  │
-│  │  ┌────────┐  ┌──────────┐  ┌──────┐  ┌─────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │  │
-│  │  │  DEX   │  │Staking   │  │ Vesu │  │ DCA │  │  Batch   │  │Portfolio │  │ Confidential │  │  │
-│  │  │  Swap  │  │Lifecycle │  │  V2  │  │     │  │ Multical │  │Dashboard │  │  Tongo Cash  │  │  │
-│  │  └────┬───┘  └────┬─────┘  └───┬──┘  └──┬──┘  └─────┬────┘  └────┬─────┘  └──────┬───────┘  │  │
-│  │       └───────────┴────────────┴────────┴───────────┴────────────┴───────────────┘          │  │
-│  │                                         │                                                   │  │
-│  │                     ┌───────────────────┴───────────────────────┐                           │  │
-│  │                     │       Starkzap SDK (starkzap v2.0.0)      │                           │  │
-│  │                     │  Wallet · TxBuilder · Tokens · Paymaster  │                           │  │
-│  │                     └────────┬──────────────────────────────────┘                           │  │
-│  └──────────────────────────────┼──────────────────────────────────────────────────────────────┘  │
-│                                 ▼                                                                 │
-│  ┌───────────────────────────────────┐  ┌────────────────────┐                                    │
-│  │  Auth Server (Hono + Privy TEE)   │  │  AVNU Paymaster    │                                    │
-│  │  Email OTP · Wallet · Sign · Gas  │  │  Gas Abstraction   │                                    │
-│  └───────────────────────────────────┘  └────────────────────┘                                    │
-└─────────────────────────────┬─────────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  Starknet (L2)  │
-                    └─────────────────┘
-```
+<div className="flex flex-col gap-4 my-8 font-sans">
+  {/* Layer 1: Entry Points */}
+  <div className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 overflow-hidden shadow-sm">
+    <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-[#1a1a1a] px-4 py-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      1. Entry Points (Clients)
+    </div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-[#111111]">
+      <div className="flex flex-col items-center justify-center p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">CLI</span>
+        <span className="text-[11px] text-zinc-500 mt-1">42 commands</span>
+      </div>
+      <div className="flex flex-col items-center justify-center p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">MCP Server</span>
+        <span className="text-[11px] text-zinc-500 mt-1">42 tools (stdio)</span>
+      </div>
+      <div className="flex flex-col items-center justify-center p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Agent Skills</span>
+        <span className="text-[11px] text-zinc-500 mt-1">12 workflows</span>
+      </div>
+      <div className="flex flex-col items-center justify-center p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Telegram Bot</span>
+        <span className="text-[11px] text-zinc-500 mt-1">OpenAI / Claude / Gemini</span>
+      </div>
+    </div>
+  </div>
+
+  <div className="flex justify-center text-zinc-400 dark:text-zinc-600">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L12 20M12 20L6 14M12 20L18 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  </div>
+
+  {/* Layer 2: Service Layer */}
+  <div className="flex flex-col rounded-xl border border-primary/20 bg-primary/5 overflow-hidden shadow-sm">
+    <div className="border-b border-primary/20 bg-primary/10 px-4 py-2.5 text-xs font-semibold text-primary uppercase tracking-wider">
+      2. Core Service Layer
+    </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 p-4">
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">DEX Swap</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Staking</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Vesu V2</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">DCA Orders</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Batch Multicall</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Portfolio</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Tongo Cash</div>
+    </div>
+  </div>
+
+  <div className="flex justify-center text-zinc-400 dark:text-zinc-600">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L12 20M12 20L6 14M12 20L18 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  </div>
+
+  {/* Layer 3: SDK Component */}
+  <div className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 overflow-hidden shadow-sm mx-auto w-full lg:w-3/4">
+    <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-[#1a1a1a] px-4 py-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-center">
+      3. SDK Integration
+    </div>
+    <div className="p-4 text-center bg-white dark:bg-[#111111]">
+      <div className="font-semibold text-zinc-900 dark:text-zinc-100">Starkzap SDK (v2.0.0)</div>
+      <div className="text-[11px] text-zinc-500 mt-1">Wallet · TxBuilder · Tokens · Paymaster</div>
+    </div>
+  </div>
+
+  <div className="flex justify-center text-zinc-400 dark:text-zinc-600">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L12 20M12 20L6 14M12 20L18 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  </div>
+
+  {/* Layer 4: Infrastructure */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111111] overflow-hidden shadow-sm">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-[#1a1a1a] px-4 py-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-center">
+        Auth Server
+      </div>
+      <div className="p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Hono + Privy TEE</span>
+        <div className="text-[11px] text-zinc-500 mt-1">Email OTP · Wallet · Sign · Gas</div>
+      </div>
+    </div>
+    <div className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111111] overflow-hidden shadow-sm">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-[#1a1a1a] px-4 py-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-center">
+        Gas Abstraction
+      </div>
+      <div className="p-4 text-center">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">AVNU Paymaster</span>
+        <div className="text-[11px] text-zinc-500 mt-1">Gasless execution</div>
+      </div>
+    </div>
+  </div>
+
+  <div className="flex justify-center text-zinc-400 dark:text-zinc-600 mt-2">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L12 20M12 20L6 14M12 20L18 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  </div>
+
+  {/* Base Layer */}
+  <div className="mx-auto w-full max-w-[200px] rounded-xl border border-primary/50 bg-primary/10 p-3 text-center shadow-inner">
+    <div className="font-bold text-primary dark:text-primary">Starknet (L2)</div>
+  </div>
+</div>
 
 ## Directory Structure
 
@@ -63,7 +122,7 @@ src/
 │   ├── config/       # config subcommands
 │   ├── chain/        # tx-status
 │   └── system/       # status (mcp-start is inline in index.ts)
-├── services/         # 13 service modules
+├── services/         # 15 service modules
 │   ├── starkzap/     # SDK client initialization + config
 │   ├── fibrous/      # DEX routing, calldata, pricing
 │   ├── vesu/         # Lending pool API + on-chain operations
@@ -76,14 +135,16 @@ src/
 │   ├── portfolio/    # Aggregated DeFi overview
 │   ├── auth/         # Session management (JWT persistence)
 │   ├── api/          # Backend API client
-│   └── config/       # Configuration persistence
+│   ├── config/       # Configuration persistence
+│   ├── price/        # USD pricing via Fibrous
+│   └── swap/         # Multi-provider swap aggregation (Fibrous, AVNU, Ekubo)
 ├── mcp/              # MCP server layer
 │   ├── server.ts     # Server setup + stdio transport
 │   ├── tools/        # 7 domain tool files + 2 utilities (Zod schemas)
 │   └── handlers/     # 11 domain handlers + 3 utility files
-└── lib/              # 12 shared utilities
-    ├── errors.ts     # ErrorCode enum + StarkfiError class
-    ├── parse-starknet-error.ts # Cairo hex decoding + error map
+└── lib/              # 15 shared utilities
+    ├── errors.ts     # ErrorCode enum (35 codes) + StarkfiError class
+    ├── parse-starknet-error.ts # Cairo hex decoding + error map (15 patterns)
     ├── retry.ts      # Exponential backoff retry
     ├── concurrency.ts # Sliding-window concurrent execution
     ├── fetch.ts      # Fetch with AbortController timeout
@@ -91,9 +152,12 @@ src/
     ├── cli-helpers.ts # runCommand wrapper + outputResult
     ├── validation.ts # Address and input validation
     ├── types.ts      # Shared TypeScript types
-    ├── config.ts     # Config file paths
+    ├── config.ts     # Config file paths (XDG-compliant)
     ├── brand.ts      # CLI branding and colors
-    └── command.ts    # Commander.js helpers
+    ├── command.ts    # Commander.js helpers
+    ├── send-with-preflight.ts # Mandatory simulation before tx execution
+    ├── tx-progress.ts # Real-time transaction progress tracking
+    └── resolve-network.ts # Network resolution priority chain
 ```
 
 ## Key Design Patterns
@@ -145,7 +209,7 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 | --------------------- | ---------------------------------------------------------------------------------------------------- | --------------- |
 | **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                                        | v2.0.0          |
 | **CLI Framework**     | [Commander.js](https://github.com/tj/commander.js)                                                   | v14.0.3         |
-| **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)                             | v1.27.1         |
+| **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)                             | v1.29.0         |
 | **Schema Validation** | [Zod](https://zod.dev/)                                                                              | v4.3.6          |
 | **Auth Server**       | [Hono](https://hono.dev/) + [Privy TEE](https://privy.io/)                                           | v4.12.7         |
 | **DEX Routing**       | [Fibrous](https://fibrous.finance/) (default), [AVNU](https://avnu.fi/), [Ekubo](https://ekubo.org/) | —               |
@@ -153,3 +217,10 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 | **Gas Abstraction**   | [AVNU](https://avnu.fi/) Paymaster                                                                   | —               |
 | **Terminal UI**       | [Chalk](https://github.com/chalk/chalk) + [Ora](https://github.com/sindresorhus/ora)                 | v5.6.2 / v9.3.0 |
 | **TypeScript**        | [TypeScript](https://www.typescriptlang.org/) (strict mode)                                          | v5.9.3          |
+
+## Deep Dive
+
+- **[Security Architecture](/docs/architecture/security)** — TEE isolation, MCP sandboxing, bot encryption, transaction security
+- **[Error Handling](/docs/architecture/error-handling)** — 35 typed error codes, Starknet error parsing, retry logic
+- **[Auth Server](/docs/architecture/auth-server)** — Hono server endpoints, middleware stack, and deployment
+- **[Development & Contributing](/docs/architecture/contributing)** — Local setup, build scripts, and contribution guidelines

@@ -1,185 +1,232 @@
 ---
 title: Using Skills
-description: Per-skill usage guides, command reference, and real-world examples
+description: How AI agents use each skill — workflow steps, decision points, and command reference
 ---
 
-## Authentication
+> **Prerequisite:** All skills require authentication. The `authenticate-wallet` skill handles this automatically — just tell your agent "log me in" and provide the OTP from your email.
 
-Before using any skill, you must authenticate:
+## How Skills Work
 
-```bash
-npx starkfi@latest auth login user@example.com
-npx starkfi@latest auth verify user@example.com 123456
-```
+Each skill guides your AI agent through a **multi-step workflow** with built-in decision points. Unlike raw CLI commands, skills handle the full lifecycle: check prerequisites → preview/quote → confirm with user → execute → verify result.
 
-The `authenticate-wallet` skill handles this automatically — just tell your AI agent "log me in" and provide the OTP from your email.
+---
 
 ## Transaction Skills
 
-### Trade (Single Swap)
+### Trade
 
-Swap one token for another using Fibrous aggregation for the best route:
+**What the agent does:** Checks auth → gets a swap quote → shows expected output and fees → waits for user confirmation → executes → verifies on-chain status.
 
 ```bash
-npx starkfi@latest trade 0.1 ETH USDC
-npx starkfi@latest trade 100 USDC STRK --slippage 0.5
-npx starkfi@latest trade 0.5 ETH DAI --simulate
+starkfi trade 0.1 ETH USDC
+starkfi trade 100 USDC STRK --slippage 0.5
+starkfi trade 0.5 ETH DAI --simulate     # Preview only
 ```
 
-The `--simulate` flag estimates fees without executing — useful for previewing before committing.
+**Agent decision points:**
+- Selects the best provider automatically (`fibrous`, `avnu`, `ekubo`, or `auto` to race all)
+- Warns if slippage exceeds 2%
+- Falls back to alternative provider if the primary one fails
+
+---
 
 ### Multi-Swap
 
-Execute up to 3 swap pairs in a single Starknet transaction:
+**What the agent does:** Validates all pairs (2–3 max) → gets batch quotes → shows combined output → executes atomically in one transaction.
 
 ```bash
-npx starkfi@latest multi-swap "100 USDC>ETH, 50 DAI>STRK"
-npx starkfi@latest multi-swap "0.1 ETH>USDC, 200 USDT>DAI" --simulate
+starkfi multi-swap "100 USDC>ETH, 50 DAI>STRK"
+starkfi multi-swap "0.1 ETH>USDC, 200 USDT>DAI" --simulate
 ```
+
+**Agent decision points:**
+- Rejects if more than 3 pairs are requested (`BATCH_LIMIT_EXCEEDED`)
+- Uses batch routing when all pairs share the same output token for efficiency
+
+---
 
 ### Batch (Multicall)
 
-Combine different operation types — swaps, staking, lending (supply, borrow, repay, withdraw), sends, and DCA orders — in one atomic transaction:
+**What the agent does:** Parses mixed operations → validates each one → simulates the combined transaction → executes atomically.
 
 ```bash
-npx starkfi@latest batch \
+starkfi batch \
   --swap "0.1 ETH USDC" \
   --stake "50 STRK karnot" \
   --simulate
 ```
 
-Requires at least 2 operations. Each flag (`--swap`, `--stake`, `--supply`, `--send`, `--borrow`, `--repay`, `--withdraw`, `--dca-create`, `--dca-cancel`) can be repeated.
+Supports: `--swap`, `--stake`, `--supply`, `--send`, `--borrow`, `--repay`, `--withdraw`, `--dca-create`, `--dca-cancel`. Minimum 2 operations required.
+
+**Agent decision points:**
+- Determines which operations can be safely batched together
+- Always simulates first to estimate combined gas cost
+- If any operation in the batch would fail, the entire batch is rejected (atomic)
+
+---
 
 ### Staking
 
-Stake STRK, WBTC, tBTC, SolvBTC, or LBTC with a validator:
+**What the agent does:** Lists validators → helps user choose → checks existing position → stakes/unstakes/claims → verifies result.
 
 ```bash
-npx starkfi@latest validators                       # List validators
-npx starkfi@latest pools karnot                      # List pools for a validator
-npx starkfi@latest stake 100 -v karnot               # Stake (default token: STRK)
-npx starkfi@latest rewards --claim -v karnot          # Claim rewards
-npx starkfi@latest unstake intent -v karnot -a 50     # Start unstaking
-npx starkfi@latest unstake exit -v karnot             # Complete unstaking
-npx starkfi@latest stake-status                       # View staking overview
+starkfi validators                         # List validators
+starkfi pools karnot                       # List pools for a validator
+starkfi stake 100 -v karnot                # Stake (default: STRK)
+starkfi rewards --claim -v karnot          # Claim rewards
+starkfi unstake intent -v karnot -a 50     # Start unstaking (step 1)
+starkfi unstake exit -v karnot             # Complete unstaking (step 2)
+starkfi stake-status                       # View staking overview
 ```
+
+**Agent decision points:**
+- Recommends validators based on commission rates and available pools
+- For unstaking, explains the 2-step process and cooldown period
+- Checks if exit cooldown has passed before attempting to complete withdrawal
+
+---
 
 ### Lending (Vesu V2)
 
-Supply, borrow, repay, monitor health, and auto-rebalance lending positions:
+**What the agent does:** Lists pools with live APY → helps choose pool/token pair → monitors health factor → auto-rebalances risky positions.
 
 ```bash
-npx starkfi@latest lend-pools                           # List pools
-npx starkfi@latest lend-supply 100 -p Prime -t USDC     # Supply
-npx starkfi@latest lend-borrow -p Prime \                # Borrow
+starkfi lend-pools                                  # List pools
+starkfi lend-supply 100 -p Prime -t USDC            # Supply
+starkfi lend-borrow -p Prime \                      # Borrow
   --collateral-amount 0.5 --collateral-token ETH \
   --borrow-amount 500 --borrow-token USDC
-npx starkfi@latest lend-repay 500 -p Prime -t USDC \     # Repay
+starkfi lend-repay 500 -p Prime -t USDC \           # Repay
   --collateral-token ETH
-npx starkfi@latest lend-withdraw 100 -p Prime -t USDC   # Withdraw
-npx starkfi@latest lend-status                              # View all positions
-npx starkfi@latest lend-status -p Prime \                    # View specific position
-  --collateral-token ETH
-npx starkfi@latest lend-monitor                               # Health monitoring (risk levels)
-npx starkfi@latest lend-auto -p Prime \                       # Auto-rebalance risky position
+starkfi lend-status                                 # View positions
+starkfi lend-monitor                                # Health monitoring
+starkfi lend-auto -p Prime \                        # Auto-rebalance
   --collateral-token ETH --borrow-token USDC --simulate
 ```
 
+**Agent decision points:**
+- Warns user when health factor is in WARNING/DANGER/CRITICAL zones
+- For auto-rebalance, chooses strategy (repay debt vs add collateral) based on wallet balances
+- Prevents borrowing that would create immediately risky positions (health factor < 1.1)
+
+---
+
 ### Send
 
-Transfer tokens to another Starknet address:
+**What the agent does:** Validates address → checks balance → previews fee → confirms with user → executes → provides explorer link.
 
 ```bash
-npx starkfi@latest send 10 STRK 0x04a3...abc
-npx starkfi@latest send 0.5 ETH 0x07b1...def --simulate
+starkfi send 10 STRK 0x04a3...abc
+starkfi send 0.5 ETH 0x07b1...def --simulate
 ```
+
+**Agent decision points:**
+- Validates recipient address format before sending
+- Warns if the transfer would leave insufficient balance for gas
+
+---
 
 ### DCA (Dollar-Cost Averaging)
 
-Set up and manage recurring buy orders:
+**What the agent does:** Previews one cycle → shows expected output → creates recurring order → monitors active orders.
 
 ```bash
-npx starkfi@latest dca-preview 10 USDC ETH                                # Preview one cycle
-npx starkfi@latest dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D # Daily DCA
-npx starkfi@latest dca-list --status ACTIVE                                # View orders
-npx starkfi@latest dca-cancel 1fd90ab7-34bf-42b8-afa0-011daf6f15ba         # Cancel using ID
-npx starkfi@latest dca-cancel 0x123...                                     # Cancel using address
+starkfi dca-preview 10 USDC ETH                                # Preview
+starkfi dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D # Create daily
+starkfi dca-list --status ACTIVE                                # List orders
+starkfi dca-cancel <order-id-or-address>                        # Cancel
 ```
+
+**Agent decision points:**
+- Always previews before creating to show per-cycle output
+- Defaults to daily frequency (`P1D`) if not specified
+- Can cancel by UUID or on-chain contract address
+
+---
 
 ### Confidential Transfers (Tongo Cash)
 
-Privacy-preserving transfers using ZK proofs on Starknet:
+**What the agent does:** Checks if Tongo is configured → guides through setup if needed → manages fund/transfer/withdraw lifecycle.
 
 ```bash
-npx starkfi@latest conf-setup --key <TONGO_KEY> --contract 0x1234…         # One-time setup
-npx starkfi@latest conf-balance                                           # Check state
-npx starkfi@latest conf-fund 100 --token USDC                              # Fund from public
-npx starkfi@latest conf-transfer 50 --recipient-x 0xABC --recipient-y 0xDEF  # Private transfer
-npx starkfi@latest conf-withdraw 100                                       # Withdraw to public
-npx starkfi@latest conf-ragequit                                           # Emergency exit
-npx starkfi@latest conf-rollover                                           # Activate pending
+starkfi conf-setup --key <TONGO_KEY> --contract <ADDR>   # One-time setup
+starkfi conf-balance                                     # Check state
+starkfi conf-fund 100 --token USDC                       # Fund from public
+starkfi conf-transfer 50 \                               # Private transfer
+  --recipient-x 0xABC --recipient-y 0xDEF
+starkfi conf-withdraw 100                                # Withdraw to public
+starkfi conf-ragequit                                    # Emergency exit
+starkfi conf-rollover                                    # Activate pending
 ```
+
+**Agent decision points:**
+- Checks for `CONFIDENTIAL_NOT_CONFIGURED` error and guides through setup
+- Reminds recipients to run `conf-rollover` to activate received funds
+- Double-confirms before `conf-ragequit` (destructive — empties entire balance)
+
+---
 
 ## Data Skills
 
 ### Balance
 
-Check individual or all token balances:
+**What the agent does:** Fetches balances → formats with token symbols → shows USD values when available.
 
 ```bash
-npx starkfi@latest balance               # All tokens
-npx starkfi@latest balance --token STRK   # Specific token
-npx starkfi@latest balance --json         # Machine-readable
+starkfi balance               # All non-zero tokens
+starkfi balance --token STRK  # Specific token
+starkfi balance --json        # Machine-readable
 ```
+
+---
 
 ### Portfolio
 
-View a comprehensive DeFi dashboard and optimize portfolio allocation:
+**What the agent does:** Aggregates token balances, staking positions, lending positions, DCA orders, and confidential balances into a comprehensive dashboard.
 
 ```bash
-npx starkfi@latest portfolio                                                          # Full dashboard
-npx starkfi@latest portfolio --json                                                   # Machine-readable
-npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --simulate # Preview rebalance
-npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"            # Execute rebalance
+starkfi portfolio                                                        # Full dashboard
+starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --simulate # Preview
+starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"           # Execute
 ```
+
+**Agent decision points:**
+- For rebalance, calculates optimal trades to reach target allocation
+- Always previews the rebalance plan before executing
+- Validates that target percentages sum to 100
+
+---
 
 ## Utility Skills
 
 ### Config
 
-Manage RPC, network, gas settings, and transaction status:
+**What the agent does:** Manages CLI settings and checks transaction status.
 
 ```bash
-npx starkfi@latest config set-rpc https://starknet-mainnet.g.alchemy.com/v2/<key>
-npx starkfi@latest config set-network mainnet
-npx starkfi@latest config set-gasfree on       # Developer sponsors gas
-npx starkfi@latest config set-gas-token USDC    # Pay gas in USDC
-npx starkfi@latest config list                  # Show all settings
-npx starkfi@latest tx-status 0x0abc...          # Check any transaction
+starkfi config set-rpc <url>              # Custom RPC
+starkfi config set-network mainnet        # Switch network
+starkfi config set-gasfree on             # Developer-sponsored gas
+starkfi config set-gas-token USDC         # Pay gas in USDC
+starkfi config list                       # Show all settings
+starkfi tx-status 0x0abc...               # Check any transaction
 ```
 
-## Simulation
+---
 
-Every transaction skill supports `--simulate` for dry-run execution:
+## Global Flags
 
-```bash
-npx starkfi@latest trade 100 USDC ETH --simulate
-npx starkfi@latest send 10 STRK 0x04a3... --simulate
-npx starkfi@latest batch --swap "0.1 ETH USDC" --stake "50 STRK karnot" --simulate
-npx starkfi@latest lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate
-npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --simulate
-```
+All skills support these flags:
 
-Simulation returns estimated fees and validates the transaction without spending gas.
+| Flag | Description |
+| --- | --- |
+| `--simulate` | Dry-run — estimate fees without executing (transaction skills only) |
+| `--json` | Machine-readable output — especially useful for AI agent parsing |
 
-## JSON Output
+---
 
-Every skill supports `--json` for machine-readable output:
+## See Also
 
-```bash
-npx starkfi@latest balance --json
-npx starkfi@latest portfolio --json
-npx starkfi@latest trade 100 USDC ETH --json
-```
-
-This is especially useful when AI agents need to parse results programmatically.
+- **[Agent Skills Overview](/docs/skills)** — Installation, skill structure, and how agents match skills
+- **[CLI Reference](/docs/cli)** — Full command reference with all flags and options
+- **[MCP Tools](/docs/mcp)** — Atomic tool equivalents for direct API integration
