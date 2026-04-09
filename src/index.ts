@@ -81,7 +81,7 @@ const LOGO_LINES = [
 ] as const;
 
 const coloredLogo = LOGO_LINES.map((line, i) =>
-	chalk.bold.hex(LOGO_ROW_COLORS[i] ?? MINT)(line)
+	chalk.hex(LOGO_ROW_COLORS[i] ?? MINT).bold(line)
 ).join("\n");
 
 const tagline =
@@ -97,7 +97,7 @@ const white = chalk.white.bind(chalk);
 
 // Quick Start block shown only on the root --help page.
 const footer = `
-${chalk.bold.hex(MINT)("Quick Start")}
+${chalk.hex(MINT).bold("Quick Start")}
 
   ${dim("$")} ${white("starkfi auth login <email>")}              ${dim("# Sign in with Privy OTP")}
   ${dim("$")} ${white("starkfi trade 0.1 ETH USDC")}             ${dim("# Best-price swap via Fibrous")}
@@ -231,7 +231,7 @@ program.configureHelp({
 
 			if (groupCmds.length === 0) continue;
 
-			lines.push(`\n  ${chalk.bold.hex(BLUE)(groupLabel)}`);
+			lines.push(`\n  ${chalk.hex(BLUE).bold(groupLabel)}`);
 			for (const c of groupCmds) {
 				lines.push(
 					`    ${chalk.white(helper.subcommandTerm(c).padEnd(width))}  ${chalk.dim(helper.subcommandDescription(c))}`

@@ -46,7 +46,7 @@ export function registerLendPoolsCommand(program: Command): void {
 					if (name && pools.length <= 2) {
 						for (const pool of pools) {
 							console.log("");
-							console.log(chalk.bold.hex("#a5b4fc")(`  ${pool.name ?? "Unnamed"}`));
+							console.log(chalk.hex("#a5b4fc").bold(`  ${pool.name ?? "Unnamed"}`));
 							console.log(chalk.gray(`  ${pool.address}`));
 
 							const markets = await getPoolMarkets(ctx.wallet, pool.address);
