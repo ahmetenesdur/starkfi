@@ -1,4 +1,4 @@
-import type { StarkZap, WalletInterface, ChainId } from "starkzap";
+import type { StarkZap, ChainId } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { getBalances } from "../tokens/balances.js";
 import { getTokenUsdPrice } from "../price/price.js";
@@ -65,7 +65,7 @@ export interface PortfolioData {
 
 export async function getPortfolio(
 	sdk: StarkZap,
-	wallet: WalletInterface,
+	wallet: StarkZapWallet,
 	session: Session
 ): Promise<PortfolioData> {
 	const chainId = resolveChainId(session);
@@ -102,7 +102,7 @@ export async function getPortfolio(
 const USD_PRICE_CONCURRENCY = 5;
 
 async function fetchBalancesWithUsd(
-	wallet: WalletInterface,
+	wallet: StarkZapWallet,
 	chainId?: ChainId
 ): Promise<PortfolioBalance[]> {
 	const rawBalances = await getBalances(wallet, chainId);
@@ -130,7 +130,7 @@ async function fetchBalancesWithUsd(
 
 async function fetchStaking(
 	sdk: StarkZap,
-	wallet: WalletInterface,
+	wallet: StarkZapWallet,
 	session: Session
 ): Promise<PortfolioStaking[]> {
 	const overview = await getStakingOverview(
@@ -178,23 +178,18 @@ function parseNumericPart(formatted: string): number {
 }
 
 async function fetchLending(
-	wallet: WalletInterface,
+	wallet: StarkZapWallet,
 	chainId?: ChainId
 ): Promise<PortfolioLending[]> {
-	const pools = await getVesuPools(wallet as StarkZapWallet);
+	const pools = await getVesuPools(wallet);
 	const results: PortfolioLending[] = [];
 
 	for (const pool of pools) {
-		const markets = await getPoolMarkets(wallet as StarkZapWallet, pool.address);
+		const markets = await getPoolMarkets(wallet, pool.address);
 		const marketSymbols = [...new Set(markets.map((m) => m.asset.symbol))];
 
 		const tasks = marketSymbols.map(async (symbol) => {
-			const supplied = await getSuppliedBalance(
-				wallet as StarkZapWallet,
-				pool.address,
-				symbol,
-				chainId
-			);
+			const supplied = await getSuppliedBalance(wallet, pool.address, symbol, chainId);
 			if (supplied && supplied !== "0") {
 				results.push({ pool: pool.name ?? pool.address, asset: symbol, supplied });
 			}
@@ -206,9 +201,9 @@ async function fetchLending(
 	return results;
 }
 
-async function fetchDca(wallet: WalletInterface): Promise<PortfolioDca[]> {
+async function fetchDca(wallet: StarkZapWallet): Promise<PortfolioDca[]> {
 	try {
-		const result = await listDcaOrders(wallet as StarkZapWallet, { status: "ACTIVE" });
+		const result = await listDcaOrders(wallet, { status: "ACTIVE" });
 		return result.content.map((o) => ({
 			id: o.id.slice(0, 8),
 			orderAddress: o.orderAddress.toString(),
@@ -223,14 +218,14 @@ async function fetchDca(wallet: WalletInterface): Promise<PortfolioDca[]> {
 }
 
 async function fetchConfidential(
-	wallet: WalletInterface,
-	chainId?: ChainId
+	wallet: StarkZapWallet,
+	_chainId?: ChainId
 ): Promise<PortfolioConfidential | null> {
 	try {
 		const config = loadTongoConfig();
 		if (!config) return null;
 
-		const tongo = createTongoInstance(wallet as StarkZapWallet, config);
+		const tongo = createTongoInstance(wallet, config);
 		const state = await getConfidentialState(tongo);
 
 		const activeUnits = "balance" in state ? BigInt(state.balance) : 0n;

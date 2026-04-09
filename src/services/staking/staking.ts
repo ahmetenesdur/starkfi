@@ -9,7 +9,7 @@ export interface ValidatorInfo {
 	address: string;
 }
 
-export interface PoolInfo {
+export interface StakingPoolInfo {
 	poolContract: string;
 	tokenSymbol: string;
 	amount: string;
@@ -43,7 +43,10 @@ export interface StakingOverview {
 	positions: StakingOverviewPosition[];
 }
 
-export function resolvePoolForToken(pools: PoolInfo[], tokenSymbol: string): PoolInfo {
+export function resolvePoolForToken(
+	pools: StakingPoolInfo[],
+	tokenSymbol: string
+): StakingPoolInfo {
 	const upper = tokenSymbol.toUpperCase();
 	const match = pools.find((p) => p.tokenSymbol.toUpperCase() === upper);
 	if (!match) {
@@ -60,7 +63,7 @@ export async function getValidatorPools(
 	sdk: StarkZap,
 	validatorAddress: string,
 	wallet?: StarkZapWallet
-): Promise<PoolInfo[]> {
+): Promise<StakingPoolInfo[]> {
 	const pools = await sdk.getStakerPools(fromAddress(validatorAddress));
 
 	return Promise.all(

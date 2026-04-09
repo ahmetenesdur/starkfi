@@ -1,6 +1,5 @@
 import { Amount, fromAddress, type ChainId } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
-import type { Session } from "../auth/session.js";
 import type { TxResult } from "../../lib/types.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import { resolveToken } from "../tokens/tokens.js";
@@ -33,7 +32,6 @@ export interface LendingRebalanceResult {
 
 export async function autoRebalanceLending(
 	wallet: StarkZapWallet,
-	_session: Session,
 	params: LendingRebalanceParams,
 	chainId?: ChainId
 ): Promise<LendingRebalanceResult> {

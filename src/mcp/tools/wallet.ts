@@ -11,74 +11,95 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 export function registerWalletTools(server: McpServer): number {
-	server.tool(
+	server.registerTool(
 		"get_tx_status",
-		"Check Starknet transaction status by hash. Use this to verify if a recently submitted transaction has been accepted on L2 or L1.",
 		{
-			hash: z.string().describe("Transaction hash (0x...)"),
+			description:
+				"Check Starknet transaction status by hash. Use this to verify if a recently submitted transaction has been accepted on L2 or L1.",
+			inputSchema: z.object({
+				hash: z.string().describe("Transaction hash (0x...)"),
+			}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
-		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetTxStatus)
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_balance",
-		"Get native token and ERC-20 token balances on Starknet for the authorized user.",
 		{
-			token: z
-				.string()
-				.optional()
-				.describe(
-					"Specific token symbol (e.g. 'STRK', 'ETH', 'USDC'). Omit to fetch all balances."
-				),
+			description:
+				"Get native token and ERC-20 token balances on Starknet for the authorized user.",
+			inputSchema: z.object({
+				token: z
+					.string()
+					.optional()
+					.describe(
+						"Specific token symbol (e.g. 'STRK', 'ETH', 'USDC'). Omit to fetch all balances."
+					),
+			}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
-		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetBalance)
 	);
 
-	server.tool(
+	server.registerTool(
 		"deploy_account",
-		"Deploy the Starknet smart contract account on-chain. Required once before sending transactions. Safe to call multiple times (idempotent) — returns status if already deployed.",
-		{},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+		{
+			description:
+				"Deploy the Starknet smart contract account on-chain. Required once before sending transactions. Safe to call multiple times (idempotent) — returns status if already deployed.",
+			inputSchema: z.object({}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+		},
 		withErrorHandling(handleDeployAccount)
 	);
 
-	server.tool(
+	server.registerTool(
 		"send_tokens",
-		"Transfer tokens to a recipient on Starknet. Set simulate=true to estimate fees without executing.",
 		{
-			amount: z.string().describe("Amount to send (e.g. '0.1', '100')"),
-			token: z.string().describe("Token symbol (e.g. 'STRK', 'ETH', 'USDC')"),
-			recipient: z.string().describe("Recipient Starknet address (0x...)"),
-			simulate: z
-				.boolean()
-				.optional()
-				.describe(
-					"Set true to simulate only — estimates fees without sending a transaction"
-				),
+			description:
+				"Transfer tokens to a recipient on Starknet. Set simulate=true to estimate fees without executing.",
+			inputSchema: z.object({
+				amount: z.string().describe("Amount to send (e.g. '0.1', '100')"),
+				token: z.string().describe("Token symbol (e.g. 'STRK', 'ETH', 'USDC')"),
+				recipient: z.string().describe("Recipient Starknet address (0x...)"),
+				simulate: z
+					.boolean()
+					.optional()
+					.describe(
+						"Set true to simulate only — estimates fees without sending a transaction"
+					),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleSendTokens)
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_portfolio",
-		"Get complete DeFi portfolio overview: all token balances (with USD values), staking positions, lending positions, DCA orders, and confidential Tongo balances in one call.",
-		{},
-		{ readOnlyHint: true, destructiveHint: false },
+		{
+			description:
+				"Get complete DeFi portfolio overview: all token balances (with USD values), staking positions, lending positions, DCA orders, and confidential Tongo balances in one call.",
+			inputSchema: z.object({}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
+		},
 		withErrorHandling(handleGetPortfolio)
 	);
 
-	server.tool(
+	server.registerTool(
 		"rebalance_portfolio",
-		"Rebalance portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction. Supports simulation.",
 		{
-			target: z.string().describe('Target allocation, e.g. "50 ETH, 30 USDC, 20 STRK"'),
-			slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
-			simulate: z.boolean().optional().describe("Set true to preview plan without executing"),
+			description:
+				"Rebalance portfolio to match a target allocation. Calculates optimal swaps and executes as a single batch transaction. Supports simulation.",
+			inputSchema: z.object({
+				target: z.string().describe('Target allocation, e.g. "50 ETH, 30 USDC, 20 STRK"'),
+				slippage: z.number().optional().describe("Slippage tolerance % (default: 1)"),
+				simulate: z
+					.boolean()
+					.optional()
+					.describe("Set true to preview plan without executing"),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleRebalancePortfolio)
 	);
 

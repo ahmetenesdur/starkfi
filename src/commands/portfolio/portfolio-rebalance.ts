@@ -1,16 +1,13 @@
 import type { Command } from "commander";
 import chalk from "chalk";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { getPortfolio } from "../../services/portfolio/portfolio.js";
 import {
 	parseTargetAllocation,
 	calculateRebalancePlan,
 	executeRebalance,
 } from "../../services/portfolio/rebalance.js";
-import { createSpinner, formatResult, formatTable } from "../../lib/format.js";
-import { formatError } from "../../lib/format.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
+import { formatResult, formatTable } from "../../lib/format.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 
 export function registerPortfolioRebalanceCommand(program: Command): void {
 	program
@@ -28,97 +25,92 @@ export function registerPortfolioRebalanceCommand(program: Command): void {
 			'\nExamples:\n  $ starkfi portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"\n  $ starkfi portfolio-rebalance --target "60 ETH, 40 STRK" --simulate'
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner(
-				opts.simulate ? "Calculating rebalance plan..." : "Executing rebalance..."
-			).start();
+			await withAuthenticatedWallet(
+				opts.simulate ? "Calculating rebalance plan..." : "Executing rebalance...",
+				async (ctx) => {
+					const targets = parseTargetAllocation(opts.target, ctx.chainId);
 
-			try {
-				const session = requireSession();
-				const { sdk, wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
+					const portfolio = await getPortfolio(ctx.sdk, ctx.wallet, ctx.session);
 
-				const targets = parseTargetAllocation(opts.target, chainId);
+					const plan = await calculateRebalancePlan(portfolio, targets, ctx.chainId);
 
-				const portfolio = await getPortfolio(sdk, wallet, session);
+					if (plan.trades.length === 0) {
+						ctx.spinner.succeed("Portfolio is already balanced — no trades needed");
+						return;
+					}
 
-				const plan = await calculateRebalancePlan(portfolio, targets, chainId);
+					const result = await executeRebalance(ctx.wallet, ctx.session, plan, {
+						slippage: parseFloat(opts.slippage),
+						simulate: opts.simulate,
+					});
 
-				if (plan.trades.length === 0) {
-					spinner.succeed("Portfolio is already balanced — no trades needed");
-					return;
-				}
+					if (opts.simulate) {
+						ctx.spinner.succeed("Rebalance plan calculated (simulation)");
+					} else {
+						ctx.spinner.succeed("Portfolio rebalanced successfully");
+					}
 
-				const result = await executeRebalance(wallet, session, plan, {
-					slippage: parseFloat(opts.slippage),
-					simulate: opts.simulate,
-				});
+					if (opts.json) {
+						console.log(JSON.stringify(result, null, 2));
+						return;
+					}
 
-				if (opts.simulate) {
-					spinner.succeed("Rebalance plan calculated (simulation)");
-				} else {
-					spinner.succeed("Portfolio rebalanced successfully");
-				}
-
-				if (opts.json) {
-					console.log(JSON.stringify(result, null, 2));
-					return;
-				}
-
-				console.log(chalk.bold("\n  Current Allocation:"));
-				console.log(
-					formatTable(
-						["Token", "Current %", "USD Value"],
-						plan.currentAllocations.map((a) => [
-							a.symbol,
-							`${a.percentage.toFixed(1)}%`,
-							`$${a.usdValue.toFixed(2)}`,
-						])
-					)
-				);
-
-				console.log(chalk.bold("\n  Target Allocation:"));
-				console.log(
-					formatTable(
-						["Token", "Target %"],
-						plan.targetAllocations.map((a) => [a.symbol, `${a.percentage.toFixed(1)}%`])
-					)
-				);
-
-				console.log(chalk.bold("\n  Trades:"));
-				console.log(
-					formatTable(
-						["Action", "From", "To", "Amount", "≈ USD"],
-						plan.trades.map((t) => [
-							t.action.toUpperCase(),
-							t.fromToken,
-							t.toToken,
-							t.amount,
-							`$${t.usdValue.toFixed(2)}`,
-						])
-					)
-				);
-
-				if (result.simulation) {
+					console.log(chalk.bold("\n  Current Allocation:"));
 					console.log(
-						formatResult({
-							mode: "🔍 SIMULATION — no transaction sent",
-							estimatedFee: result.simulation.estimatedFee,
-							estimatedFeeUsd: result.simulation.estimatedFeeUsd,
-							callCount: result.simulation.callCount,
-						})
+						formatTable(
+							["Token", "Current %", "USD Value"],
+							plan.currentAllocations.map((a) => [
+								a.symbol,
+								`${a.percentage.toFixed(1)}%`,
+								`$${a.usdValue.toFixed(2)}`,
+							])
+						)
 					);
-				} else if (result.txHash) {
+
+					console.log(chalk.bold("\n  Target Allocation:"));
 					console.log(
-						formatResult({
-							txHash: result.txHash,
-							explorer: result.explorerUrl ?? "N/A",
-						})
+						formatTable(
+							["Token", "Target %"],
+							plan.targetAllocations.map((a) => [
+								a.symbol,
+								`${a.percentage.toFixed(1)}%`,
+							])
+						)
 					);
-				}
-			} catch (error) {
-				spinner.fail("Portfolio rebalance failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+
+					console.log(chalk.bold("\n  Trades:"));
+					console.log(
+						formatTable(
+							["Action", "From", "To", "Amount", "≈ USD"],
+							plan.trades.map((t) => [
+								t.action.toUpperCase(),
+								t.fromToken,
+								t.toToken,
+								t.amount,
+								`$${t.usdValue.toFixed(2)}`,
+							])
+						)
+					);
+
+					if (result.simulation) {
+						console.log(
+							formatResult({
+								mode: "🔍 SIMULATION — no transaction sent",
+								estimatedFee: result.simulation.estimatedFee,
+								estimatedFeeUsd: result.simulation.estimatedFeeUsd,
+								callCount: result.simulation.callCount,
+							})
+						);
+					} else if (result.txHash) {
+						console.log(
+							formatResult({
+								txHash: result.txHash,
+								explorer: result.explorerUrl ?? "N/A",
+							})
+						);
+					}
+				},
+				{ onError: "Portfolio rebalance failed" }
+			);
 		});
 }

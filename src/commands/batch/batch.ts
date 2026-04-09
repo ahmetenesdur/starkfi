@@ -1,13 +1,11 @@
 import type { Command } from "commander";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { buildBatch, type BatchOperation } from "../../services/batch/batch.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
-import { createSpinner, formatError } from "../../lib/format.js";
+import { createSpinner } from "../../lib/format.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
 import { waitWithProgress } from "../../lib/tx-progress.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 
 // Collect repeatable options into array.
 function collect(value: string, previous: string[]): string[] {
@@ -222,83 +220,80 @@ Flag formats:
 Minimum 2 operations required. Each flag can be repeated.`
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner("Preparing batch...").start();
+			await withAuthenticatedWallet(
+				"Preparing batch...",
+				async (ctx) => {
+					const operations: BatchOperation[] = [
+						...(opts.swap as string[]).map((s: string) => parseOperation("swap", s)),
+						...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
+						...(opts.supply as string[]).map((s: string) =>
+							parseOperation("supply", s)
+						),
+						...(opts.send as string[]).map((s: string) => parseOperation("send", s)),
+						...(opts.borrow as string[]).map((s: string) =>
+							parseOperation("borrow", s)
+						),
+						...(opts.repay as string[]).map((s: string) => parseOperation("repay", s)),
+						...(opts.withdraw as string[]).map((s: string) =>
+							parseOperation("withdraw", s)
+						),
+						...(opts.dcaCreate as string[]).map((s: string) =>
+							parseOperation("dca-create", s)
+						),
+						...(opts.dcaCancel as string[]).map((s: string) =>
+							parseOperation("dca-cancel", s)
+						),
+					];
 
-			try {
-				const operations: BatchOperation[] = [
-					...(opts.swap as string[]).map((s: string) => parseOperation("swap", s)),
-					...(opts.stake as string[]).map((s: string) => parseOperation("stake", s)),
-					...(opts.supply as string[]).map((s: string) => parseOperation("supply", s)),
-					...(opts.send as string[]).map((s: string) => parseOperation("send", s)),
-					...(opts.borrow as string[]).map((s: string) => parseOperation("borrow", s)),
-					...(opts.repay as string[]).map((s: string) => parseOperation("repay", s)),
-					...(opts.withdraw as string[]).map((s: string) =>
-						parseOperation("withdraw", s)
-					),
-					...(opts.dcaCreate as string[]).map((s: string) =>
-						parseOperation("dca-create", s)
-					),
-					...(opts.dcaCancel as string[]).map((s: string) =>
-						parseOperation("dca-cancel", s)
-					),
-				];
+					if (operations.length < 2) {
+						throw new StarkfiError(
+							ErrorCode.INVALID_AMOUNT,
+							"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--borrow/--repay/--withdraw/--dca-create/--dca-cancel options."
+						);
+					}
 
-				if (operations.length < 2) {
-					throw new StarkfiError(
-						ErrorCode.INVALID_AMOUNT,
-						"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--borrow/--repay/--withdraw/--dca-create/--dca-cancel options."
+					ctx.spinner.text = "Building batch transaction...";
+					const { builder, summary } = await buildBatch(
+						ctx.wallet,
+						ctx.session,
+						operations,
+						ctx.chainId,
+						ctx.sdk
 					);
-				}
 
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
+					ctx.spinner.stop();
+					console.log("\n  Batch Operations:\n");
+					summary.forEach((s, i) => console.log(`    ${i + 1}. ${s}`));
+					console.log();
 
-				await wallet.ensureReady({ deploy: "if_needed" });
+					if (opts.simulate) {
+						const simSpinner = createSpinner("Simulating batch...").start();
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-				spinner.text = "Building batch transaction...";
-				const { builder, summary } = await buildBatch(
-					wallet,
-					session,
-					operations,
-					resolveChainId(session)
-				);
+						handleSimulationResult(sim, simSpinner, opts, {
+							operations: operations.length,
+						});
+						return;
+					}
 
-				spinner.stop();
-				console.log("\n  Batch Operations:\n");
-				summary.forEach((s, i) => console.log(`    ${i + 1}. ${s}`));
-				console.log();
+					const execSpinner = createSpinner("Executing batch...").start();
+					const tx = await builder.send();
 
-				if (opts.simulate) {
-					spinner.start();
-					spinner.text = "Simulating batch...";
-					const sim = await simulateTransaction(builder, resolveChainId(session));
-
-					handleSimulationResult(sim, spinner, opts, {
-						operations: operations.length,
+					await waitWithProgress(tx, (status) => {
+						execSpinner.text = `Transaction: ${status}`;
 					});
-					return;
-				}
 
-				spinner.start();
-				spinner.text = "Executing batch...";
-				const tx = await builder.send();
-
-				await waitWithProgress(tx, (status) => {
-					spinner.text = `Transaction: ${status}`;
-				});
-
-				spinner.succeed("Batch confirmed");
-				const txResult = {
-					operations: operations.length,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				};
-
-				outputResult(txResult, opts);
-			} catch (error) {
-				spinner.fail("Batch failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					execSpinner.succeed("Batch confirmed");
+					outputResult(
+						{
+							operations: operations.length,
+							txHash: tx.hash,
+							explorer: tx.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Batch failed" }
+			);
 		});
 }

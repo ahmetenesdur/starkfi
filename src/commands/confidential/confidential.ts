@@ -1,14 +1,12 @@
 import type { Command } from "commander";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import * as confService from "../../services/confidential/confidential.js";
 import { requireTongoConfig, saveTongoConfig } from "../../services/confidential/config.js";
-import { createSpinner, formatError } from "../../lib/format.js";
+import { formatError } from "../../lib/format.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
 import { Amount, fromAddress } from "starkzap";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 
 export function registerConfSetupCommand(program: Command): void {
 	program
@@ -41,32 +39,28 @@ export function registerConfBalanceCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi conf-balance\n  $ starkfi conf-balance --json"
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner("Fetching confidential balance...").start();
+			await withAuthenticatedWallet(
+				"Fetching confidential balance...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					const state = await confService.getConfidentialState(tongo);
 
-				const state = await confService.getConfidentialState(tongo);
+					ctx.spinner.stop();
 
-				spinner.stop();
-
-				outputResult(
-					{
-						address: state.address,
-						balance: state.balance,
-						pending: state.pending,
-						nonce: state.nonce,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Failed to fetch confidential balance");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					outputResult(
+						{
+							address: state.address,
+							balance: state.balance,
+							pending: state.pending,
+							nonce: state.nonce,
+						},
+						opts
+					);
+				},
+				{ ensureDeployed: false, onError: "Failed to fetch confidential balance" }
+			);
 		});
 }
 
@@ -83,59 +77,55 @@ export function registerConfFundCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi conf-fund 100\n  $ starkfi conf-fund 50 --simulate"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner("Funding confidential account...").start();
+			await withAuthenticatedWallet(
+				"Funding confidential account...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					if (opts.simulate) {
+						ctx.spinner.text = "Simulating confidential fund...";
+						const token = resolveToken(opts.token, ctx.chainId);
+						const parsedAmount = Amount.parse(amount, token);
 
-				await wallet.ensureReady({ deploy: "if_needed" });
+						const builder = ctx.wallet
+							.tx()
+							.confidentialFund(tongo, {
+								amount: parsedAmount,
+								sender: ctx.wallet.address,
+							});
 
-				if (opts.simulate) {
-					spinner.text = "Simulating confidential fund...";
-					const token = resolveToken(opts.token, chainId);
-					const parsedAmount = Amount.parse(amount, token);
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-					const builder = wallet
-						.tx()
-						.confidentialFund(tongo, { amount: parsedAmount, sender: wallet.address });
+						handleSimulationResult(sim, ctx.spinner, opts, {
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							operation: "confidential-fund",
+						});
+						return;
+					}
 
-					const sim = await simulateTransaction(builder, chainId);
+					const result = await confService.fundConfidential(
+						ctx.wallet,
+						tongo,
+						{
+							amount,
+							token: opts.token,
+						},
+						ctx.chainId
+					);
 
-					handleSimulationResult(sim, spinner, opts, {
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						operation: "confidential-fund",
-					});
-					return;
-				}
-
-				const result = await confService.fundConfidential(
-					wallet,
-					tongo,
-					{
-						amount,
-						token: opts.token,
-					},
-					chainId
-				);
-
-				spinner.succeed("Confidential account funded");
-				outputResult(
-					{
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Confidential fund failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("Confidential account funded");
+					outputResult(
+						{
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Confidential fund failed" }
+			);
 		});
 }
 
@@ -154,63 +144,56 @@ export function registerConfTransferCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi conf-transfer 50 --recipient-x 0xABC --recipient-y 0xDEF"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner("Transferring confidentially...").start();
+			await withAuthenticatedWallet(
+				"Transferring confidentially...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					if (opts.simulate) {
+						ctx.spinner.text = "Simulating confidential transfer...";
+						const token = resolveToken(opts.token, ctx.chainId);
+						const parsedAmount = Amount.parse(amount, token);
 
-				await wallet.ensureReady({ deploy: "if_needed" });
+						const builder = ctx.wallet.tx().confidentialTransfer(tongo, {
+							amount: parsedAmount,
+							to: { x: opts.recipientX, y: opts.recipientY },
+							sender: ctx.wallet.address,
+						});
 
-				if (opts.simulate) {
-					spinner.text = "Simulating confidential transfer...";
-					const token = resolveToken(opts.token, chainId);
-					const parsedAmount = Amount.parse(amount, token);
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-					const builder = wallet.tx().confidentialTransfer(tongo, {
-						amount: parsedAmount,
-						to: { x: opts.recipientX, y: opts.recipientY },
-						sender: wallet.address,
-					});
+						handleSimulationResult(sim, ctx.spinner, opts, {
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							operation: "confidential-transfer",
+						});
+						return;
+					}
 
-					const sim = await simulateTransaction(builder, chainId);
+					const result = await confService.transferConfidential(
+						ctx.wallet,
+						tongo,
+						{
+							amount,
+							recipientX: opts.recipientX,
+							recipientY: opts.recipientY,
+							token: opts.token,
+						},
+						ctx.chainId
+					);
 
-					handleSimulationResult(sim, spinner, opts, {
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						operation: "confidential-transfer",
-					});
-					return;
-				}
-
-				const result = await confService.transferConfidential(
-					wallet,
-					tongo,
-					{
-						amount,
-						recipientX: opts.recipientX,
-						recipientY: opts.recipientY,
-						token: opts.token,
-					},
-					chainId
-				);
-
-				spinner.succeed("Confidential transfer complete");
-				outputResult(
-					{
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Confidential transfer failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("Confidential transfer complete");
+					outputResult(
+						{
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Confidential transfer failed" }
+			);
 		});
 }
 
@@ -228,64 +211,57 @@ export function registerConfWithdrawCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi conf-withdraw 100\n  $ starkfi conf-withdraw 50 --to 0x1234… --simulate"
 		)
 		.action(async (amount: string, opts) => {
-			const spinner = createSpinner("Withdrawing from confidential account...").start();
+			await withAuthenticatedWallet(
+				"Withdrawing from confidential account...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					if (opts.simulate) {
+						ctx.spinner.text = "Simulating confidential withdrawal...";
+						const token = resolveToken(opts.token, ctx.chainId);
+						const parsedAmount = Amount.parse(amount, token);
 
-				await wallet.ensureReady({ deploy: "if_needed" });
+						const builder = ctx.wallet.tx().confidentialWithdraw(tongo, {
+							amount: parsedAmount,
+							to: opts.to ? fromAddress(opts.to) : ctx.wallet.address,
+							sender: ctx.wallet.address,
+						});
 
-				if (opts.simulate) {
-					spinner.text = "Simulating confidential withdrawal...";
-					const token = resolveToken(opts.token, chainId);
-					const parsedAmount = Amount.parse(amount, token);
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-					const builder = wallet.tx().confidentialWithdraw(tongo, {
-						amount: parsedAmount,
-						to: opts.to ? fromAddress(opts.to) : wallet.address,
-						sender: wallet.address,
-					});
+						handleSimulationResult(sim, ctx.spinner, opts, {
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							operation: "confidential-withdraw",
+							to: opts.to ?? "own wallet",
+						});
+						return;
+					}
 
-					const sim = await simulateTransaction(builder, chainId);
+					const result = await confService.withdrawConfidential(
+						ctx.wallet,
+						tongo,
+						{
+							amount,
+							to: opts.to,
+							token: opts.token,
+						},
+						ctx.chainId
+					);
 
-					handleSimulationResult(sim, spinner, opts, {
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						operation: "confidential-withdraw",
-						to: opts.to ?? "own wallet",
-					});
-					return;
-				}
-
-				const result = await confService.withdrawConfidential(
-					wallet,
-					tongo,
-					{
-						amount,
-						to: opts.to,
-						token: opts.token,
-					},
-					chainId
-				);
-
-				spinner.succeed("Confidential withdrawal complete");
-				outputResult(
-					{
-						amount: `${amount} ${opts.token.toUpperCase()}`,
-						to: opts.to ?? "own wallet",
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Confidential withdrawal failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("Confidential withdrawal complete");
+					outputResult(
+						{
+							amount: `${amount} ${opts.token.toUpperCase()}`,
+							to: opts.to ?? "own wallet",
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Confidential withdrawal failed" }
+			);
 		});
 }
 
@@ -300,34 +276,28 @@ export function registerConfRagequitCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi conf-ragequit\n  $ starkfi conf-ragequit --to 0x1234…"
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner("Executing ragequit...").start();
+			await withAuthenticatedWallet(
+				"Executing ragequit...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					const result = await confService.ragequitConfidential(ctx.wallet, tongo, {
+						to: opts.to,
+					});
 
-				await wallet.ensureReady({ deploy: "if_needed" });
-
-				const result = await confService.ragequitConfidential(wallet, tongo, {
-					to: opts.to,
-				});
-
-				spinner.succeed("Ragequit complete — all funds withdrawn");
-				outputResult(
-					{
-						to: opts.to ?? "own wallet",
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Ragequit failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("Ragequit complete — all funds withdrawn");
+					outputResult(
+						{
+							to: opts.to ?? "own wallet",
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Ragequit failed" }
+			);
 		});
 }
 
@@ -338,30 +308,24 @@ export function registerConfRolloverCommand(program: Command): void {
 		.option("--json", "Output raw JSON")
 		.addHelpText("after", "\nExamples:\n  $ starkfi conf-rollover")
 		.action(async (opts) => {
-			const spinner = createSpinner("Rolling over pending balance...").start();
+			await withAuthenticatedWallet(
+				"Rolling over pending balance...",
+				async (ctx) => {
+					const tongoConfig = requireTongoConfig();
+					const tongo = confService.createTongoInstance(ctx.wallet, tongoConfig);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const tongoConfig = requireTongoConfig();
-				const tongo = confService.createTongoInstance(wallet, tongoConfig);
+					const result = await confService.rolloverConfidential(ctx.wallet, tongo);
 
-				await wallet.ensureReady({ deploy: "if_needed" });
-
-				const result = await confService.rolloverConfidential(wallet, tongo);
-
-				spinner.succeed("Rollover complete — pending balance is now active");
-				outputResult(
-					{
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Rollover failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("Rollover complete — pending balance is now active");
+					outputResult(
+						{
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Rollover failed" }
+			);
 		});
 }

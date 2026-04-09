@@ -1,14 +1,12 @@
 import type { Command } from "commander";
 import { Amount, fromAddress } from "starkzap";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import { createSpinner, formatError } from "../../lib/format.js";
 import { validateAddress } from "../../lib/validation.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
 import { waitWithProgress } from "../../lib/tx-progress.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
+import { StarkfiError, ErrorCode } from "../../lib/errors.js";
 
 export function registerSendCommand(program: Command): void {
 	program
@@ -20,65 +18,56 @@ export function registerSendCommand(program: Command): void {
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.action(async (amount: string, token: string, to: string, opts) => {
-			const spinner = createSpinner("Preparing transfer...").start();
+			await withAuthenticatedWallet(
+				"Preparing transfer...",
+				async (ctx) => {
+					const validatedTo = validateAddress(to);
+					const tokenObj = resolveToken(token, ctx.chainId);
+					const parsedAmount = Amount.parse(amount, tokenObj);
 
-			try {
-				const validatedTo = validateAddress(to);
+					const balanceAmount = await ctx.wallet.balanceOf(tokenObj);
+					if (balanceAmount.lt(parsedAmount)) {
+						throw new StarkfiError(
+							ErrorCode.INSUFFICIENT_BALANCE,
+							`Insufficient balance. You have: ${balanceAmount.toFormatted()}, attempting to send: ${parsedAmount.toFormatted()}`
+						);
+					}
 
-				const session = requireSession();
-				const chainId = resolveChainId(session);
-				const { wallet } = await initSDKAndWallet(session);
-
-				await wallet.ensureReady({ deploy: "if_needed" });
-
-				const tokenObj = resolveToken(token, chainId);
-
-				const parsedAmount = Amount.parse(amount, tokenObj);
-
-				const balanceAmount = await wallet.balanceOf(tokenObj);
-				if (balanceAmount.lt(parsedAmount)) {
-					spinner.fail(`Insufficient balance.`);
-					console.error(`You have: ${balanceAmount.toFormatted()}`);
-					console.error(`Attempting to send: ${parsedAmount.toFormatted()}`);
-					process.exit(1);
-				}
-
-				const builder = wallet.tx().transfer(tokenObj, {
-					to: fromAddress(validatedTo),
-					amount: parsedAmount,
-				});
-
-				if (opts.simulate) {
-					spinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder, resolveChainId(session));
-
-					handleSimulationResult(sim, spinner, opts, {
-						amount: `${amount} ${token.toUpperCase()}`,
-						to: validatedTo,
+					const builder = ctx.wallet.tx().transfer(tokenObj, {
+						to: fromAddress(validatedTo),
+						amount: parsedAmount,
 					});
-					return;
-				}
 
-				spinner.text = "Executing transfer...";
-				const tx = await builder.send();
+					if (opts.simulate) {
+						ctx.spinner.text = "Simulating transaction...";
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-				await waitWithProgress(tx, (status) => {
-					spinner.text = `Transaction: ${status}`;
-				});
+						handleSimulationResult(sim, ctx.spinner, opts, {
+							amount: `${amount} ${token.toUpperCase()}`,
+							to: validatedTo,
+						});
+						return;
+					}
 
-				spinner.succeed("Transfer confirmed");
-				const txResult = {
-					amount: `${amount} ${token.toUpperCase()}`,
-					to: validatedTo,
-					txHash: tx.hash,
-					explorer: tx.explorerUrl,
-				};
+					ctx.spinner.text = "Executing transfer...";
+					const tx = await builder.send();
 
-				outputResult(txResult, opts);
-			} catch (error) {
-				spinner.fail("Transfer failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					await waitWithProgress(tx, (status) => {
+						ctx.spinner.text = `Transaction: ${status}`;
+					});
+
+					ctx.spinner.succeed("Transfer confirmed");
+					outputResult(
+						{
+							amount: `${amount} ${token.toUpperCase()}`,
+							to: validatedTo,
+							txHash: tx.hash,
+							explorer: tx.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Transfer failed" }
+			);
 		});
 }

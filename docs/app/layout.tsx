@@ -9,10 +9,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
 	title: {
 		template: "%s | StarkFi Docs",
-		default: "StarkFi Docs — Starknet DeFi CLI + MCP Server",
+		default: "StarkFi Docs — Starknet DeFi CLI + MCP Server + Agent Skills",
 	},
 	description:
-		"Official documentation for StarkFi — Starknet DeFi CLI + MCP Server. 35+ commands, 42 MCP tools, 12 Agent Skills. Swaps, staking, lending, DCA, batch, gasless transactions.",
+		"Official documentation for StarkFi — Starknet DeFi CLI + MCP Server + Agent Skills. 42+ commands, 42 MCP tools, 12 Agent Skills. Swaps, staking, lending, DCA, batch, gasless transactions.",
 	keywords: [
 		"StarkFi",
 		"Starknet",

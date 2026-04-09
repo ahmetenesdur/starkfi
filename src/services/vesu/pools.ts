@@ -2,14 +2,14 @@ import type { LendingMarket } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
-export interface PoolInfo {
+export interface VesuPoolInfo {
 	name: string | null;
 	address: string;
 }
 
-export async function getVesuPools(wallet: StarkZapWallet): Promise<PoolInfo[]> {
+export async function getVesuPools(wallet: StarkZapWallet): Promise<VesuPoolInfo[]> {
 	const markets = await wallet.lending().getMarkets();
-	const seen = new Map<string, PoolInfo>();
+	const seen = new Map<string, VesuPoolInfo>();
 
 	for (const m of markets) {
 		const addr = m.poolAddress.toString();
@@ -32,7 +32,7 @@ export async function getPoolMarkets(
 export async function resolvePoolAddress(
 	wallet: StarkZapWallet,
 	poolInput: string
-): Promise<PoolInfo> {
+): Promise<VesuPoolInfo> {
 	if (poolInput.startsWith("0x")) {
 		return { name: null, address: poolInput };
 	}
