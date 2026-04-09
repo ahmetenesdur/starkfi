@@ -14,6 +14,7 @@ import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
 import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 import { initPriceService } from "../price/price.js";
+import { StarkfiError, ErrorCode } from "../../lib/errors.js";
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
@@ -32,22 +33,16 @@ export function resolveFeeModeConfig(
 	gasTokenAddress: string | undefined;
 	needsPaymaster: boolean;
 } {
+	// Gasfree mode: developer-sponsored, no gas token required
 	if (gasfreeMode) {
 		return { feeMode: "sponsored", gasTokenAddress: undefined, needsPaymaster: true };
 	}
 
+	// Gasless mode: user pays via ERC-20 token through paymaster
 	const resolvedToken = gasToken ?? DEFAULT_GAS_TOKEN;
-	const gasTokenAddress = GAS_TOKEN_ADDRESSES[resolvedToken.toUpperCase()];
-
-	if (gasTokenAddress) {
-		return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
-	}
-
-	return {
-		feeMode: "sponsored",
-		gasTokenAddress: GAS_TOKEN_ADDRESSES["STRK"],
-		needsPaymaster: true,
-	};
+	const gasTokenAddress =
+		GAS_TOKEN_ADDRESSES[resolvedToken.toUpperCase()] ?? GAS_TOKEN_ADDRESSES["STRK"];
+	return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
 }
 
 function patchGaslessMode(wallet: WalletInterface, gasTokenAddress: string): void {
@@ -57,11 +52,11 @@ function patchGaslessMode(wallet: WalletInterface, gasTokenAddress: string): voi
 
 	const exec = accountInternal.executePaymasterTransaction;
 	if (typeof exec !== "function") {
-		console.warn(
-			"[StarkFi] Cannot patch gasless mode — executePaymasterTransaction not found on account. " +
-				"Gas will use default sponsored mode. Consider updating StarkZap SDK."
+		throw new StarkfiError(
+			ErrorCode.SDK_INCOMPATIBLE,
+			"Cannot patch gasless mode — executePaymasterTransaction not found on account. " +
+				"Please update StarkZap SDK or disable gasless mode (starkfi set-gasfree off)."
 		);
-		return;
 	}
 
 	const originalExecutePaymaster = (exec as (...args: unknown[]) => unknown).bind(account);

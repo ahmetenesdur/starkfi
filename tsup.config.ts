@@ -15,7 +15,8 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: st
  */
 const stubOptionalPeers = {
 	name: "stub-optional-peers",
-	setup(build) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	setup(build: any) {
 		const stubPackages = [
 			/^@fatsolutions\/tongo-sdk$/,
 			/^@hyperlane-xyz\/sdk$/,
@@ -25,7 +26,8 @@ const stubOptionalPeers = {
 		];
 
 		for (const filter of stubPackages) {
-			build.onResolve({ filter }, (args) => ({
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			build.onResolve({ filter }, (args: any) => ({
 				path: args.path,
 				namespace: "optional-peer-stub",
 			}));
@@ -56,7 +58,7 @@ export default defineConfig({
 	treeshake: true,
 	minify: true,
 	splitting: false,
-	sourcemap: false,
+	sourcemap: true,
 	clean: true,
 
 	// Bundle ALL dependencies into the output file.
