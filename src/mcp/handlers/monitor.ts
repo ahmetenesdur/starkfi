@@ -54,7 +54,6 @@ export async function handleAutoRebalanceLending(args: {
 	return withWallet(async ({ session, wallet }) => {
 		const result = await autoRebalanceLending(
 			wallet,
-			session,
 			{
 				pool: args.pool,
 				collateralToken: args.collateral_token,

@@ -13,108 +13,133 @@ import {
 import { withErrorHandling } from "./error-handling.js";
 
 export function registerStakingTools(server: McpServer): number {
-	server.tool(
+	server.registerTool(
 		"list_validators",
-		"List all known Starknet staking validators. Use this FIRST to see available validators and their names before trying to find pools.",
-		{},
-		{ readOnlyHint: true, destructiveHint: false },
+		{
+			description:
+				"List all known Starknet staking validators. Use this FIRST to see available validators and their names before trying to find pools.",
+			inputSchema: z.object({}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
+		},
 		withErrorHandling(handleListValidators)
 	);
 
-	server.tool(
+	server.registerTool(
 		"list_pools",
-		"List delegation pools for a specific validator. Look up a validator name via list_validators first.",
 		{
-			validator: z
-				.string()
-				.describe(
-					"Validator name (e.g. 'Karnot', 'Kakarot') or staker address. Supports partial matches."
-				),
+			description:
+				"List delegation pools for a specific validator. Look up a validator name via list_validators first.",
+			inputSchema: z.object({
+				validator: z
+					.string()
+					.describe(
+						"Validator name (e.g. 'Karnot', 'Kakarot') or staker address. Supports partial matches."
+					),
+			}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
-		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleListPools)
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_staking_info",
-		"Get staking position info (staked balance, unclaimed rewards, total balance, commission, unpooling cooldown) for a specific pool contract.",
 		{
-			pool: z.string().describe("Staking pool contract address (0x...)"),
+			description:
+				"Get staking position info (staked balance, unclaimed rewards, total balance, commission, unpooling cooldown) for a specific pool contract.",
+			inputSchema: z.object({
+				pool: z.string().describe("Staking pool contract address (0x...)"),
+			}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
-		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetStakingInfo)
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_stake_status",
-		"Scan ALL known validators and pools to return a consolidated staking dashboard with total staked, total rewards, total value, and per-pool breakdown. Use this to give the user a full picture of their staking portfolio.",
 		{
-			validator: z
-				.string()
-				.optional()
-				.describe("Optional validator name or staker address to strictly filter results."),
+			description:
+				"Scan ALL known validators and pools to return a consolidated staking dashboard with total staked, total rewards, total value, and per-pool breakdown. Use this to give the user a full picture of their staking portfolio.",
+			inputSchema: z.object({
+				validator: z
+					.string()
+					.optional()
+					.describe(
+						"Optional validator name or staker address to strictly filter results."
+					),
+			}),
+			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
-		{ readOnlyHint: true, destructiveHint: false },
 		withErrorHandling(handleGetStakeStatus)
 	);
 
-	server.tool(
+	server.registerTool(
 		"stake_tokens",
-		"Stake tokens in a delegation pool on Starknet. Smart stake: auto-detects whether the user needs to enter the pool or just add to an existing delegation. Supports STRK, WBTC, tBTC, SolvBTC, LBTC.",
 		{
-			amount: z.string().describe("Amount to stake (e.g. '100', '0.01')"),
-			pool: z.string().describe("Staking pool contract address (0x...)"),
-			token: z
-				.string()
-				.optional()
-				.describe(
-					"Token symbol to stake (default: STRK). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC"
-				),
+			description:
+				"Stake tokens in a delegation pool on Starknet. Smart stake: auto-detects whether the user needs to enter the pool or just add to an existing delegation. Supports STRK, WBTC, tBTC, SolvBTC, LBTC.",
+			inputSchema: z.object({
+				amount: z.string().describe("Amount to stake (e.g. '100', '0.01')"),
+				pool: z.string().describe("Staking pool contract address (0x...)"),
+				token: z
+					.string()
+					.optional()
+					.describe(
+						"Token symbol to stake (default: STRK). Supported: STRK, WBTC, tBTC, SolvBTC, LBTC"
+					),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleStakeTokens)
 	);
 
-	server.tool(
+	server.registerTool(
 		"unstake_tokens",
-		"Unstake tokens from a pool. Unstaking is a TWO-STEP process: 1. call with action='intent', 2. wait for cooldown, 3. call with action='exit' to complete withdrawal.",
 		{
-			action: z
-				.enum(["intent", "exit"])
-				.describe(
-					"'intent' strictly starts the unstaking process, 'exit' completes withdrawal after cooldown."
-				),
-			pool: z.string().describe("Staking pool contract address (0x...)"),
-			amount: z
-				.string()
-				.optional()
-				.describe("Amount to unstake (ONLY required when action='intent')"),
-			token: z
-				.string()
-				.optional()
-				.describe("Token symbol (default: STRK). Must match the pool's token."),
+			description:
+				"Unstake tokens from a pool. Unstaking is a TWO-STEP process: 1. call with action='intent', 2. wait for cooldown, 3. call with action='exit' to complete withdrawal.",
+			inputSchema: z.object({
+				action: z
+					.enum(["intent", "exit"])
+					.describe(
+						"'intent' strictly starts the unstaking process, 'exit' completes withdrawal after cooldown."
+					),
+				pool: z.string().describe("Staking pool contract address (0x...)"),
+				amount: z
+					.string()
+					.optional()
+					.describe("Amount to unstake (ONLY required when action='intent')"),
+				token: z
+					.string()
+					.optional()
+					.describe("Token symbol (default: STRK). Must match the pool's token."),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleUnstakeTokens)
 	);
 
-	server.tool(
+	server.registerTool(
 		"claim_rewards",
-		"Extract earned rewards from a staking pool to the user's wallet.",
 		{
-			pool: z.string().describe("Staking pool contract address (0x...)"),
+			description: "Extract earned rewards from a staking pool to the user's wallet.",
+			inputSchema: z.object({
+				pool: z.string().describe("Staking pool contract address (0x...)"),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleClaimRewards)
 	);
 
-	server.tool(
+	server.registerTool(
 		"compound_rewards",
-		"Atomically claim staking rewards and re-stake them recursively into the same pool in a single transaction (compound interest).",
 		{
-			pool: z.string().describe("Staking pool contract address (0x...)"),
+			description:
+				"Atomically claim staking rewards and re-stake them recursively into the same pool in a single transaction (compound interest).",
+			inputSchema: z.object({
+				pool: z.string().describe("Staking pool contract address (0x...)"),
+			}),
+			annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		},
-		{ readOnlyHint: false, destructiveHint: true, idempotentHint: false },
 		withErrorHandling(handleCompoundRewards)
 	);
 
