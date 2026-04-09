@@ -11,6 +11,10 @@ export function registerBalanceCommand(program: Command): void {
 		.description("Show wallet balance for all tokens or a specific token")
 		.option("-t, --token <symbol>", "Specific token symbol (e.g. STRK, ETH)")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi balance\n  $ starkfi balance --token STRK\n  $ starkfi balance --json"
+		)
 		.action(async (opts) => {
 			await withAuthenticatedWallet(
 				"Fetching balances...",

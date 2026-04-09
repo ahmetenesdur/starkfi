@@ -17,6 +17,10 @@ export function registerSendCommand(program: Command): void {
 		.argument("<to>", "Recipient Starknet address")
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi send 10 STRK 0x04a3…\n  $ starkfi send 100 USDC 0x07b2… --simulate\n  $ starkfi send 0.1 ETH 0x04a3… --json"
+		)
 		.action(async (amount: string, token: string, to: string, opts) => {
 			await withAuthenticatedWallet(
 				"Preparing transfer...",

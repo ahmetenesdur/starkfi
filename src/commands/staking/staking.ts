@@ -365,6 +365,10 @@ export function registerStakeStatusCommand(program: Command): void {
 		.description("Show a consolidated staking dashboard across validators and pools")
 		.argument("[validator]", "Optional validator name to filter results (e.g. Fibrous)")
 		.option("--json", "Output raw JSON")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi stake-status\n  $ starkfi stake-status karnot\n  $ starkfi stake-status --json"
+		)
 		.action(async (validatorTarget: string | undefined, opts) => {
 			await withAuthenticatedWallet(
 				"Scanning staking positions...",

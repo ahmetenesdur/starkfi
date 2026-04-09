@@ -15,7 +15,7 @@ export function registerLendStatusCommand(program: Command): void {
 		.option("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
 		.option(
 			"--collateral-token <symbol>",
-			"Token supplied as earn position (e.g. 'ETH', 'STRK')"
+			"Collateral or supplied token (e.g. 'ETH', 'STRK')"
 		)
 		.option(
 			"--borrow-token <symbol>",

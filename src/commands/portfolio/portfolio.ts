@@ -8,6 +8,10 @@ export function registerPortfolioCommand(program: Command): void {
 		.command("portfolio")
 		.description("Show complete DeFi portfolio: balances, staking, and lending positions")
 		.option("--json", "Output raw JSON instead of formatted table")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi portfolio\n  $ starkfi portfolio --json"
+		)
 		.action(async (opts) => {
 			await withAuthenticatedWallet(
 				"Loading portfolio...",

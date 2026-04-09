@@ -183,7 +183,7 @@ export function registerDcaCancelCommand(program: Command): void {
 		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi dca-cancel abc123\n  $ starkfi dca-cancel abc123 --provider avnu"
+			"\nExamples:\n  $ starkfi dca-cancel 687cfb07\n  $ starkfi dca-cancel 0x04f8… --provider avnu"
 		)
 		.action(async (orderIdOrAddress: string, opts) => {
 			await withAuthenticatedWallet(

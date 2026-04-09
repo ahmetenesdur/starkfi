@@ -69,7 +69,7 @@ export function registerConfFundCommand(program: Command): void {
 		.command("conf-fund")
 		.description("Fund your confidential account from public balance")
 		.argument("<amount>", "Amount to fund (e.g. '100')")
-		.option("--token <symbol>", "Token to fund (default: USDC)", "USDC")
+		.option("--token <symbol>", "Token to fund", "USDC")
 		.option("--simulate", "Estimate fees without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -136,7 +136,7 @@ export function registerConfTransferCommand(program: Command): void {
 		.argument("<amount>", "Amount to transfer")
 		.requiredOption("--recipient-x <x>", "Recipient public key X coordinate")
 		.requiredOption("--recipient-y <y>", "Recipient public key Y coordinate")
-		.option("--token <symbol>", "Token to transfer (default: USDC)", "USDC")
+		.option("--token <symbol>", "Token to transfer", "USDC")
 		.option("--simulate", "Estimate fees without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -203,7 +203,7 @@ export function registerConfWithdrawCommand(program: Command): void {
 		.description("Withdraw from confidential account to a public address")
 		.argument("<amount>", "Amount to withdraw")
 		.option("--to <address>", "Recipient address (default: own wallet)")
-		.option("--token <symbol>", "Token to withdraw (default: USDC)", "USDC")
+		.option("--token <symbol>", "Token to withdraw", "USDC")
 		.option("--simulate", "Estimate fees without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(

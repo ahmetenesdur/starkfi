@@ -8,6 +8,10 @@ export function registerStatusCommand(program: Command): void {
 	program
 		.command("status")
 		.description("Check authentication status and Fibrous API health")
+		.addHelpText(
+			"after",
+			"\nExamples:\n  $ starkfi status"
+		)
 		.action(async () => {
 			const spinner = createSpinner("Checking status...").start();
 
