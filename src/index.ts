@@ -129,6 +129,15 @@ const COMMAND_GROUPS: Record<string, string[]> = {
 	],
 	Portfolio: ["portfolio", "portfolio-rebalance"],
 	Operations: ["batch"],
+	Confidential: [
+		"conf-setup",
+		"conf-balance",
+		"conf-fund",
+		"conf-transfer",
+		"conf-withdraw",
+		"conf-ragequit",
+		"conf-rollover",
+	],
 	Configuration: ["config"],
 	System: ["status", "tx-status", "mcp-start", "help"],
 };

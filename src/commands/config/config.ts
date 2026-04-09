@@ -7,7 +7,7 @@ import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerConfigCommand(program: Command): void {
 	const configService = ConfigService.getInstance();
-	const configCmd = program.command("config").description("Manage starkfi configuration");
+	const configCmd = program.command("config").description("Manage StarkFi configuration");
 
 	configCmd
 		.command("set-rpc")
