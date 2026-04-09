@@ -1,7 +1,6 @@
 import { Amount, fromAddress } from "starkzap";
-import type { TxBuilder, WalletInterface, ChainId } from "starkzap";
+import type { TxBuilder, WalletInterface, ChainId, StarkZap } from "starkzap";
 import type { Session } from "../auth/session.js";
-import { initSDKAndWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import {
 	resolveProviders,
@@ -111,7 +110,8 @@ export async function buildBatch(
 	wallet: WalletInterface,
 	session: Session,
 	operations: BatchOperation[],
-	chainId?: ChainId
+	chainId?: ChainId,
+	sdk?: StarkZap
 ): Promise<{ builder: TxBuilder; summary: string[] }> {
 	if (operations.length < 2) {
 		throw new StarkfiError(
@@ -141,17 +141,12 @@ export async function buildBatch(
 					op.params as BatchStakeParams,
 					wallet,
 					session,
-					chainId
+					chainId,
+					sdk
 				);
 				break;
 			case "supply":
-				await addSupplyCalls(
-					builder,
-					op.params as BatchSupplyParams,
-					wallet,
-					session,
-					chainId
-				);
+				await addSupplyCalls(builder, op.params as BatchSupplyParams, wallet, chainId);
 				break;
 			case "send":
 				await addSendCalls(builder, op.params as BatchSendParams, chainId);
@@ -213,7 +208,8 @@ async function addStakeCalls(
 	params: BatchStakeParams,
 	wallet: WalletInterface,
 	session: Session,
-	chainId?: ChainId
+	chainId?: ChainId,
+	sdk?: StarkZap
 ): Promise<void> {
 	const tokenSymbol = (params.token ?? "STRK").toUpperCase();
 	const token = resolveToken(tokenSymbol, chainId);
@@ -222,7 +218,12 @@ async function addStakeCalls(
 	let poolAddress = params.pool;
 
 	if (!poolAddress && params.validator) {
-		const { sdk } = await initSDKAndWallet(session);
+		if (!sdk) {
+			throw new StarkfiError(
+				ErrorCode.SDK_NOT_INITIALIZED,
+				"SDK is required for validator pool resolution in batch stake operations"
+			);
+		}
 		const validator = findValidator(params.validator, resolveNetwork(session));
 		if (!validator) {
 			throw new StarkfiError(
@@ -249,7 +250,6 @@ async function addSupplyCalls(
 	builder: TxBuilder,
 	params: BatchSupplyParams,
 	wallet: WalletInterface,
-	_session: Session,
 	chainId?: ChainId
 ): Promise<void> {
 	const token = resolveToken(params.token, chainId);
