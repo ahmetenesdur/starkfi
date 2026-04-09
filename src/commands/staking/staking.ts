@@ -21,7 +21,7 @@ export function registerStakeCommand(program: Command): void {
 			"-v, --validator <name>",
 			"Validator name or staker address (auto-finds pool by token)"
 		)
-		.option("-t, --token <symbol>", "Token to stake (default: STRK)", "STRK")
+		.option("-t, --token <symbol>", "Token to stake", "STRK")
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -92,7 +92,7 @@ export function registerUnstakeCommand(program: Command): void {
 		.argument("<action>", "'intent' to declare exit or 'exit' to complete withdrawal")
 		.option("-p, --pool <address>", "Pool contract address")
 		.option("-v, --validator <name>", "Validator name (use with --token to find pool)")
-		.option("-t, --token <symbol>", "Token symbol (default: STRK)", "STRK")
+		.option("-t, --token <symbol>", "Token symbol", "STRK")
 		.option("-a, --amount <amount>", "Amount to unstake (required for intent)")
 		.addHelpText(
 			"after",
@@ -170,7 +170,7 @@ export function registerRewardsCommand(program: Command): void {
 		.description("Claim or compound accumulated staking rewards")
 		.option("--validator <nameOrAddress>", "Validator name (e.g., Fibrous) or address")
 		.option("--pool <address>", "Specific staking pool address")
-		.option("-t, --token <symbol>", "Token symbol (default: STRK)", "STRK")
+		.option("-t, --token <symbol>", "Token symbol", "STRK")
 		.option("--claim", "Claim rewards currently available in the pool")
 		.option("--compound", "Claim and immediately restake rewards")
 		.addHelpText(

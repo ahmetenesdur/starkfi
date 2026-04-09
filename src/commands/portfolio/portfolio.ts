@@ -6,7 +6,7 @@ import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 export function registerPortfolioCommand(program: Command): void {
 	program
 		.command("portfolio")
-		.description("Show complete DeFi portfolio: balances, staking, and lending positions")
+		.description("Show complete DeFi portfolio: balances, staking, lending, and DCA positions")
 		.option("--json", "Output raw JSON instead of formatted table")
 		.addHelpText(
 			"after",

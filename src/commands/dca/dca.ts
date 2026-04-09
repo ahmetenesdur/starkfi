@@ -17,7 +17,7 @@ export function registerDcaCreateCommand(program: Command): void {
 		.option("--per-cycle <amount>", "Amount to sell per cycle (required)")
 		.option(
 			"--frequency <duration>",
-			"ISO 8601 duration between cycles (default: P1D=daily)",
+			"ISO 8601 duration between cycles (e.g. P1D=daily)",
 			"P1D"
 		)
 		.option("--provider <name>", "DCA provider: avnu or ekubo")
