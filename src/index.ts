@@ -99,12 +99,12 @@ const white = chalk.white.bind(chalk);
 const footer = `
 ${mint.bold("Quick Start")}
 
-  ${dim("$")} ${white("starkfi auth login <email>")}              ${dim("# Sign in with Privy OTP")}
-  ${dim("$")} ${white("starkfi trade 0.1 ETH USDC")}             ${dim("# Best-price swap via Fibrous")}
-  ${dim("$")} ${white("starkfi balance")}                         ${dim("# View all token balances")}
-  ${dim("$")} ${white("starkfi stake 10 -v karnot")}        ${dim("# Stake STRK with a validator")}
+  ${dim("$")} ${white("starkfi auth login <email>")}                 ${dim("# Sign in with Privy OTP")}
+  ${dim("$")} ${white("starkfi trade 0.1 ETH USDC")}                 ${dim("# Best-price swap via Fibrous")}
+  ${dim("$")} ${white("starkfi balance")}                            ${dim("# View all token balances")}
+  ${dim("$")} ${white("starkfi stake 10 -v karnot")}                 ${dim("# Stake STRK with a validator")}
   ${dim("$")} ${white("starkfi lend-supply 100 -p Prime -t USDC")}   ${dim("# Supply to Vesu")}
-  ${dim("$")} ${white('starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"')}   ${dim("# Multicall")}
+  ${dim("$")} ${white('starkfi batch --swap ".." --stake ".."')}     ${dim("# Multicall")}
 
   ${dim("Run")} ${white("starkfi <command> --help")} ${dim("for detailed flags and examples.")}
   ${dim("Docs →")} ${blue.underline("https://docs.starkfi.app/docs")}
@@ -147,7 +147,9 @@ const program = new Command();
 program
 	.name("starkfi")
 	.description("Starknet DeFi CLI + MCP Server")
-	.version(version)
+	.version(version, "-V, --version", "Output the version number")
+	.helpOption("-h, --help", "Display help for command")
+	.helpCommand("help [command]", "Display help for command")
 	.showHelpAfterError()
 	.addHelpText("beforeAll", banner);
 
