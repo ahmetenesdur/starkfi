@@ -1,13 +1,11 @@
 import type { Command } from "commander";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
-import * as dcaService from "../../services/dca/dca.js";
-import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
-import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
-import { resolveToken } from "../../services/tokens/tokens.js";
 import { Amount } from "starkzap";
+import * as dcaService from "../../services/dca/dca.js";
+import { formatResult, formatTable } from "../../lib/format.js";
+import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
+import { resolveToken } from "../../services/tokens/tokens.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 
 export function registerDcaCreateCommand(program: Command): void {
 	program
@@ -37,72 +35,64 @@ export function registerDcaCreateCommand(program: Command): void {
 				process.exit(1);
 			}
 
-			const spinner = createSpinner("Creating DCA order...").start();
+			await withAuthenticatedWallet(
+				"Creating DCA order...",
+				async (ctx) => {
+					if (opts.simulate) {
+						ctx.spinner.text = "Simulating DCA order...";
+						const sell = resolveToken(sellToken, ctx.chainId);
+						const buy = resolveToken(buyToken, ctx.chainId);
+						const sellAmount = Amount.parse(amount, sell);
+						const sellAmountPerCycle = Amount.parse(opts.perCycle, sell);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
+						const builder = ctx.wallet.tx().dcaCreate({
+							sellToken: sell,
+							buyToken: buy,
+							sellAmount,
+							sellAmountPerCycle,
+							frequency: opts.frequency,
+							provider: opts.provider,
+						});
 
-				await wallet.ensureReady({ deploy: "if_needed" });
+						const sim = await simulateTransaction(builder, ctx.chainId);
 
-				if (opts.simulate) {
-					spinner.text = "Simulating DCA order...";
-					const sell = resolveToken(sellToken, chainId);
-					const buy = resolveToken(buyToken, chainId);
-					const sellAmount = Amount.parse(amount, sell);
-					const sellAmountPerCycle = Amount.parse(opts.perCycle, sell);
+						handleSimulationResult(sim, ctx.spinner, opts, {
+							sellAmount: `${amount} ${sellToken.toUpperCase()}`,
+							buyToken: buyToken.toUpperCase(),
+							perCycle: `${opts.perCycle} ${sellToken.toUpperCase()}`,
+							frequency: opts.frequency,
+						});
+						return;
+					}
 
-					const builder = wallet.tx().dcaCreate({
-						sellToken: sell,
-						buyToken: buy,
-						sellAmount,
-						sellAmountPerCycle,
-						frequency: opts.frequency,
-						provider: opts.provider,
-					});
+					const result = await dcaService.createDcaOrder(
+						ctx.wallet,
+						{
+							sellToken,
+							buyToken,
+							sellAmount: amount,
+							amountPerCycle: opts.perCycle,
+							frequency: opts.frequency,
+							provider: opts.provider,
+						},
+						ctx.chainId
+					);
 
-					const sim = await simulateTransaction(builder, chainId);
-
-					handleSimulationResult(sim, spinner, opts, {
-						sellAmount: `${amount} ${sellToken.toUpperCase()}`,
-						buyToken: buyToken.toUpperCase(),
-						perCycle: `${opts.perCycle} ${sellToken.toUpperCase()}`,
-						frequency: opts.frequency,
-					});
-					return;
-				}
-
-				const result = await dcaService.createDcaOrder(
-					wallet,
-					{
-						sellToken,
-						buyToken,
-						sellAmount: amount,
-						amountPerCycle: opts.perCycle,
-						frequency: opts.frequency,
-						provider: opts.provider,
-					},
-					chainId
-				);
-
-				spinner.succeed("DCA order created");
-				outputResult(
-					{
-						sellAmount: `${amount} ${sellToken.toUpperCase()}`,
-						buyToken: buyToken.toUpperCase(),
-						perCycle: `${opts.perCycle} ${sellToken.toUpperCase()}`,
-						frequency: opts.frequency,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("DCA order creation failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("DCA order created");
+					outputResult(
+						{
+							sellAmount: `${amount} ${sellToken.toUpperCase()}`,
+							buyToken: buyToken.toUpperCase(),
+							perCycle: `${opts.perCycle} ${sellToken.toUpperCase()}`,
+							frequency: opts.frequency,
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "DCA order creation failed" }
+			);
 		});
 }
 
@@ -119,73 +109,68 @@ export function registerDcaListCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi dca-list\n  $ starkfi dca-list --status ACTIVE\n  $ starkfi dca-list --provider avnu --json"
 		)
 		.action(async (opts) => {
-			const spinner = createSpinner("Fetching DCA orders...").start();
+			await withAuthenticatedWallet(
+				"Fetching DCA orders...",
+				async (ctx) => {
+					const result = await dcaService.listDcaOrders(ctx.wallet, {
+						status: opts.status as "ACTIVE" | "CLOSED" | "INDEXING" | undefined,
+						provider: opts.provider,
+						page: Number(opts.page),
+					});
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
+					ctx.spinner.stop();
 
-				const result = await dcaService.listDcaOrders(wallet, {
-					status: opts.status as "ACTIVE" | "CLOSED" | "INDEXING" | undefined,
-					provider: opts.provider,
-					page: Number(opts.page),
-				});
+					if (result.content.length === 0) {
+						console.log("\n  No DCA orders found.\n");
+						return;
+					}
 
-				spinner.stop();
+					if (opts.json) {
+						console.log(
+							JSON.stringify(
+								{
+									orders: result.content.map((o) => ({
+										id: o.id,
+										orderAddress: o.orderAddress.toString(),
+										provider: o.providerId,
+										status: o.status,
+										sellToken: o.sellTokenAddress.toString(),
+										buyToken: o.buyTokenAddress.toString(),
+										frequency: o.frequency,
+										executedTrades: o.executedTradesCount,
+										startDate: o.startDate.toISOString(),
+										endDate: o.endDate.toISOString(),
+									})),
+									totalElements: result.totalElements,
+									page: result.pageNumber,
+									totalPages: result.totalPages,
+								},
+								null,
+								2
+							)
+						);
+						return;
+					}
 
-				if (result.content.length === 0) {
-					console.log("\n  No DCA orders found.\n");
-					return;
-				}
+					console.log(`\n  DCA Orders (${result.totalElements} total)\n`);
 
-				if (opts.json) {
 					console.log(
-						JSON.stringify(
-							{
-								orders: result.content.map((o) => ({
-									id: o.id,
-									orderAddress: o.orderAddress.toString(),
-									provider: o.providerId,
-									status: o.status,
-									sellToken: o.sellTokenAddress.toString(),
-									buyToken: o.buyTokenAddress.toString(),
-									frequency: o.frequency,
-									executedTrades: o.executedTradesCount,
-									startDate: o.startDate.toISOString(),
-									endDate: o.endDate.toISOString(),
-								})),
-								totalElements: result.totalElements,
-								page: result.pageNumber,
-								totalPages: result.totalPages,
-							},
-							null,
-							2
+						formatTable(
+							["ID", "Order Address", "Provider", "Status", "Frequency", "Trades"],
+							result.content.map((o) => [
+								o.id.slice(0, 8),
+								o.orderAddress.toString(),
+								o.providerId,
+								o.status,
+								o.frequency,
+								`${o.executedTradesCount}/${o.iterations}`,
+							])
 						)
 					);
-					return;
-				}
-
-				console.log(`\n  DCA Orders (${result.totalElements} total)\n`);
-
-				console.log(
-					formatTable(
-						["ID", "Order Address", "Provider", "Status", "Frequency", "Trades"],
-						result.content.map((o) => [
-							o.id.slice(0, 8),
-							o.orderAddress.toString(),
-							o.providerId,
-							o.status,
-							o.frequency,
-							`${o.executedTradesCount}/${o.iterations}`,
-						])
-					)
-				);
-				console.log();
-			} catch (error) {
-				spinner.fail("Failed to fetch DCA orders");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					console.log();
+				},
+				{ ensureDeployed: false, onError: "Failed to fetch DCA orders" }
+			);
 		});
 }
 
@@ -201,36 +186,29 @@ export function registerDcaCancelCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi dca-cancel abc123\n  $ starkfi dca-cancel abc123 --provider avnu"
 		)
 		.action(async (orderIdOrAddress: string, opts) => {
-			const spinner = createSpinner("Cancelling DCA order...").start();
+			await withAuthenticatedWallet(
+				"Cancelling DCA order...",
+				async (ctx) => {
+					const isAddress = orderIdOrAddress.startsWith("0x");
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
+					const result = await dcaService.cancelDcaOrder(ctx.wallet, {
+						orderId: isAddress ? undefined : orderIdOrAddress,
+						orderAddress: isAddress ? orderIdOrAddress : undefined,
+						provider: opts.provider,
+					});
 
-				await wallet.ensureReady({ deploy: "if_needed" });
-
-				const isAddress = orderIdOrAddress.startsWith("0x");
-
-				const result = await dcaService.cancelDcaOrder(wallet, {
-					orderId: isAddress ? undefined : orderIdOrAddress,
-					orderAddress: isAddress ? orderIdOrAddress : undefined,
-					provider: opts.provider,
-				});
-
-				spinner.succeed("DCA order cancelled");
-				outputResult(
-					{
-						orderId: orderIdOrAddress,
-						txHash: result.hash,
-						explorer: result.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("DCA cancellation failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					ctx.spinner.succeed("DCA order cancelled");
+					outputResult(
+						{
+							orderId: orderIdOrAddress,
+							txHash: result.hash,
+							explorer: result.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "DCA cancellation failed" }
+			);
 		});
 }
 
@@ -248,44 +226,38 @@ export function registerDcaPreviewCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi dca-preview 10 STRK USDC\n  $ starkfi dca-preview 0.1 ETH USDC --provider ekubo --json"
 		)
 		.action(async (amount: string, sellToken: string, buyToken: string, opts) => {
-			const spinner = createSpinner("Fetching DCA cycle preview...").start();
+			await withAuthenticatedWallet(
+				"Fetching DCA cycle preview...",
+				async (ctx) => {
+					const quote = await dcaService.previewDcaCycle(
+						ctx.wallet,
+						{
+							sellToken,
+							buyToken,
+							amountPerCycle: amount,
+							provider: opts.provider,
+						},
+						ctx.chainId
+					);
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
+					ctx.spinner.stop();
 
-				const quote = await dcaService.previewDcaCycle(
-					wallet,
-					{
-						sellToken,
-						buyToken,
-						amountPerCycle: amount,
-						provider: opts.provider,
-					},
-					chainId
-				);
+					const data = {
+						sellPerCycle: `${amount} ${sellToken.toUpperCase()}`,
+						expectedOutputBase: quote.amountOutBase.toString(),
+						buyToken: buyToken.toUpperCase(),
+						provider: quote.provider,
+						priceImpactBps: quote.priceImpactBps?.toString() ?? null,
+					};
 
-				spinner.stop();
+					if (opts.json) {
+						console.log(JSON.stringify(data, null, 2));
+						return;
+					}
 
-				const data = {
-					sellPerCycle: `${amount} ${sellToken.toUpperCase()}`,
-					expectedOutputBase: quote.amountOutBase.toString(),
-					buyToken: buyToken.toUpperCase(),
-					provider: quote.provider,
-					priceImpactBps: quote.priceImpactBps?.toString() ?? null,
-				};
-
-				if (opts.json) {
-					console.log(JSON.stringify(data, null, 2));
-					return;
-				}
-
-				console.log(formatResult(data));
-			} catch (error) {
-				spinner.fail("DCA preview failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+					console.log(formatResult(data));
+				},
+				{ ensureDeployed: false, onError: "DCA preview failed" }
+			);
 		});
 }
