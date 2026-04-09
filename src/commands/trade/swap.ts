@@ -1,12 +1,9 @@
 import type { Command } from "commander";
 import { Amount } from "starkzap";
-import { requireSession } from "../../services/auth/session.js";
-import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { resolveToken } from "../../services/tokens/tokens.js";
-import { createSpinner, formatError, formatTable } from "../../lib/format.js";
+import { createSpinner, formatTable } from "../../lib/format.js";
 import { simulateTransaction } from "../../services/simulate/simulate.js";
 import { outputResult, handleSimulationResult } from "../../lib/cli-helpers.js";
-import { resolveChainId } from "../../lib/resolve-network.js";
 import { waitWithProgress } from "../../lib/tx-progress.js";
 import {
 	resolveProviders,
@@ -17,6 +14,7 @@ import {
 	toSlippageBps,
 	type SwapProviderId,
 } from "../../services/swap/index.js";
+import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 
 export function registerSwapCommand(program: Command): void {
 	program
@@ -37,116 +35,108 @@ export function registerSwapCommand(program: Command): void {
 			"\nExamples:\n  $ starkfi trade 0.1 ETH USDC\n  $ starkfi trade 100 USDC STRK --provider avnu\n  $ starkfi trade 0.5 ETH DAI --simulate"
 		)
 		.action(async (amount: string, from: string, to: string, opts) => {
-			const spinner = createSpinner("Fetching swap quote...").start();
+			await withAuthenticatedWallet(
+				"Fetching swap quote...",
+				async (ctx) => {
+					const tokenIn = resolveToken(from, ctx.chainId);
+					const tokenOut = resolveToken(to, ctx.chainId);
+					const amountInRaw = Amount.parse(amount, tokenIn).toBase();
+					const slippage = parseFloat(opts.slippage);
+					const providerChoice = opts.provider as SwapProviderId | "auto" | undefined;
 
-			try {
-				const session = requireSession();
-				const { wallet } = await initSDKAndWallet(session);
-				const chainId = resolveChainId(session);
+					const providers = resolveProviders(ctx.wallet, providerChoice);
 
-				await wallet.ensureReady({ deploy: "if_needed" });
-
-				const tokenIn = resolveToken(from, chainId);
-				const tokenOut = resolveToken(to, chainId);
-				const amountInRaw = Amount.parse(amount, tokenIn).toBase();
-				const slippage = parseFloat(opts.slippage);
-				const providerChoice = opts.provider as SwapProviderId | "auto" | undefined;
-
-				const providers = resolveProviders(wallet, providerChoice);
-
-				spinner.text = "Fetching quotes...";
-				const quotes = await getAllQuotes(providers, {
-					tokenIn,
-					tokenOut,
-					amountInRaw,
-					slippageBps: toSlippageBps(slippage),
-				});
-
-				const best = getBestQuote(quotes);
-
-				// Display comparison table when multiple quotes are available.
-				if (quotes.length > 1) {
-					const savings = calculateSavings(
-						quotes[0].amountOutRaw,
-						quotes[quotes.length - 1].amountOutRaw
-					);
-
-					spinner.stop();
-					console.log(
-						"\n" +
-							formatTable(
-								["Provider", "Output", "Status"],
-								quotes.map((q) => [
-									`${q.isBest ? "✓ " : "  "}${q.provider.toUpperCase()}`,
-									`${q.amountOutFormatted} ${tokenOut.symbol}`,
-									q.isBest ? "Best" : "",
-								])
-							)
-					);
-
-					if (savings) {
-						console.log(`\n  Savings vs worst: ${savings}`);
-					}
-					console.log();
-				} else {
-					spinner.stop();
-					console.log(
-						`\n  Route: ${amount} ${tokenIn.symbol} → ~${best.amountOutFormatted} ${tokenOut.symbol}`
-					);
-
-					console.log(`  Slippage: ${slippage}%\n`);
-				}
-
-				// Build the swap transaction via the winning provider.
-				const execSpinner = createSpinner(
-					`Executing via ${best.provider.toUpperCase()}...`
-				).start();
-
-				const provider = resolveProvider(providers, best.provider);
-				const builder = wallet.tx();
-
-				await provider.buildSwapTx(builder, {
-					tokenIn,
-					tokenOut,
-					amountInRaw,
-					walletAddress: session.address,
-					slippage,
-				});
-
-				if (opts.simulate) {
-					execSpinner.text = "Simulating transaction...";
-					const sim = await simulateTransaction(builder, chainId);
-
-					handleSimulationResult(sim, execSpinner, opts, {
-						input: `${amount} ${tokenIn.symbol}`,
-						expectedOutput: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
-						provider: best.provider.toUpperCase(),
+					ctx.spinner.text = "Fetching quotes...";
+					const quotes = await getAllQuotes(providers, {
+						tokenIn,
+						tokenOut,
+						amountInRaw,
+						slippageBps: toSlippageBps(slippage),
 					});
-					return;
-				}
 
-				execSpinner.text = "Executing swap...";
-				const tx = await builder.send();
+					const best = getBestQuote(quotes);
 
-				await waitWithProgress(tx, (status) => {
-					execSpinner.text = `Transaction: ${status}`;
-				});
+					// Display comparison table when multiple quotes are available.
+					if (quotes.length > 1) {
+						const savings = calculateSavings(
+							quotes[0].amountOutRaw,
+							quotes[quotes.length - 1].amountOutRaw
+						);
 
-				execSpinner.succeed("Swap confirmed");
-				outputResult(
-					{
-						input: `${amount} ${tokenIn.symbol}`,
-						output: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
-						provider: best.provider.toUpperCase(),
-						txHash: tx.hash,
-						explorer: tx.explorerUrl,
-					},
-					opts
-				);
-			} catch (error) {
-				spinner.fail("Swap failed");
-				console.error(formatError(error));
-				process.exit(1);
-			}
+						ctx.spinner.stop();
+						console.log(
+							"\n" +
+								formatTable(
+									["Provider", "Output", "Status"],
+									quotes.map((q) => [
+										`${q.isBest ? "✓ " : "  "}${q.provider.toUpperCase()}`,
+										`${q.amountOutFormatted} ${tokenOut.symbol}`,
+										q.isBest ? "Best" : "",
+									])
+								)
+						);
+
+						if (savings) {
+							console.log(`\n  Savings vs worst: ${savings}`);
+						}
+						console.log();
+					} else {
+						ctx.spinner.stop();
+						console.log(
+							`\n  Route: ${amount} ${tokenIn.symbol} → ~${best.amountOutFormatted} ${tokenOut.symbol}`
+						);
+
+						console.log(`  Slippage: ${slippage}%\n`);
+					}
+
+					// Build the swap transaction via the winning provider.
+					const execSpinner = createSpinner(
+						`Executing via ${best.provider.toUpperCase()}...`
+					).start();
+
+					const provider = resolveProvider(providers, best.provider);
+					const builder = ctx.wallet.tx();
+
+					await provider.buildSwapTx(builder, {
+						tokenIn,
+						tokenOut,
+						amountInRaw,
+						walletAddress: ctx.session.address,
+						slippage,
+					});
+
+					if (opts.simulate) {
+						execSpinner.text = "Simulating transaction...";
+						const sim = await simulateTransaction(builder, ctx.chainId);
+
+						handleSimulationResult(sim, execSpinner, opts, {
+							input: `${amount} ${tokenIn.symbol}`,
+							expectedOutput: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+							provider: best.provider.toUpperCase(),
+						});
+						return;
+					}
+
+					execSpinner.text = "Executing swap...";
+					const tx = await builder.send();
+
+					await waitWithProgress(tx, (status) => {
+						execSpinner.text = `Transaction: ${status}`;
+					});
+
+					execSpinner.succeed("Swap confirmed");
+					outputResult(
+						{
+							input: `${amount} ${tokenIn.symbol}`,
+							output: `~${best.amountOutFormatted} ${tokenOut.symbol}`,
+							provider: best.provider.toUpperCase(),
+							txHash: tx.hash,
+							explorer: tx.explorerUrl,
+						},
+						opts
+					);
+				},
+				{ onError: "Swap failed" }
+			);
 		});
 }
