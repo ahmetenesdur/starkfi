@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
-import { BLUE, MINT, SLATE } from "./brand.js";
+import { blue, mint, slate } from "./brand.js";
 import { parseStarknetError } from "./parse-starknet-error.js";
 
 function hyperlink(text: string, url: string): string {
@@ -10,11 +10,11 @@ function hyperlink(text: string, url: string): string {
 // Semantic color by key name for formatResult values.
 function colorizeValue(key: string, value: string): string {
 	if (key === "explorer") return chalk.dim(hyperlink(value, value));
-	if (key === "txHash") return chalk.hex(BLUE).dim(value);
+	if (key === "txHash") return blue.dim(value);
 	if (key === "revertReason") return chalk.red(value);
 	if (key === "mode" && value.includes("SIMULATION")) return chalk.yellow(value);
 	if (/fee/i.test(key) && !/usd/i.test(key)) return chalk.yellow(value);
-	if (/usd/i.test(key)) return chalk.hex(MINT)(value);
+	if (/usd/i.test(key)) return mint(value);
 	return chalk.white(value);
 }
 
@@ -80,7 +80,7 @@ export function formatTable(headers: string[], rows: string[][]): string {
 				.map((cell, colIdx) => {
 					const padded = (cell ?? "").padEnd(colWidths[colIdx]);
 					if (colIdx === 0) return chalk.white(padded);
-					return isEven ? chalk.hex(SLATE)(padded) : chalk.dim(padded);
+					return isEven ? slate(padded) : chalk.dim(padded);
 				})
 				.join("  ")
 		);
@@ -90,7 +90,7 @@ export function formatTable(headers: string[], rows: string[][]): string {
 }
 
 export function success(msg: string): string {
-	return chalk.hex(MINT).bold(`✔ ${msg}`);
+	return mint.bold(`✔ ${msg}`);
 }
 
 export function warn(msg: string): string {
@@ -125,7 +125,7 @@ class NonTtySpinner {
 		return this;
 	}
 	info(msg: string): this {
-		console.log(chalk.hex(BLUE)(`ℹ ${msg}`));
+		console.log(blue(`ℹ ${msg}`));
 		return this;
 	}
 	warn(msg: string): this {

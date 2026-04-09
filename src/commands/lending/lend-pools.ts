@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import chalk from "chalk";
+import { blue } from "../../lib/brand.js";
 import { getVesuPools, getPoolMarkets } from "../../services/vesu/pools.js";
 import { formatTable } from "../../lib/format.js";
 import { withAuthenticatedWallet } from "../../lib/command-runner.js";
@@ -46,7 +47,7 @@ export function registerLendPoolsCommand(program: Command): void {
 					if (name && pools.length <= 2) {
 						for (const pool of pools) {
 							console.log("");
-							console.log(chalk.hex("#a5b4fc").bold(`  ${pool.name ?? "Unnamed"}`));
+							console.log(blue.bold(`  ${pool.name ?? "Unnamed"}`));
 							console.log(chalk.gray(`  ${pool.address}`));
 
 							const markets = await getPoolMarkets(ctx.wallet, pool.address);

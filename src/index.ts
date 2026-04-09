@@ -5,7 +5,7 @@ import { Command, type Help } from "commander";
 import chalk from "chalk";
 import { formatError } from "./lib/format.js";
 import { startMcpServer } from "./mcp/server.js";
-import { BLUE, MINT, LOGO_ROW_COLORS } from "./lib/brand.js";
+import { blue, mint, LOGO_ROW_COLORS } from "./lib/brand.js";
 
 /**
  * STARKFI_VERSION is replaced at build time by tsup (esbuild define).
@@ -81,12 +81,12 @@ const LOGO_LINES = [
 ] as const;
 
 const coloredLogo = LOGO_LINES.map((line, i) =>
-	chalk.hex(LOGO_ROW_COLORS[i] ?? MINT).bold(line)
+	(LOGO_ROW_COLORS[i] ?? mint).bold(line)
 ).join("\n");
 
 const tagline =
 	chalk.dim("v") +
-	chalk.hex(BLUE).bold(version) +
+	blue.bold(version) +
 	chalk.dim("  ·  ") +
 	chalk.white("Starknet DeFi CLI + MCP Server");
 
@@ -97,7 +97,7 @@ const white = chalk.white.bind(chalk);
 
 // Quick Start block shown only on the root --help page.
 const footer = `
-${chalk.hex(MINT).bold("Quick Start")}
+${mint.bold("Quick Start")}
 
   ${dim("$")} ${white("starkfi auth login <email>")}              ${dim("# Sign in with Privy OTP")}
   ${dim("$")} ${white("starkfi trade 0.1 ETH USDC")}             ${dim("# Best-price swap via Fibrous")}
@@ -107,7 +107,7 @@ ${chalk.hex(MINT).bold("Quick Start")}
   ${dim("$")} ${white('starkfi batch --swap "0.1 ETH USDC" --stake "50 STRK karnot"')}   ${dim("# Multicall")}
 
   ${dim("Run")} ${white("starkfi <command> --help")} ${dim("for detailed flags and examples.")}
-  ${dim("Docs →")} ${chalk.hex(BLUE).underline("https://docs.starkfi.app/docs")}
+  ${dim("Docs →")} ${blue.underline("https://docs.starkfi.app/docs")}
 `;
 
 const COMMAND_GROUPS: Record<string, string[]> = {
@@ -212,7 +212,7 @@ program.configureHelp({
 			lines.push(chalk.bold("Options:"));
 			for (const o of opts) {
 				lines.push(
-					`  ${chalk.hex(BLUE)(helper.optionTerm(o).padEnd(width))}  ${chalk.dim(helper.optionDescription(o))}`
+					`  ${blue(helper.optionTerm(o).padEnd(width))}  ${chalk.dim(helper.optionDescription(o))}`
 				);
 			}
 			lines.push("");
@@ -231,7 +231,7 @@ program.configureHelp({
 
 			if (groupCmds.length === 0) continue;
 
-			lines.push(`\n  ${chalk.hex(BLUE).bold(groupLabel)}`);
+			lines.push(`\n  ${blue.bold(groupLabel)}`);
 			for (const c of groupCmds) {
 				lines.push(
 					`    ${chalk.white(helper.subcommandTerm(c).padEnd(width))}  ${chalk.dim(helper.subcommandDescription(c))}`
