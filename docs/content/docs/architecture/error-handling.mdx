@@ -1,6 +1,6 @@
 ---
 title: Error Handling
-description: 35 typed error codes, retry logic, and error recovery patterns
+description: 36 typed error codes, retry logic, and error recovery patterns
 ---
 
 ## StarkfiError
@@ -34,7 +34,7 @@ The `toJSON()` method ensures errors are consistently serialized in MCP response
 
 ## Error Codes
 
-StarkFi defines 35 typed error codes organized by domain:
+StarkFi defines 36 typed error codes organized by domain:
 
 ### Authentication & Session
 
@@ -107,6 +107,7 @@ StarkFi defines 35 typed error codes organized by domain:
 | `RATE_LIMITED`         | Too many requests to RPC/API         | Wait and retry, or configure a custom RPC    |
 | `BATCH_LIMIT_EXCEEDED` | More than 3 operations in multi-swap | Split into multiple transactions             |
 | `SDK_NOT_INITIALIZED`  | Starkzap SDK not initialized         | Ensure authentication is complete            |
+| `SDK_INCOMPATIBLE`     | SDK version or mode mismatch         | Check SDK configuration and update           |
 | `PROVIDER_UNAVAILABLE` | DEX provider is unavailable          | Try a different provider or retry later      |
 | `ALL_PROVIDERS_FAILED` | All DEX providers failed             | Check network status and retry               |
 
@@ -182,7 +183,22 @@ All HTTP requests use `fetchWithTimeout()` which wraps the native `fetch()` with
 
 ### CLI Commands
 
-CLI commands catch errors at the top level, stop the spinner, and print a formatted error message:
+Most CLI commands use the `withAuthenticatedWallet` runner from `lib/command-runner.ts`, which centralizes session auth, SDK initialization, deployment checks, spinner lifecycle, and error handling:
+
+```typescript
+.action(async (amount, token, opts) => {
+	await withAuthenticatedWallet("Processing...", async (ctx) => {
+		// ctx provides: wallet, session, sdk, chainId, network, spinner
+		const tokenObj = resolveToken(token, ctx.chainId);
+		// ... business logic
+		ctx.spinner.succeed("Done");
+	}, { ensureDeployed: true, onError: "Operation failed" });
+});
+```
+
+The runner automatically catches errors, stops the spinner, calls `formatError()`, and exits with code 1. Errors inside the callback should be thrown as `StarkfiError` — the runner handles the rest.
+
+For commands that don't need a wallet (e.g., `tx-status`, `deploy`), the traditional pattern is used:
 
 ```typescript
 try {

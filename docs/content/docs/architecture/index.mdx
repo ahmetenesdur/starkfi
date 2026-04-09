@@ -142,14 +142,15 @@ src/
 │   ├── server.ts     # Server setup + stdio transport
 │   ├── tools/        # 7 domain tool files + 2 utilities (Zod schemas)
 │   └── handlers/     # 11 domain handlers + 3 utility files
-└── lib/              # 15 shared utilities
-    ├── errors.ts     # ErrorCode enum (35 codes) + StarkfiError class
+└── lib/              # 16 shared utilities
+    ├── errors.ts     # ErrorCode enum (36 codes) + StarkfiError class
     ├── parse-starknet-error.ts # Cairo hex decoding + error map (15 patterns)
     ├── retry.ts      # Exponential backoff retry
     ├── concurrency.ts # Sliding-window concurrent execution
     ├── fetch.ts      # Fetch with AbortController timeout
     ├── format.ts     # Table, result, and error formatting
     ├── cli-helpers.ts # runCommand wrapper + outputResult
+    ├── command-runner.ts # withAuthenticatedWallet centralized runner
     ├── validation.ts # Address and input validation
     ├── types.ts      # Shared TypeScript types
     ├── config.ts     # Config file paths (XDG-compliant)
@@ -221,6 +222,6 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 ## Deep Dive
 
 - **[Security Architecture](/docs/architecture/security)** — TEE isolation, MCP sandboxing, bot encryption, transaction security
-- **[Error Handling](/docs/architecture/error-handling)** — 35 typed error codes, Starknet error parsing, retry logic
+- **[Error Handling](/docs/architecture/error-handling)** — 36 typed error codes, Starknet error parsing, retry logic
 - **[Auth Server](/docs/architecture/auth-server)** — Hono server endpoints, middleware stack, and deployment
 - **[Development & Contributing](/docs/architecture/contributing)** — Local setup, build scripts, and contribution guidelines
