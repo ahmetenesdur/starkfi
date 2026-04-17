@@ -88,12 +88,10 @@ export function registerConfFundCommand(program: Command): void {
 						const token = resolveToken(opts.token, ctx.chainId);
 						const parsedAmount = Amount.parse(amount, token);
 
-						const builder = ctx.wallet
-							.tx()
-							.confidentialFund(tongo, {
-								amount: parsedAmount,
-								sender: ctx.wallet.address,
-							});
+						const builder = ctx.wallet.tx().confidentialFund(tongo, {
+							amount: parsedAmount,
+							sender: ctx.wallet.address,
+						});
 
 						const sim = await simulateTransaction(builder, ctx.chainId);
 

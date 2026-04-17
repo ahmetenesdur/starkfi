@@ -9,10 +9,7 @@ export function registerDeployCommand(program: Command): void {
 	program
 		.command("deploy")
 		.description("Deploy your Starknet account on-chain (required before sending transactions)")
-		.addHelpText(
-			"after",
-			"\nExamples:\n  $ starkfi deploy"
-		)
+		.addHelpText("after", "\nExamples:\n  $ starkfi deploy")
 		.action(async () => {
 			const session = requireSession();
 			const spinner = createSpinner("Checking account status...").start();

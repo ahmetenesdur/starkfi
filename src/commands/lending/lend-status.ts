@@ -13,10 +13,7 @@ export function registerLendStatusCommand(program: Command): void {
 		.command("lend-status")
 		.description("View your lending position and supplied assets in a Vesu V2 pool")
 		.option("-p, --pool <name|address>", "Pool name (e.g. 'Prime') or contract address")
-		.option(
-			"--collateral-token <symbol>",
-			"Collateral or supplied token (e.g. 'ETH', 'STRK')"
-		)
+		.option("--collateral-token <symbol>", "Collateral or supplied token (e.g. 'ETH', 'STRK')")
 		.option(
 			"--borrow-token <symbol>",
 			"Borrow token (e.g. 'USDC', 'USDT'), required to see debt position"

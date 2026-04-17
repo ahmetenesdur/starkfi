@@ -13,10 +13,10 @@ export const slate = chalk.ansi256(252); // slate-300   — table rows (#cbd5e1)
 
 // ASCII logo row colors (blue → mint gradient)
 export const LOGO_ROW_COLORS = [
-	 chalk.hex("#a5b4fc"),
-	 chalk.hex("#adbcfc"),
-	 chalk.hex("#b5c4fb"),
-	 chalk.hex("#bdccfb"),
-	 chalk.hex("#c6d4fa"),
-	 chalk.hex("#99f6e4"),
+	chalk.hex("#a5b4fc"),
+	chalk.hex("#adbcfc"),
+	chalk.hex("#b5c4fb"),
+	chalk.hex("#bdccfb"),
+	chalk.hex("#c6d4fa"),
+	chalk.hex("#99f6e4"),
 ] as const;

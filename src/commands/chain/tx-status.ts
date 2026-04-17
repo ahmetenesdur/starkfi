@@ -12,10 +12,7 @@ export function registerTxStatusCommand(program: Command): void {
 		.command("tx-status")
 		.description("Check transaction status by hash")
 		.argument("<hash>", "Transaction hash (0x...)")
-		.addHelpText(
-			"after",
-			"\nExamples:\n  $ starkfi tx-status 0x056b…"
-		)
+		.addHelpText("after", "\nExamples:\n  $ starkfi tx-status 0x056b…")
 		.action(async (hash: string) => {
 			await runCommand(
 				"Checking transaction...",

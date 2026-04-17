@@ -80,9 +80,7 @@ const LOGO_LINES = [
 	"╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝",
 ] as const;
 
-const coloredLogo = LOGO_LINES.map((line, i) =>
-	(LOGO_ROW_COLORS[i] ?? mint).bold(line)
-).join("\n");
+const coloredLogo = LOGO_LINES.map((line, i) => (LOGO_ROW_COLORS[i] ?? mint).bold(line)).join("\n");
 
 const tagline =
 	chalk.dim("v") +
