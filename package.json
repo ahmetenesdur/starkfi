@@ -77,24 +77,24 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@types/node": "^25.5.2",
+		"@types/node": "^25.6.0",
 		"chalk": "^5.6.2",
 		"commander": "^14.0.3",
 		"env-paths": "^3.0.0",
-		"eslint": "^10.2.0",
+		"eslint": "^10.2.1",
 		"eslint-config-prettier": "^10.1.8",
-		"globals": "^17.4.0",
+		"globals": "^17.5.0",
 		"jiti": "^2.6.1",
-		"ora": "^9.3.0",
-		"prettier": "^3.8.1",
-		"starkzap": "^2.0.0",
+		"ora": "^9.4.0",
+		"prettier": "^3.8.3",
+		"starkzap": "^3.0.0",
 		"tsup": "^8.5.1",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.58.0",
+		"typescript-eslint": "^8.59.0",
 		"zod": "^4.3.6"
 	},
 	"dependencies": {
-		"@fatsolutions/tongo-sdk": "^1.4.0"
+		"@fatsolutions/tongo-sdk": "^1.5.0"
 	}
 }
