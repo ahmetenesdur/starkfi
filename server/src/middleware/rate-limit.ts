@@ -74,11 +74,7 @@ export function rateLimit(options: RateLimitOptions) {
 		}
 	}
 
-	function setRateLimitHeaders(
-		c: Context,
-		remaining: number,
-		resetAt: number
-	) {
+	function setRateLimitHeaders(c: Context, remaining: number, resetAt: number) {
 		c.header("X-RateLimit-Limit", String(maxRequests));
 		c.header("X-RateLimit-Remaining", String(remaining));
 		c.header("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)));
@@ -117,11 +113,7 @@ export function rateLimit(options: RateLimitOptions) {
 			c.header("Retry-After", String(retryAfterSec));
 			setRateLimitHeaders(c, 0, entry.resetAt);
 
-			throw new ApiError(
-				429,
-				"Too many requests. Please try again later.",
-				"RATE_LIMITED"
-			);
+			throw new ApiError(429, "Too many requests. Please try again later.", "RATE_LIMITED");
 		}
 
 		setRateLimitHeaders(c, maxRequests - entry.count, entry.resetAt);
