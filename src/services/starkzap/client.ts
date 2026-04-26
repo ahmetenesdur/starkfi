@@ -1,4 +1,4 @@
-import type { WalletInterface } from "starkzap";
+import type { WalletInterface, FeeMode, LoggerConfig } from "starkzap";
 import {
 	StarkZap,
 	OnboardStrategy,
@@ -7,14 +7,14 @@ import {
 	EkuboSwapProvider,
 	AvnuDcaProvider,
 	EkuboDcaProvider,
-	type FeeMode,
+	fromAddress,
 } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
 import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 import { initPriceService } from "../price/price.js";
-import { StarkfiError, ErrorCode } from "../../lib/errors.js";
+
 import {
 	AVNU_PAYMASTER_URL,
 	AVNU_PAYMASTER_SEPOLIA_URL,
@@ -30,48 +30,20 @@ export function resolveFeeModeConfig(
 	gasToken: string | undefined
 ): {
 	feeMode: FeeMode;
-	gasTokenAddress: string | undefined;
 	needsPaymaster: boolean;
 } {
-	// Gasfree mode: developer-sponsored, no gas token required
+	// Gasfree mode: developer-sponsored via paymaster, no gas token required
 	if (gasfreeMode) {
-		return { feeMode: "sponsored", gasTokenAddress: undefined, needsPaymaster: true };
+		return { feeMode: { type: "paymaster" }, needsPaymaster: true };
 	}
 
 	// Gasless mode: user pays via ERC-20 token through paymaster
 	const resolvedToken = gasToken ?? DEFAULT_GAS_TOKEN;
 	const gasTokenAddress =
 		GAS_TOKEN_ADDRESSES[resolvedToken.toUpperCase()] ?? GAS_TOKEN_ADDRESSES["STRK"];
-	return { feeMode: "sponsored", gasTokenAddress, needsPaymaster: true };
-}
-
-function patchGaslessMode(wallet: WalletInterface, gasTokenAddress: string): void {
-	const account = wallet.getAccount();
-
-	const accountInternal = account as unknown as Record<string, unknown>;
-
-	const exec = accountInternal.executePaymasterTransaction;
-	if (typeof exec !== "function") {
-		throw new StarkfiError(
-			ErrorCode.SDK_INCOMPATIBLE,
-			"Cannot patch gasless mode — executePaymasterTransaction not found on account. " +
-				"Please update StarkZap SDK or disable gasless mode (starkfi set-gasfree off)."
-		);
-	}
-
-	const originalExecutePaymaster = (exec as (...args: unknown[]) => unknown).bind(account);
-
-	accountInternal.executePaymasterTransaction = async function (
-		calls: unknown[],
-		details: Record<string, unknown>,
-		...rest: unknown[]
-	) {
-		const patchedDetails = {
-			...details,
-			feeMode: { mode: "default", gasToken: gasTokenAddress },
-		};
-
-		return originalExecutePaymaster(calls, patchedDetails, ...rest);
+	return {
+		feeMode: { type: "paymaster", gasToken: fromAddress(gasTokenAddress) },
+		needsPaymaster: true,
 	};
 }
 
@@ -80,7 +52,8 @@ export function createSDK(
 	rpcUrl?: string,
 	needsPaymaster = false,
 	paymasterUrl?: string,
-	paymasterHeaders?: Record<string, string>
+	paymasterHeaders?: Record<string, string>,
+	logging?: LoggerConfig
 ): StarkZap {
 	const config: ConstructorParameters<typeof StarkZap>[0] = { network };
 	if (rpcUrl) config.rpcUrl = rpcUrl;
@@ -94,6 +67,11 @@ export function createSDK(
 		};
 	}
 
+	// StarkZap v3 native logging — forward SDK diagnostics when verbose mode enabled
+	if (logging) {
+		config.logging = logging;
+	}
+
 	return new StarkZap(config);
 }
 
@@ -101,7 +79,7 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 	const configService = ConfigService.getInstance();
 	const gasfreeMode = configService.get("gasfreeMode") === true;
 	const gasToken = configService.get("gasToken") as string | undefined;
-	const { feeMode, gasTokenAddress } = resolveFeeModeConfig(gasfreeMode, gasToken);
+	const { feeMode } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
 	const { wallet } = await sdk.onboard({
 		strategy: OnboardStrategy.Privy,
@@ -117,10 +95,6 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 		feeMode,
 		deploy: "never",
 	});
-
-	if (!gasfreeMode && gasTokenAddress) {
-		patchGaslessMode(wallet, gasTokenAddress);
-	}
 
 	wallet.lending().registerProvider(new VesuLendingProvider(), true);
 
@@ -138,7 +112,6 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 export interface SDKAndWallet {
 	sdk: StarkZap;
 	wallet: WalletInterface;
-	gasTokenAddress: string | undefined;
 }
 
 export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> {
@@ -147,7 +120,7 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 	const gasfreeMode = configService.get("gasfreeMode") === true;
 	const gasToken = configService.get("gasToken") as string | undefined;
 
-	const { gasTokenAddress, needsPaymaster } = resolveFeeModeConfig(gasfreeMode, gasToken);
+	const { needsPaymaster } = resolveFeeModeConfig(gasfreeMode, gasToken);
 
 	const network = resolveNetwork(session);
 
@@ -159,10 +132,17 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 	const paymasterHeaders =
 		paymasterUrl && session.token ? { Authorization: `Bearer ${session.token}` } : undefined;
 
-	const sdk = createSDK(network, rpcUrl, needsPaymaster, paymasterUrl, paymasterHeaders);
+	const sdk = createSDK(
+		network,
+		rpcUrl,
+		needsPaymaster,
+		paymasterUrl,
+		paymasterHeaders,
+		configService.get("verbose") === true ? { logger: console, logLevel: "debug" } : undefined
+	);
 	const wallet = await connectWallet(sdk, session);
 
 	initPriceService(wallet, resolveChainId(session));
 
-	return { sdk, wallet, gasTokenAddress };
+	return { sdk, wallet };
 }
