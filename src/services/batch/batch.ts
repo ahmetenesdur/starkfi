@@ -25,7 +25,9 @@ export type BatchOperationType =
 	| "dca-cancel"
 	| "borrow"
 	| "repay"
-	| "withdraw";
+	| "withdraw"
+	| "troves-deposit"
+	| "troves-withdraw";
 
 export interface BatchSwapParams {
 	amount: string;
@@ -89,6 +91,12 @@ export interface BatchWithdrawParams {
 	pool: string;
 }
 
+export interface BatchTrovesParams {
+	strategy_id: string;
+	amount: string;
+	token: string;
+}
+
 export type BatchParams =
 	| BatchSwapParams
 	| BatchStakeParams
@@ -99,6 +107,7 @@ export type BatchParams =
 	| BatchBorrowParams
 	| BatchRepayParams
 	| BatchWithdrawParams
+	| BatchTrovesParams
 	| Record<string, string>;
 
 export interface BatchOperation {
@@ -165,6 +174,22 @@ export async function buildBatch(
 				break;
 			case "withdraw":
 				await addWithdrawCalls(builder, op.params as BatchWithdrawParams, wallet, chainId);
+				break;
+			case "troves-deposit":
+				await addTrovesDepositCalls(
+					builder,
+					op.params as BatchTrovesParams,
+					wallet,
+					chainId
+				);
+				break;
+			case "troves-withdraw":
+				await addTrovesWithdrawCalls(
+					builder,
+					op.params as BatchTrovesParams,
+					wallet,
+					chainId
+				);
 				break;
 			default:
 				throw new StarkfiError(
@@ -363,6 +388,28 @@ async function addWithdrawCalls(
 	});
 }
 
+async function addTrovesDepositCalls(
+	builder: TxBuilder,
+	params: BatchTrovesParams,
+	_wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<void> {
+	const token = resolveToken(params.token, chainId);
+	const parsedAmount = Amount.parse(params.amount, token);
+	builder.trovesDeposit({ strategyId: params.strategy_id, amount: parsedAmount });
+}
+
+async function addTrovesWithdrawCalls(
+	builder: TxBuilder,
+	params: BatchTrovesParams,
+	_wallet: WalletInterface,
+	chainId?: ChainId
+): Promise<void> {
+	const token = resolveToken(params.token, chainId);
+	const parsedAmount = Amount.parse(params.amount, token);
+	builder.trovesWithdraw({ strategyId: params.strategy_id, amount: parsedAmount });
+}
+
 function formatOpSummary(op: BatchOperation): string {
 	const p = op.params;
 	switch (op.type) {
@@ -401,6 +448,14 @@ function formatOpSummary(op: BatchOperation): string {
 		case "withdraw": {
 			const s = p as BatchWithdrawParams;
 			return `withdraw ${s.amount} ${s.token.toUpperCase()}`;
+		}
+		case "troves-deposit": {
+			const s = p as BatchTrovesParams;
+			return `troves-deposit ${s.amount} ${s.token.toUpperCase()} → ${s.strategy_id}`;
+		}
+		case "troves-withdraw": {
+			const s = p as BatchTrovesParams;
+			return `troves-withdraw ${s.amount} ${s.token.toUpperCase()} ← ${s.strategy_id}`;
 		}
 		default:
 			return `${op.type}: ${JSON.stringify(p)}`;

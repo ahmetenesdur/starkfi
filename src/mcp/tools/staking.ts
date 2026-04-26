@@ -121,7 +121,8 @@ export function registerStakingTools(server: McpServer): number {
 	server.registerTool(
 		"claim_rewards",
 		{
-			description: "Extract earned rewards from a staking pool to the user's wallet.",
+			description:
+				"Extract earned rewards from a delegation staking pool to the user's wallet. WARNING: This ONLY works with delegation pools, NOT with Endur LST positions (use get_lst_position instead — LST yield is embedded in share price).",
 			inputSchema: z.object({
 				pool: z.string().describe("Staking pool contract address (0x...)"),
 			}),
@@ -134,7 +135,7 @@ export function registerStakingTools(server: McpServer): number {
 		"compound_rewards",
 		{
 			description:
-				"Atomically claim staking rewards and re-stake them recursively into the same pool in a single transaction (compound interest).",
+				"Atomically claim delegation staking rewards and re-stake them recursively into the same pool in a single transaction (compound interest). WARNING: This ONLY works with delegation pools, NOT with Endur LST positions (LST yield auto-compounds via share price).",
 			inputSchema: z.object({
 				pool: z.string().describe("Staking pool contract address (0x...)"),
 			}),
