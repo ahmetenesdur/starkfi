@@ -71,13 +71,15 @@ npx starkfi@latest portfolio-rebalance --target "<allocation>" [--slippage <n>] 
 
 ## Dashboard Sections
 
-The portfolio displays five sections:
+The portfolio displays seven sections:
 
 1. **Token Balances** — STRK, ETH, and all ERC-20 tokens with non-zero balances and their USD values.
 2. **Staking Positions** — Active stakes across all validators/pools with pending rewards. Shows unpooling amounts and cooldown dates when exit intents are active.
 3. **Lending Positions** — Active Vesu V2 positions: supplied and borrowed amounts with pool details.
 4. **DCA Orders** — Active Dollar-Cost Averaging recurring swap orders.
 5. **Confidential Tongo Balance** — Private active and pending balances under Tongo Cash.
+6. **Troves Vault Positions** — Active deposits in Troves DeFi yield strategies with current value and APY.
+7. **LST Positions** — xSTRK holdings from Endur liquid staking with current STRK value and yield accrued.
 
 ## Examples
 
@@ -146,5 +148,7 @@ npx starkfi@latest portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK" --sli
 - Use `lending` `lend-status` for detailed lending positions.
 - Use `lending` `lend-monitor` to monitor health factors across lending positions.
 - Use `dca` `dca-list` to view active DCA orders.
+- Use `troves` `troves-position` for detailed vault positions.
+- Use `lst` `lst-position` for detailed liquid staking positions.
 - Use `trade` if you need to swap a single token pair (not full rebalance).
 

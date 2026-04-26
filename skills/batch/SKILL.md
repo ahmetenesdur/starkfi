@@ -1,6 +1,6 @@
 ---
 name: batch
-description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply/borrow/repay/withdraw, token sends, and DCA orders into one multicall. Use this skill when the user wants to batch, combine, bundle, or chain multiple diverse operations together in one atomic transaction, such as "swap ETH and then stake STRK" or "withdraw from lending and swap" or "repay debt and stake" or "swap and send in one go" or "create a DCA order and stake". Also trigger when the user mentions multicall, combining operations, doing multiple things at once, or wants to save gas by bundling actions — even if they don't use the word "batch".
+description: Execute multiple different DeFi operations in a single Starknet transaction — combine swaps, staking, lending supply/borrow/repay/withdraw, token sends, DCA orders, and Troves vault deposits/withdrawals into one multicall. Use this skill when the user wants to batch, combine, bundle, or chain multiple diverse operations together in one atomic transaction, such as "swap ETH and then stake STRK" or "withdraw from lending and swap" or "repay debt and stake" or "swap and send in one go" or "create a DCA order and stake" or "deposit into vault and swap". Also trigger when the user mentions multicall, combining operations, doing multiple things at once, or wants to save gas by bundling actions — even if they don't use the word "batch".
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Batch Execute
 
-Bundle multiple diverse DeFi operations into a single Starknet multicall transaction. Supports combining **swaps**, **staking**, **lending supply/borrow/repay/withdraw**, **token sends**, and **DCA orders** — all executed atomically in one on-chain call.
+Bundle multiple diverse DeFi operations into a single Starknet multicall transaction. Supports combining **swaps**, **staking**, **lending supply/borrow/repay/withdraw**, **token sends**, **DCA orders**, and **Troves vault deposits/withdrawals** — all executed atomically in one on-chain call.
 
 ## Prerequisites
 
@@ -47,7 +47,9 @@ npx starkfi@latest batch [--simulate] [--json] \
   --repay "<amount> <token> <col_token> <pool>" \
   --withdraw "<amount> <token> <pool>" \
   --dca-create "<amount> <sell> <buy> <perCycle> [frequency]" \
-  --dca-cancel "<orderId>"
+  --dca-cancel "<orderId>" \
+  --troves-deposit "<amount> <strategy_id> [token]" \
+  --troves-withdraw "<amount> <strategy_id> [token]"
 ```
 
 ## Operation Formats
@@ -63,6 +65,8 @@ npx starkfi@latest batch [--simulate] [--json] \
 | `--withdraw`   | `"<amount> <token> <pool>"`                | `--withdraw "200 USDC Prime"`   |
 | `--dca-create` | `"<amount> <sell> <buy> <perCycle> [freq]"` | `--dca-create "1000 USDC ETH 10 P1D"` |
 | `--dca-cancel` | `"<orderId>"`                              | `--dca-cancel "abc123"`         |
+| `--troves-deposit`  | `"<amount> <strategy_id> [token]"`    | `--troves-deposit "100 evergreen_strk"` |
+| `--troves-withdraw` | `"<amount> <strategy_id> [token]"`    | `--troves-withdraw "50 evergreen_strk"` |
 
 > **Note:** `--stake` accepts either a validator name (e.g. `Karnot`) or a pool contract address (starting with `0x`). The CLI auto-detects the format.
 
@@ -79,6 +83,8 @@ npx starkfi@latest batch [--simulate] [--json] \
 | `--withdraw`   | string | Withdraw from lending pool (repeatable) | No\*   |
 | `--dca-create` | string | Create DCA order (repeatable)         | No\*     |
 | `--dca-cancel` | string | Cancel DCA order (repeatable)         | No\*     |
+| `--troves-deposit`  | string | Troves vault deposit (repeatable) | No\*     |
+| `--troves-withdraw` | string | Troves vault withdraw (repeatable) | No\*    |
 | `--simulate` | flag   | Estimate fees without broadcasting    | No       |
 | `--json`     | flag   | Output as JSON                        | No       |
 
@@ -150,3 +156,5 @@ npx starkfi@latest batch --simulate \
 - Use `lending` for standalone lending operations.
 - Use `send` for standalone token transfers.
 - Use `dca` for standalone DCA order management.
+- Use `troves` for standalone vault deposit/withdraw operations.
+- Use `lst` for liquid staking operations (not supported in batch).

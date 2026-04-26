@@ -50,6 +50,7 @@ Manage Starknet staking operations: delegate tokens to validators, claim or comp
 5. AFTER any transactional operation (stake, unstake, rewards), verify with `tx-status`.
 6. Use `stake-status` to view the user's current staking positions across all validators. When exit intents are active, unpooling amounts and cooldown dates are shown automatically.
 7. Token defaults to `STRK` if `--token` is not specified.
+8. **LST Disambiguation:** If the user mentions "liquid staking", "xSTRK", or "Endur", redirect to the `lst` skill instead. This skill handles **delegation staking** only. Do NOT use `rewards --claim` or `rewards --compound` for xSTRK positions.
 
 ## Commands
 
@@ -187,3 +188,4 @@ npx starkfi@latest stake-status
 - Use `balance` to check available tokens before staking.
 - Use `portfolio` for a full overview including staking positions with USD values.
 - Use `batch` to combine staking with other operations in one transaction.
+- Use `lst` for liquid staking via Endur (xSTRK — automatic yield, instant redemption).

@@ -2,7 +2,7 @@
 
 Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — a Starknet DeFi toolkit.
 
-> 12 skills · [Full Documentation](https://docs.starkfi.app/docs/skills)
+> 14 skills · [Full Documentation](https://docs.starkfi.app/docs/skills)
 
 ## Available Skills
 
@@ -13,8 +13,10 @@ Agent Skills for the [StarkFi](https://github.com/ahmetenesdur/starkfi) CLI — 
 | [send](./send/SKILL.md)                               | transaction | Transfer tokens to a Starknet address                                                   |
 | [trade](./trade/SKILL.md)                             | transaction | Swap tokens via Fibrous (default), AVNU, or Ekubo                                       |
 | [multi-swap](./multi-swap/SKILL.md)                   | transaction | Multiple swaps in one transaction (up to 3)                                             |
-| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send + borrow + repay + withdraw + DCA in one multicall |
-| [staking](./staking/SKILL.md)                         | transaction | Stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC)                       |
+| [batch](./batch/SKILL.md)                             | transaction | Combine swap + stake + supply + send + borrow + repay + withdraw + DCA + troves in one multicall |
+| [staking](./staking/SKILL.md)                         | transaction | Delegation staking: stake, unstake, claim, compound (STRK, WBTC, tBTC, SolvBTC, LBTC)  |
+| [lst](./lst/SKILL.md)                                 | transaction | Endur liquid staking: stake STRK → xSTRK, redeem, exit-all (auto-yield via share price) |
+| [troves](./troves/SKILL.md)                           | transaction | Troves DeFi yield vaults: list strategies, deposit, withdraw, check positions            |
 | [lending](./lending/SKILL.md)                         | transaction | Vesu V2 lending: supply, borrow, repay, monitor, auto-rebalance                         |
 | [dca](./dca/SKILL.md)                                 | transaction | Dollar-Cost Averaging: create, preview, list, cancel recurring orders                   |
 | [confidential](./confidential/SKILL.md)               | transaction | Tongo Cash: fund, transfer, withdraw, ragequit, rollover (ZK privacy)                   |
@@ -62,6 +64,12 @@ npx skills add ahmetenesdur/starkfi
 | "Repay debt and stake in one tx"    | `batch`               |
 | "Stake 1000 STRK with Karnot"       | `staking`             |
 | "Earn yield on my STRK"             | `staking`             |
+| "Liquid stake 500 STRK"             | `lst`                 |
+| "How much is my xSTRK worth?"       | `lst`                 |
+| "What's the LST exchange rate?"     | `lst`                 |
+| "Deposit 100 into Evergreen vault"  | `troves`              |
+| "Show me yield vault strategies"    | `troves`              |
+| "Withdraw from my vault"            | `troves`              |
 | "Supply 500 USDC to Prime pool"     | `lending`             |
 | "Is my position safe?"              | `lending`             |
 | "My health factor is low, fix it"   | `lending`             |
