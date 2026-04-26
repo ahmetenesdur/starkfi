@@ -40,6 +40,15 @@ export async function getLSTPosition(
 	};
 }
 
+/** Case-insensitive key lookup for StarkZap result maps (handles tBTC, solvBTC, etc.) */
+function findByKey<T>(map: Record<string, T>, key: string): T | undefined {
+	const direct = map[key];
+	if (direct !== undefined) return direct;
+	const lower = key.toLowerCase();
+	const match = Object.keys(map).find((k) => k.toLowerCase() === lower);
+	return match ? map[match] : undefined;
+}
+
 export async function getLSTStats(
 	wallet: StarkZapWallet,
 	asset = "STRK"
@@ -47,13 +56,13 @@ export async function getLSTStats(
 	const lst = wallet.lstStaking(asset);
 	const [apyResult, tvlResult] = await Promise.all([lst.getAPY(), lst.getTVL()]);
 
-	const apyData = apyResult[asset.toUpperCase()];
-	const tvlData = tvlResult[asset.toUpperCase()];
+	const apyData = findByKey(apyResult, asset);
+	const tvlData = findByKey(tvlResult, asset);
 
 	if (!apyData && !tvlData) return null;
 
 	return {
-		asset: asset.toUpperCase(),
+		asset: lst.asset,
 		apy: apyData?.apyInPercentage ?? "N/A",
 		tvlUsd: tvlData ? `$${(tvlData.tvlUsd / 1_000_000).toFixed(2)}M` : "N/A",
 		tvlAsset: tvlData ? `${tvlData.tvlAsset.toFixed(2)}` : "N/A",
