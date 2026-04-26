@@ -54,7 +54,6 @@ starkfi troves-deposit <amount> <strategy-id> [-t <token>]
 ```bash
 starkfi troves-deposit 100 evergreen_strk
 starkfi troves-deposit 0.5 ekubo_cl_strketh -t ETH
-starkfi troves-deposit 100 evergreen_strk --simulate
 ```
 
 ### `troves-withdraw`
@@ -82,8 +81,7 @@ starkfi troves-withdraw 0.25 ekubo_cl_strketh -t ETH
 
 1. **List before depositing** — Always run `troves-list` to verify the strategy exists and check the current APY
 2. **Check positions** — Use `troves-position` to see your current deposit before adding more or withdrawing
-3. **Simulate first** — Use `--simulate` on deposit/withdraw to preview fees before executing
-4. **Understand risk** — Check the `riskFactor` and `isAudited` fields before depositing
+3. **Understand risk** — Check the `riskFactor` and `isAudited` fields before depositing
 
 ## Batch Support
 
