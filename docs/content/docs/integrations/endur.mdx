@@ -1,0 +1,55 @@
+---
+title: Endur (LST)
+description: Liquid staking integration — how StarkFi connects to Endur for STRK → xSTRK
+---
+
+## Overview
+
+[Endur](https://endur.fi) is a liquid staking protocol on Starknet. When you stake STRK through Endur, you receive **xSTRK** — a liquid staking token whose value appreciates over time as staking yield accrues.
+
+Unlike delegation staking (where you claim rewards manually), **LST yield is embedded in the share price**. Your xSTRK shares increase in value automatically.
+
+StarkFi integrates with Endur via the **Starkzap v3 SDK**, using native `wallet.lstStake()`, `lstRedeem()`, and `lstExitAll()` methods.
+
+## How StarkFi Uses Endur
+
+| Operation | Starkzap API | StarkFi CLI | MCP Tool |
+| --- | --- | --- | --- |
+| Check position | `wallet.getLstPosition()` | `lst-position` | `get_lst_position` |
+| Protocol stats | `sdk.endur.getStats()` | `lst-stats` | `get_lst_stats` |
+| Stake (deposit) | `wallet.lstStake()` | `lst-stake` | `lst_stake` |
+| Redeem (partial) | `wallet.lstRedeem()` | `lst-redeem` | `lst_redeem` |
+| Exit all | `wallet.lstExitAll()` | `lst-exit-all` | `lst_exit_all` |
+
+## Yield Model
+
+> **⚠️ Important:** Endur LST yield is **not** a claimable reward. The xSTRK share price increases over time to reflect accumulated staking yield. To realize your yield, redeem xSTRK back to STRK — you'll receive more STRK than you originally staked.
+
+**Example:** If you stake 100 STRK and receive 100 xSTRK, after some time the exchange rate increases from 1.0 to 1.05. Your 100 xSTRK is now worth 105 STRK.
+
+## LST vs Delegation Staking
+
+| Feature | Delegation Staking | Endur LST |
+| --- | --- | --- |
+| **Token received** | None (position tracked on-chain) | xSTRK (ERC-20, tradeable) |
+| **Yield mechanism** | Manual claim via `rewards --claim` | Automatic via share price |
+| **Liquidity** | Locked until unstake cooldown | Liquid — trade xSTRK anytime |
+| **DeFi composability** | Limited | xSTRK usable in Troves, lending, DEX |
+| **Unstaking** | 2-step process with cooldown | Instant redemption |
+
+## Composability
+
+xSTRK is a standard ERC-20 token, so it can be used in other DeFi protocols:
+
+- **Troves:** Deposit xSTRK into yield vault strategies for additional yield
+- **Lending:** Supply xSTRK as collateral on Vesu
+- **Trading:** Swap xSTRK on DEXs
+
+---
+
+## See Also
+
+- **[LST CLI Commands](/docs/cli/lst)** — Full CLI reference
+- **[LST MCP Tools](/docs/mcp/tools-lst)** — AI agent tool reference
+- **[Staking CLI Commands](/docs/cli/staking)** — Delegation staking (alternative approach)
+- **[Starkzap SDK](/docs/integrations/starkzap)** — Core SDK documentation

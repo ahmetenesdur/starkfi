@@ -1,6 +1,6 @@
 # Model Context Protocol (MCP) — Tool Reference
 
-StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude Desktop, Antigravity) connect and discover all tools with JSON schemas automatically.
+StarkFi exposes **51 MCP tools** via stdio transport. AI clients (Cursor, Claude Desktop, Antigravity) connect and discover all tools with JSON schemas automatically.
 
 ## Setup
 
@@ -22,7 +22,7 @@ StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude
 
 ---
 
-## Tool Registry (42 Tools)
+## Tool Registry (51 Tools)
 
 ### Auth & Config (2)
 
@@ -50,7 +50,7 @@ StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude
 | `swap_tokens` | write | Execute swap |
 | `get_multi_swap_quote` | read | Multi-pair quote (2-3 pairs) |
 | `multi_swap` | write | Execute multi-pair swap |
-| `batch_execute` | write | Atomic multicall (swap + stake + lend + send + DCA, min 2 ops) |
+| `batch_execute` | write | Atomic multicall (swap + stake + lend + send + DCA + troves, min 2 ops) |
 
 ### Staking (8)
 
@@ -101,6 +101,25 @@ StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude
 | `confidential_ragequit` | write | Emergency full withdrawal |
 | `confidential_rollover` | write | Activate pending balance |
 
+### Troves DeFi Vaults (4)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `list_troves_strategies` | read | List active Troves vault strategies with APY, TVL, and risk tier |
+| `get_troves_position` | read | User vault position — shares and underlying asset value |
+| `troves_deposit` | write | Deposit into a Troves vault strategy |
+| `troves_withdraw` | write | Withdraw from a Troves vault strategy |
+
+### LST Staking — Endur (5)
+
+| Tool | Type | Description |
+| --- | --- | --- |
+| `get_lst_position` | read | LST share balance and equivalent staked value (yield embedded in share price) |
+| `get_lst_stats` | read | Endur LST statistics — current APY and TVL |
+| `lst_stake` | write | Deposit into Endur liquid staking (e.g. STRK → xSTRK) |
+| `lst_redeem` | write | Redeem specific amount of LST shares back to underlying |
+| `lst_exit_all` | write | Redeem entire LST position |
+
 ---
 
 ## Agent Best Practices
@@ -111,6 +130,8 @@ StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude
 4. **Check auth first** — Call `get_auth_status` before any wallet operations
 5. **Check existing positions** — Query before creating to avoid duplicates
 6. **Confidential lifecycle** — Always `confidential_setup` → `confidential_balance` → action. Remind recipients to `confidential_rollover`
+7. **Troves safety** — Use `list_troves_strategies` to validate strategy exists before deposit
+8. **LST yield model** — Endur LST yield is embedded in the share price. Do **not** call `claim_rewards` for LST positions — use `lst_redeem` or `lst_exit_all` instead
 
 ---
 
@@ -126,4 +147,6 @@ StarkFi exposes **42 MCP tools** via stdio transport. AI clients (Cursor, Claude
 | Tool Schemas (Lending) | [docs.starkfi.app/docs/mcp/tools-lending](https://docs.starkfi.app/docs/mcp/tools-lending) |
 | Tool Schemas (DCA) | [docs.starkfi.app/docs/mcp/tools-dca](https://docs.starkfi.app/docs/mcp/tools-dca) |
 | Tool Schemas (Confidential) | [docs.starkfi.app/docs/mcp/tools-confidential](https://docs.starkfi.app/docs/mcp/tools-confidential) |
+| Tool Schemas (Troves) | [docs.starkfi.app/docs/mcp/tools-troves](https://docs.starkfi.app/docs/mcp/tools-troves) |
+| Tool Schemas (LST) | [docs.starkfi.app/docs/mcp/tools-lst](https://docs.starkfi.app/docs/mcp/tools-lst) |
 | Security Model | [docs.starkfi.app/docs/architecture/security](https://docs.starkfi.app/docs/architecture/security) |

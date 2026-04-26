@@ -109,6 +109,40 @@ starkfi conf-balance
 
 ## What's Next?
 
+## 9. Deposit into a Yield Vault
+
+Deposit STRK into the Evergreen vault strategy:
+
+```bash
+# List available strategies
+starkfi troves-list
+
+# Deposit 100 STRK
+starkfi troves-deposit 100 evergreen_strk
+
+# Check your position
+starkfi troves-position evergreen_strk
+```
+
+## 10. Liquid Stake with Endur
+
+Stake STRK to receive xSTRK — a liquid token whose value grows over time:
+
+```bash
+# Stake 100 STRK → xSTRK
+starkfi lst-stake 100
+
+# Check your position
+starkfi lst-position
+
+# View current APY
+starkfi lst-stats
+```
+
+> **Note:** xSTRK yield is embedded in the share price — there are no separate rewards to claim.
+
+---
+
 You've covered the basics. Here's where to go from here:
 
 | If you want to...                       | Go to                                |
@@ -120,5 +154,7 @@ You've covered the basics. Here's where to go from here:
 | Understand the system design            | [Architecture](/docs/architecture)   |
 | Set up DCA recurring buys              | [DCA Commands](/docs/cli/dca)        |
 | Use confidential transfers             | [Confidential Commands](/docs/cli/confidential) |
+| Deposit into yield vaults              | [Troves Commands](/docs/cli/troves)  |
+| Liquid stake with Endur                | [LST Commands](/docs/cli/lst)        |
 | Understand gas abstraction             | [AVNU Paymaster](/docs/integrations/paymaster) |
 

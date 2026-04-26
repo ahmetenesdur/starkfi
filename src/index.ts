@@ -67,6 +67,19 @@ import {
 	registerConfRagequitCommand,
 	registerConfRolloverCommand,
 } from "./commands/confidential/confidential.js";
+import {
+	registerTrovesListCommand,
+	registerTrovesPositionCommand,
+	registerTrovesDepositCommand,
+	registerTrovesWithdrawCommand,
+} from "./commands/troves/troves.js";
+import {
+	registerLSTPositionCommand,
+	registerLSTStatsCommand,
+	registerLSTStakeCommand,
+	registerLSTRedeemCommand,
+	registerLSTExitAllCommand,
+} from "./commands/lst/lst.js";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -126,6 +139,8 @@ const COMMAND_GROUPS: Record<string, string[]> = {
 		"lend-auto",
 	],
 	Portfolio: ["portfolio", "portfolio-rebalance"],
+	Troves: ["troves-list", "troves-position", "troves-deposit", "troves-withdraw"],
+	"LST Staking": ["lst-position", "lst-stats", "lst-stake", "lst-redeem", "lst-exit-all"],
 	Operations: ["batch"],
 	Confidential: [
 		"conf-setup",
@@ -305,6 +320,19 @@ registerPortfolioCommand(program);
 registerPortfolioRebalanceCommand(program);
 registerBatchCommand(program);
 registerConfigCommand(program);
+
+// ── Troves ──
+registerTrovesListCommand(program);
+registerTrovesPositionCommand(program);
+registerTrovesDepositCommand(program);
+registerTrovesWithdrawCommand(program);
+
+// ── LST Staking ──
+registerLSTPositionCommand(program);
+registerLSTStatsCommand(program);
+registerLSTStakeCommand(program);
+registerLSTRedeemCommand(program);
+registerLSTExitAllCommand(program);
 
 program
 	.command("mcp-start")

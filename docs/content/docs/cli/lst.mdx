@@ -1,0 +1,114 @@
+---
+title: LST Commands
+description: Endur liquid staking — stake, redeem, check positions and stats
+---
+
+> **Prerequisite:** Requires an active authenticated session. Run `starkfi auth login` first.
+
+## Overview
+
+LST (Liquid Staking Token) commands let you interact with Endur liquid staking on Starknet. When you stake STRK, you receive xSTRK — a liquid token whose value appreciates over time as staking yield accrues. Unlike delegation staking, **LST yield is embedded in the share price** — there is no separate reward to claim.
+
+## Commands
+
+### `lst-position`
+
+Show your liquid staking position — LST share balance and equivalent staked value.
+
+```bash
+starkfi lst-position
+starkfi lst-position -a WBTC --json
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-a, --asset` | STRK | Underlying asset symbol |
+
+### `lst-stats`
+
+Show Endur LST statistics — current APY and total value locked.
+
+```bash
+starkfi lst-stats
+starkfi lst-stats -a WBTC --json
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-a, --asset` | STRK | Asset to query |
+
+### `lst-stake`
+
+Deposit into Endur liquid staking (e.g. STRK → xSTRK).
+
+```bash
+starkfi lst-stake <amount> [-a <asset>]
+```
+
+| Argument/Flag | Required | Default | Description |
+| --- | --- | --- | --- |
+| `amount` | ✅ | — | Amount to stake |
+| `-a, --asset` | ❌ | STRK | Asset to stake |
+
+**Examples:**
+
+```bash
+starkfi lst-stake 100
+starkfi lst-stake 0.5 -a WBTC
+```
+
+### `lst-redeem`
+
+Redeem a specific amount of LST shares back to the underlying asset.
+
+```bash
+starkfi lst-redeem <amount> [-a <asset>]
+```
+
+| Argument/Flag | Required | Default | Description |
+| --- | --- | --- | --- |
+| `amount` | ✅ | — | Amount of LST shares to redeem |
+| `-a, --asset` | ❌ | STRK | Underlying asset |
+
+**Examples:**
+
+```bash
+starkfi lst-redeem 50
+starkfi lst-redeem 0.25 -a WBTC
+```
+
+### `lst-exit-all`
+
+Redeem your entire LST position for a given asset.
+
+```bash
+starkfi lst-exit-all [-a <asset>]
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-a, --asset` | STRK | Asset to exit completely |
+
+**Examples:**
+
+```bash
+starkfi lst-exit-all
+starkfi lst-exit-all -a WBTC
+```
+
+## Yield Model
+
+> **Important:** Endur LST yield is **embedded in the share price**. Your xSTRK shares increase in value over time — there are no separate rewards to claim. Do **not** use `rewards --claim` for LST positions. Use `lst-redeem` or `lst-exit-all` to realize your yield.
+
+## LST vs Delegation Staking
+
+| Feature | Delegation Staking | LST (Endur) |
+| --- | --- | --- |
+| **Liquidity** | Locked until unstake cooldown | Liquid — trade xSTRK anytime |
+| **Yield** | Claimable rewards | Embedded in share price |
+| **Commands** | `stake`, `unstake`, `rewards` | `lst-stake`, `lst-redeem`, `lst-exit-all` |
+| **Composability** | Limited | xSTRK usable in DeFi (Troves, lending) |
+
+---
+
+> **MCP equivalents:** [LST Tools](/docs/mcp/tools-lst) — `get_lst_position`, `get_lst_stats`, `lst_stake`, `lst_redeem`, `lst_exit_all`

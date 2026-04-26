@@ -310,5 +310,7 @@ npx starkfi@latest lend-auto --pool Prime --collateral-token ETH --borrow-token 
 - Use `balance` to verify available assets before supplying.
 - Use `trade` to swap tokens if the user doesn't have the right asset.
 - Use `portfolio` for a full overview including lending positions with USD values.
-- Use `batch` to combine supply operations with swaps or staking.
+- Use `batch` to combine supply operations with swaps, staking, or vault deposits.
+- Use `troves` for vault-based yield strategies (different from lending).
+- Use `lst` for liquid staking yield (xSTRK can also be supplied to lending pools).
 - Use `portfolio-rebalance` (within `portfolio` skill) to optimize overall portfolio allocation.

@@ -1,13 +1,13 @@
 ---
 title: Starkzap SDK
-description: Core SDK powering wallets, tokens, staking, DCA, confidential transfers, and transaction building
+description: Core SDK powering wallets, tokens, staking, DCA, confidential transfers, Troves vaults, LST, and transaction building
 ---
 
 ## Overview
 
-[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, DCA, confidential transfers, gas abstraction, and multicall transaction building.
+[Starkzap](https://starkzap.io) is the core SDK that powers all on-chain interactions in StarkFi. It provides a unified TypeScript API for Starknet — wallet management, token operations, staking, DCA, Troves yield vaults, Endur liquid staking, confidential transfers, gas abstraction, and multicall transaction building.
 
-StarkFi uses **Starkzap v2.0.0** as a direct dependency.
+StarkFi uses **Starkzap v3.0.0** as a direct dependency.
 
 ## How StarkFi Uses Starkzap
 
@@ -18,10 +18,12 @@ StarkFi uses **Starkzap v2.0.0** as a direct dependency.
 | Staking              | `wallet.stake()`, `wallet.exitPoolIntent()` | `stake`, `unstake`             |
 | Rewards              | `wallet.claimPoolRewards()`                 | `rewards --claim / --compound` |
 | DCA                  | `wallet.dca()`                              | `dca-create`, `dca-cancel`, `dca-list`, `dca-preview` |
+| Troves               | `TxBuilder.trovesDeposit()`, `trovesWithdraw()` | `troves-deposit`, `troves-withdraw` |
+| LST                  | `wallet.lstStake()`, `lstRedeem()`, `lstExitAll()` | `lst-stake`, `lst-redeem`, `lst-exit-all` |
 | Confidential         | `TongoConfidential`                         | `conf-fund`, `conf-transfer`, `conf-withdraw`, `conf-ragequit`, `conf-rollover` |
 | Wallet Deploy        | `wallet.ensureReady()`                      | `deploy`                       |
 | Transaction Building | `wallet.tx()` (TxBuilder)                   | `batch`, `multi-swap`          |
-| Gas Abstraction      | `feeMode: "sponsored"`                      | `config set-gasfree`           |
+| Gas Abstraction      | `feeMode: { type: "paymaster", gasToken }`  | `config set-gasfree`           |
 
 ## SDK Initialization
 
@@ -55,12 +57,12 @@ const { wallet } = await sdk.onboard({
 		}),
 	},
 	accountPreset: "argentXV050",
-	feeMode: "sponsored",
+	feeMode: { type: "paymaster", gasToken: "0x04718f5a0f...7c938d" },
 	deploy: "never",
 });
 ```
 
-The `onboard()` API handles signer creation, account class resolution, and fee mode configuration automatically — replacing the manual `PrivySigner` + `connectWallet()` pattern from v1.
+The `onboard()` API handles signer creation, account class resolution, and fee mode configuration automatically — replacing the manual `PrivySigner` + `connectWallet()` pattern from v1. In v3, `feeMode` uses a discriminated union `{ type: "paymaster", gasToken: Address }` instead of the legacy string `"sponsored"` format.
 
 ## Key APIs
 
@@ -93,10 +95,43 @@ const tx = await wallet
 	.approve(token, amount, spender)
 	.add(calls)
 	.stake(poolAddress, amount)
-	.send({ feeMode: "sponsored" });
+	.send({ feeMode: { type: "paymaster", gasToken } });
 ```
 
-StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, confidential, and lending operations where multiple calls must execute atomically.
+StarkFi uses TxBuilder for `batch`, `multi-swap`, `dca`, confidential, lending, and troves operations where multiple calls must execute atomically.
+
+### Troves (DeFi Vaults)
+
+```typescript
+// Deposit
+const tx = await wallet.tx()
+	.trovesDeposit({ strategyId, amount })
+	.send({ feeMode });
+
+// Withdraw
+const tx = await wallet.tx()
+	.trovesWithdraw({ strategyId, amount })
+	.send({ feeMode });
+```
+
+### Endur LST (Liquid Staking)
+
+```typescript
+// Stake STRK → xSTRK
+await wallet.lstStake(amount);
+
+// Redeem xSTRK → STRK
+await wallet.lstRedeem(amount);
+
+// Exit entire position
+await wallet.lstExitAll();
+
+// Check position
+const position = await wallet.getLstPosition();
+// { shareBalance, underlyingValue, exchangeRate }
+```
+
+> **Important:** Endur LST yield is embedded in the share price (xSTRK appreciates over time). There are no separate rewards to claim.
 
 ### Confidential Transfers (Tongo Cash)
 
@@ -122,19 +157,22 @@ const ragequitCalls = tongo.ragequit(to);         // Emergency exit
 const rolloverCalls = tongo.rollover();           // Activate pending
 ```
 
-### v2 Enhancements
+### v3 Enhancements
 
-StarkFi leverages three key capabilities introduced in Starkzap v2:
+StarkFi leverages key capabilities introduced in Starkzap v3:
 
 | Feature              | API                         | What It Does                                              |
 | -------------------- | --------------------------- | --------------------------------------------------------- |
+| **FeeMode Union**    | `{ type: "paymaster", gasToken }` | Type-safe gas abstraction replacing legacy string format |
 | **Preflight**        | `builder.sendWithPreflight()` | Simulates the transaction before broadcasting — catches reverts early |
 | **Watch**            | `tx.watch()`                | Streams real-time finality updates (`RECEIVED` → `ACCEPTED_ON_L2`)    |
 | **Quote Health**     | `quoteHealth()`             | Projects health factor impact of a lending action without executing   |
+| **Troves**           | `TxBuilder.trovesDeposit()` / `trovesWithdraw()` | Native DeFi vault strategy operations |
+| **Endur LST**        | `wallet.lstStake()` / `lstRedeem()` / `lstExitAll()` | Liquid staking with yield in share price |
 
 ```typescript
 // Preflight — simulate before sending
-const tx = await builder.sendWithPreflight({ feeMode: "sponsored" });
+const tx = await builder.sendWithPreflight({ feeMode: { type: "paymaster", gasToken } });
 
 // Watch — track transaction finality
 for await (const update of tx.watch()) {

@@ -6,7 +6,7 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: st
 /**
  * esbuild plugin: stub out optional starkzap peer dependencies.
  *
- * StarkZap v2 ships modules (confidential/tongo, bridge/solana) that
+ * StarkZap v3 ships modules (confidential/tongo, bridge/solana) that
  * statically import optional peer dependencies StarkFi doesn't use.
  * Without stubs, esbuild fails to resolve them at bundle time.
  *

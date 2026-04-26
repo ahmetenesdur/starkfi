@@ -155,6 +155,30 @@ function parseOperation(type: string, raw: string): BatchOperation {
 				},
 			};
 		}
+		case "troves-deposit": {
+			if (parts.length < 3) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --troves-deposit format: "${raw}". Expected: "100 USDC strategyId"`
+				);
+			}
+			return {
+				type: "troves-deposit",
+				params: { amount: parts[0], token: parts[1], strategy_id: parts[2] },
+			};
+		}
+		case "troves-withdraw": {
+			if (parts.length < 3) {
+				throw new StarkfiError(
+					ErrorCode.INVALID_AMOUNT,
+					`Invalid --troves-withdraw format: "${raw}". Expected: "100 USDC strategyId"`
+				);
+			}
+			return {
+				type: "troves-withdraw",
+				params: { amount: parts[0], token: parts[1], strategy_id: parts[2] },
+			};
+		}
 		default:
 			throw new StarkfiError(ErrorCode.INVALID_CONFIG, `Unknown operation type: ${type}`);
 	}
@@ -195,6 +219,18 @@ export function registerBatchCommand(program: Command): void {
 			collect,
 			[]
 		)
+		.option(
+			"--troves-deposit <args>",
+			'Deposit to Troves vault: "100 USDC strategyId" (repeatable)',
+			collect,
+			[]
+		)
+		.option(
+			"--troves-withdraw <args>",
+			'Withdraw from Troves vault: "100 USDC strategyId" (repeatable)',
+			collect,
+			[]
+		)
 		.option("--simulate", "Estimate fees and validate without executing")
 		.option("--json", "Output raw JSON")
 		.addHelpText(
@@ -216,6 +252,8 @@ Flag formats:
   --withdraw   "<amount> <token> <pool>"                                e.g. "200 USDC Prime"
   --dca-create "<total> <sell> <buy> <perCycle> [freq]"                  e.g. "100 STRK USDC 10 P1D"
   --dca-cancel "<orderIdOrAddress> [provider]"                          e.g. "0x123... avnu"
+  --troves-deposit "<amount> <token> <strategyId>"                      e.g. "100 USDC strategy123"
+  --troves-withdraw "<amount> <token> <strategyId>"                     e.g. "100 USDC strategy123"
 
 Minimum 2 operations required. Each flag can be repeated.`
 		)
@@ -243,12 +281,18 @@ Minimum 2 operations required. Each flag can be repeated.`
 						...(opts.dcaCancel as string[]).map((s: string) =>
 							parseOperation("dca-cancel", s)
 						),
+						...(opts.trovesDeposit as string[]).map((s: string) =>
+							parseOperation("troves-deposit", s)
+						),
+						...(opts.trovesWithdraw as string[]).map((s: string) =>
+							parseOperation("troves-withdraw", s)
+						),
 					];
 
 					if (operations.length < 2) {
 						throw new StarkfiError(
 							ErrorCode.INVALID_AMOUNT,
-							"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--borrow/--repay/--withdraw/--dca-create/--dca-cancel options."
+							"Batch requires at least 2 operations. Provide multiple --swap/--stake/--supply/--send/--borrow/--repay/--withdraw/--dca-create/--dca-cancel/--troves-deposit/--troves-withdraw options."
 						);
 					}
 

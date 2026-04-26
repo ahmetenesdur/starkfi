@@ -24,7 +24,7 @@ npx starkfi@latest --help
 
 Most DeFi tools are built for humans clicking buttons. StarkFi is built for **agents**.
 
-- 🤖 **42 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
+- 🤖 **51 MCP tools** — Any AI assistant (Cursor, Claude, Antigravity) can execute DeFi operations autonomously
 - ⚡ **Atomic Batching** — Combine swap + stake + lend + send into a single multicall transaction
 - 💸 **Gas Abstraction** — Pay gas in STRK, ETH, USDC, USDT, or DAI — or let the developer sponsor gas entirely
 - 🔒 **Confidential Transfers** — Privacy-preserving transfers via Tongo Cash (ZK proofs)
@@ -66,17 +66,19 @@ npx starkfi@latest portfolio
 | **Stake** | `stake 100 -v karnot` | [Staking](/docs/cli/staking) |
 | **Lend** | `lend-supply 100 -p Prime -t USDC` | [Lending](/docs/cli/lending) |
 | **DCA** | `dca-create 1000 USDC ETH --per-cycle 10 --frequency P1D` | [DCA](/docs/cli/dca) |
+| **Troves Vaults** | `troves-deposit 100 evergreen_strk` | [Troves](/docs/cli/troves) |
+| **LST Staking** | `lst-stake 100` | [LST](/docs/cli/lst) |
 | **Confidential** | `conf-fund 100 --token USDC` | [Confidential](/docs/cli/confidential) |
 | **Portfolio** | `portfolio-rebalance --target "50 ETH, 30 USDC, 20 STRK"` | [Portfolio](/docs/cli/portfolio) |
 | **Gas Modes** | `config set-gasfree on` / `config set-gas-token USDC` | [Configuration](/docs/configuration) |
 
-→ **[Full CLI Reference (41 commands)](https://docs.starkfi.app/docs/cli)**
+→ **[Full CLI Reference (50 commands)](https://docs.starkfi.app/docs/cli)**
 
 ---
 
 ## AI Integration
 
-### MCP Server (42 Tools)
+### MCP Server (51 Tools)
 
 ```bash
 npx starkfi@latest mcp-start
@@ -104,6 +106,8 @@ Add to your AI client config (Cursor, Claude Desktop, Antigravity):
 | Lending | `list_lending_pools`, `get_lending_position`, `supply_assets`, `withdraw_assets`, `borrow_assets`, `repay_debt`, `close_position`, `monitor_lending_position`, `auto_rebalance_lending`, `lending_quote_health` | 10 |
 | DCA | `dca_preview`, `dca_create`, `dca_list`, `dca_cancel` | 4 |
 | Confidential | `confidential_setup`, `confidential_balance`, `confidential_fund`, `confidential_transfer`, `confidential_withdraw`, `confidential_ragequit`, `confidential_rollover` | 7 |
+| Troves Vaults | `list_troves_strategies`, `get_troves_position`, `troves_deposit`, `troves_withdraw` | 4 |
+| LST Staking | `get_lst_position`, `get_lst_stats`, `lst_stake`, `lst_redeem`, `lst_exit_all` | 5 |
 
 → **[Full MCP Documentation](https://docs.starkfi.app/docs/mcp)** · **[Tool Schemas (MCP.md)](MCP.md)**
 
@@ -129,11 +133,11 @@ Chat-based DeFi via natural language with BYOAI model (OpenAI, Claude, Gemini).
 
 ```
 src/
-├── commands/      # 12 command groups (41 commands)
-├── services/      # 15 service modules
-├── mcp/           # MCP server (42 tools, stdio transport)
+├── commands/      # 14 command groups (50 commands)
+├── services/      # 17 service modules
+├── mcp/           # MCP server (51 tools, stdio transport)
 ├── lib/           # 15 shared utilities
-skills/            # 12 agent skills
+skills/            # 14 agent skills
 server/            # Auth server (Hono + Privy TEE)
 docs/              # Documentation site (Fumadocs)
 ```
@@ -144,16 +148,18 @@ docs/              # Documentation site (Fumadocs)
 
 ## Starkzap Modules
 
-StarkFi leverages **all core Starkzap modules**:
+StarkFi leverages **all core Starkzap v3 modules**:
 
 | Module | Usage |
 | --- | --- |
 | **Wallets** | `OnboardStrategy.Privy` + `argentXV050` for email-based wallet onboarding |
-| **Paymaster** | Gas abstraction with 5 tokens + developer-sponsored gasfree mode |
+| **Paymaster** | Gas abstraction with v3 `{ type: "paymaster", gasToken }` union |
 | **Staking** | Multi-token lifecycle (STRK, WBTC, tBTC, SolvBTC, LBTC) |
 | **DCA** | Recurring buy orders via AVNU and Ekubo |
-| **TxBuilder** | Atomic multicall batching (swap + stake + lend + send + DCA) |
+| **TxBuilder** | Atomic multicall batching (swap + stake + lend + send + DCA + troves) |
 | **Confidential** | Privacy-preserving transfers via Tongo Cash (ZK proofs) |
+| **Troves** | DeFi vault strategies — deposit/withdraw into yield-bearing vaults |
+| **Endur LST** | Liquid staking (STRK → xSTRK) — yield embedded in share price |
 | **ERC-20** | Token presets, balance queries, transfers, approvals |
 
 ---

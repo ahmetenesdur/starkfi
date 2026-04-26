@@ -1,4 +1,4 @@
 {
 	"title": "Integrations",
-	"pages": ["starkzap", "fibrous", "vesu", "paymaster", "telegram-bot"]
+	"pages": ["starkzap", "fibrous", "vesu", "troves", "endur", "paymaster", "telegram-bot"]
 }

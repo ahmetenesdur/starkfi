@@ -7,12 +7,12 @@ description: Combine multiple DeFi operations into a single atomic transaction
 
 ## Overview
 
-The `batch` command lets you combine multiple operations — swaps, staking, lending (supply, borrow, repay, withdraw), sends, and DCA orders — into a single atomic Starknet transaction using multicall. All operations succeed together or revert together.
+The `batch` command lets you combine multiple operations — swaps, staking, lending (supply, borrow, repay, withdraw), sends, DCA orders, and Troves vault deposits/withdrawals — into a single atomic Starknet transaction using multicall. All operations succeed together or revert together.
 
 ## Usage
 
 ```bash
-starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [--borrow "..."] [--repay "..."] [--withdraw "..."] [--dca-create "..."] [--dca-cancel "..."] [flags]
+starkfi batch [--swap "..."] [--stake "..."] [--supply "..."] [--send "..."] [--borrow "..."] [--repay "..."] [--withdraw "..."] [--dca-create "..."] [--dca-cancel "..."] [--troves-deposit "..."] [--troves-withdraw "..."] [flags]
 ```
 
 At least **2 operations** are required per batch. Each flag can be repeated.
@@ -30,6 +30,8 @@ At least **2 operations** are required per batch. Each flag can be repeated.
 | `--withdraw "<amount> <token> <pool>"`   | Withdraw from lending pool      |
 | `--dca-create "<amount> <sell> <buy> <perCycle> [frequency]"` | Create DCA order   |
 | `--dca-cancel "<orderId>"`             | Cancel DCA order                |
+| `--troves-deposit "<amount> <strategy> [token]"` | Deposit into Troves vault      |
+| `--troves-withdraw "<amount> <strategy> [token]"` | Withdraw from Troves vault    |
 | `--simulate`                             | Estimate fees without executing |
 | `--json`                                 | Output raw JSON                 |
 
@@ -95,6 +97,22 @@ Example: `--withdraw "200 USDC Prime"`
 --dca-cancel "<orderId>"
 ```
 
+### Troves Deposit
+
+```bash
+--troves-deposit "<amount> <strategy_id> [token]"
+```
+
+Example: `--troves-deposit "100 evergreen_strk"`
+
+### Troves Withdraw
+
+```bash
+--troves-withdraw "<amount> <strategy_id> [token]"
+```
+
+Example: `--troves-withdraw "50 evergreen_strk"`
+
 ## Examples
 
 Swap ETH to USDC, then stake STRK — all in one transaction:
@@ -127,6 +145,14 @@ Borrow and swap in a single transaction:
 starkfi batch \
   --borrow "0.5 ETH 500 USDC Prime" \
   --swap "250 USDC STRK"
+```
+
+Swap and deposit into a vault:
+
+```bash
+starkfi batch \
+  --swap "100 USDC STRK" \
+  --troves-deposit "100 STRK evergreen_strk"
 ```
 
 ## How It Works

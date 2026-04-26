@@ -84,7 +84,7 @@ Each swap object: `{ amount, from_token, to_token }`
 
 ## batch_execute
 
-Execute a batch of mixed operations (swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel) atomically in a single Starknet multicall.
+Execute a batch of mixed operations (swap, stake, supply, send, borrow, repay, withdraw, dca-create, dca-cancel, troves-deposit, troves-withdraw) atomically in a single Starknet multicall.
 
 | Param        | Type    | Required | Description                                   |
 | ------------ | ------- | -------- | --------------------------------------------- |
@@ -104,6 +104,8 @@ Each operation has a `type` and `params`:
 | `withdraw` | `amount`, `token`, `pool`              | `{ "type": "withdraw", "params": { "amount": "200", "token": "USDC", "pool": "Prime" } }`    |
 | `dca-create` | `sell_amount`, `sell_token`, `buy_token`, `amount_per_cycle`, `frequency?` | `{ "type": "dca-create", "params": { "sell_amount": "1000", "sell_token": "USDC", "buy_token": "ETH", "amount_per_cycle": "10" } }` |
 | `dca-cancel` | `order_id`, `provider?`              | `{ "type": "dca-cancel", "params": { "order_id": "abc123" } }`                                |
+| `troves-deposit` | `amount`, `strategy_id`, `token?`  | `{ "type": "troves-deposit", "params": { "amount": "100", "strategy_id": "evergreen_strk" } }` |
+| `troves-withdraw` | `amount`, `strategy_id`, `token?` | `{ "type": "troves-withdraw", "params": { "amount": "50", "strategy_id": "evergreen_strk" } }` |
 
 > **Note:** Minimum 2 operations required per batch. Each operation is executed atomically — if any fails, the entire batch reverts.
 
