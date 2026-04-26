@@ -5,7 +5,7 @@ description: StarkFi — Starknet DeFi from your terminal and AI agents
 
 ## What is StarkFi?
 
-**StarkFi** is a Starknet DeFi toolkit that lets you swap, stake, lend, DCA, batch, transfer confidentially, and manage your portfolio — all from the **terminal** or through **AI agents** via the MCP server.
+**StarkFi** is a Starknet DeFi toolkit that lets you swap, stake, lend, DCA, batch, deposit into yield vaults, liquid stake, transfer confidentially, and manage your portfolio — all from the **terminal** or through **AI agents** via the MCP server.
 
 No browser needed. No wallet extension. Just authenticate with your email and start interacting with DeFi protocols directly.
 
@@ -34,6 +34,8 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 | **Staking**         | Delegate STRK, WBTC, tBTC, SolvBTC, LBTC to validators       | `stake`, `unstake`, `rewards` |
 | **Lending**         | Supply, borrow, repay, monitor, auto-rebalance on Vesu V2     | `lend-supply`, `lend-borrow`, `lend-monitor`, `lend-auto` |
 | **DCA**             | Recurring buy orders via AVNU and Ekubo                        | `dca-create`, `dca-list`, `dca-cancel` |
+| **Troves Vaults**   | Deposit/withdraw into DeFi yield vault strategies             | `troves-list`, `troves-deposit`, `troves-withdraw` |
+| **LST Staking**     | Liquid staking via Endur (e.g. STRK → xSTRK)                 | `lst-stake`, `lst-redeem`, `lst-exit-all` |
 | **Confidential**    | Privacy-preserving transfers via Tongo Cash (ZK proofs)       | `conf-fund`, `conf-transfer`, `conf-withdraw` |
 | **Batch**           | Combine multiple operations into a single atomic transaction | `batch`                       |
 | **Portfolio**       | Full DeFi dashboard with USD valuations + rebalancing         | `portfolio`, `portfolio-rebalance` |
@@ -43,13 +45,13 @@ Or install globally with `npm i -g starkfi@latest` for a shorter command.
 
 ### CLI — For Developers and Power Users
 
-41 commands across 12 groups for every DeFi operation. Supports `--simulate` for dry-runs and `--json` for machine-readable output.
+50 commands across 14 groups for every DeFi operation. Supports `--simulate` for dry-runs and `--json` for machine-readable output.
 
 → [CLI Reference](/docs/cli)
 
 ### MCP Server — For AI Agents
 
-42 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage DCA orders, monitor lending positions, transfer confidentially, rebalance portfolios, and execute batch operations.
+51 typed tools that integrate with Claude, Cursor, Antigravity, and any MCP-compatible client. AI agents can swap tokens, manage DCA orders, monitor lending positions, deposit into yield vaults, liquid stake, transfer confidentially, rebalance portfolios, and execute batch operations.
 
 → [MCP Server](/docs/mcp)
 

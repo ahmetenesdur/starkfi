@@ -16,11 +16,11 @@ StarkFi follows a layered architecture with four entry points that share a commo
     <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-[#111111]">
       <div className="flex flex-col items-center justify-center p-4 text-center">
         <span className="font-semibold text-zinc-900 dark:text-zinc-100">CLI</span>
-        <span className="text-[11px] text-zinc-500 mt-1">42 commands</span>
+        <span className="text-[11px] text-zinc-500 mt-1">50 commands</span>
       </div>
       <div className="flex flex-col items-center justify-center p-4 text-center">
         <span className="font-semibold text-zinc-900 dark:text-zinc-100">MCP Server</span>
-        <span className="text-[11px] text-zinc-500 mt-1">42 tools (stdio)</span>
+        <span className="text-[11px] text-zinc-500 mt-1">51 tools (stdio)</span>
       </div>
       <div className="flex flex-col items-center justify-center p-4 text-center">
         <span className="font-semibold text-zinc-900 dark:text-zinc-100">Agent Skills</span>
@@ -48,6 +48,8 @@ StarkFi follows a layered architecture with four entry points that share a commo
       <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Vesu V2</div>
       <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">DCA Orders</div>
       <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Batch Multicall</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Troves</div>
+      <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Endur LST</div>
       <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Portfolio</div>
       <div className="rounded-lg border border-primary/30 bg-white dark:bg-zinc-950 p-2 text-center text-xs font-medium dark:text-zinc-200 shadow-sm flex items-center justify-center">Tongo Cash</div>
     </div>
@@ -63,8 +65,8 @@ StarkFi follows a layered architecture with four entry points that share a commo
       3. SDK Integration
     </div>
     <div className="p-4 text-center bg-white dark:bg-[#111111]">
-      <div className="font-semibold text-zinc-900 dark:text-zinc-100">Starkzap SDK (v2.0.0)</div>
-      <div className="text-[11px] text-zinc-500 mt-1">Wallet · TxBuilder · Tokens · Paymaster</div>
+      <div className="font-semibold text-zinc-900 dark:text-zinc-100">Starkzap SDK (v3.0.0)</div>
+      <div className="text-[11px] text-zinc-500 mt-1">Wallet · TxBuilder · Tokens · Paymaster · Troves · LST</div>
     </div>
   </div>
 
@@ -109,25 +111,29 @@ StarkFi follows a layered architecture with four entry points that share a commo
 ```
 src/
 ├── index.ts          # CLI entry point (Commander.js)
-├── commands/         # 12 command directories
+├── commands/         # 14 command directories
 │   ├── auth/         # login, verify, logout
 │   ├── wallet/       # address, balance, send, deploy
 │   ├── trade/        # trade, multi-swap
 │   ├── staking/      # stake, unstake, rewards, pools, validators, stake-status
 │   ├── lending/      # lend-pools, lend-supply, lend-withdraw, lend-borrow, lend-repay, lend-close, lend-status, lend-monitor, lend-auto
 │   ├── dca/          # dca-preview, dca-create, dca-list, dca-cancel
+│   ├── troves/       # troves-list, troves-position, troves-deposit, troves-withdraw
+│   ├── lst/          # lst-position, lst-stats, lst-stake, lst-redeem, lst-exit-all
 │   ├── confidential/ # conf-setup, conf-balance, conf-fund, conf-transfer, conf-withdraw, conf-ragequit, conf-rollover
 │   ├── batch/        # batch multicall
 │   ├── portfolio/    # portfolio dashboard
 │   ├── config/       # config subcommands
 │   ├── chain/        # tx-status
 │   └── system/       # status (mcp-start is inline in index.ts)
-├── services/         # 15 service modules
+├── services/         # 17 service modules
 │   ├── starkzap/     # SDK client initialization + config
 │   ├── fibrous/      # DEX routing, calldata, pricing
 │   ├── vesu/         # Lending pool API + on-chain operations
 │   ├── staking/      # Validator resolution + pool operations
 │   ├── dca/          # DCA order management (create, cancel, list, preview)
+│   ├── troves/       # Troves vault strategy operations
+│   ├── lst/          # Endur liquid staking operations
 │   ├── confidential/ # Tongo Cash config + privacy-preserving transfers
 │   ├── tokens/       # Token resolution + balance queries
 │   ├── batch/        # Multicall composition via TxBuilder
@@ -140,8 +146,8 @@ src/
 │   └── swap/         # Multi-provider swap aggregation (Fibrous, AVNU, Ekubo)
 ├── mcp/              # MCP server layer
 │   ├── server.ts     # Server setup + stdio transport
-│   ├── tools/        # 7 domain tool files + 2 utilities (Zod schemas)
-│   └── handlers/     # 11 domain handlers + 3 utility files
+│   ├── tools/        # 9 domain tool files + 2 utilities (Zod schemas)
+│   └── handlers/     # 13 domain handlers + 3 utility files
 └── lib/              # 16 shared utilities
     ├── errors.ts     # ErrorCode enum (36 codes) + StarkfiError class
     ├── parse-starknet-error.ts # Cairo hex decoding + error map (15 patterns)
@@ -167,7 +173,7 @@ src/
 
 Each service module is self-contained — the Fibrous service doesn't know about Vesu, and vice versa. Cross-service composition happens only in dedicated orchestrators:
 
-- **`batch`** service composes swap + stake + supply + borrow + repay + withdraw + send + dca-create + dca-cancel operations
+- **`batch`** service composes swap + stake + supply + borrow + repay + withdraw + send + dca-create + dca-cancel + troves-deposit + troves-withdraw operations
 - **`portfolio`** service aggregates data from tokens, staking, and lending services
 
 ### Tool → Handler → Service (MCP)
@@ -208,7 +214,7 @@ Every transactional command supports `--simulate` (CLI) or simulation parameters
 
 | Layer                 | Technology                                                                                           | Version         |
 | --------------------- | ---------------------------------------------------------------------------------------------------- | --------------- |
-| **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                                        | v2.0.0          |
+| **Core SDK**          | [Starkzap](https://github.com/keep-starknet-strange/starkzap)                                        | v3.0.0          |
 | **CLI Framework**     | [Commander.js](https://github.com/tj/commander.js)                                                   | v14.0.3         |
 | **MCP Protocol**      | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk)                             | v1.29.0         |
 | **Schema Validation** | [Zod](https://zod.dev/)                                                                              | v4.3.6          |

@@ -1,0 +1,117 @@
+---
+title: Troves Tools
+description: MCP tools for DeFi yield vault strategies — list, deposit, withdraw, and check positions
+---
+
+## Overview
+
+Troves MCP tools let AI agents interact with DeFi yield vault strategies on Starknet. Strategies range from single-asset vaults to LP strategies and leveraged positions — all audited and managed by the Troves protocol.
+
+> **Agent tip:** Always call `list_troves_strategies` to validate a strategy exists and check its risk profile before depositing.
+
+## Tools
+
+### `list_troves_strategies`
+
+| Property | Value |
+| --- | --- |
+| **Type** | read |
+| **Description** | List all active Troves vault strategies with APY, TVL, and risk tier |
+
+**Input Schema:**
+
+No required parameters.
+
+**Response:**
+
+```json
+{
+  "strategies": [
+    {
+      "id": "evergreen_strk",
+      "name": "STRK Evergreen",
+      "apy": "5.23%",
+      "tvlUsd": "$2.02K",
+      "depositTokens": ["STRK"],
+      "riskFactor": 1.1,
+      "isAudited": true,
+      "status": "Active"
+    }
+  ]
+}
+```
+
+---
+
+### `get_troves_position`
+
+| Property | Value |
+| --- | --- |
+| **Type** | read |
+| **Description** | User vault position — shares and underlying asset value |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `strategy_id` | string | ✅ | Strategy ID (e.g. `evergreen_strk`) |
+
+**Response:**
+
+```json
+{
+  "strategyId": "evergreen_strk",
+  "vaultAddress": "0x...",
+  "shares": "100.0",
+  "amounts": [{ "token": "STRK", "amount": "102.5" }]
+}
+```
+
+---
+
+### `troves_deposit`
+
+| Property | Value |
+| --- | --- |
+| **Type** | write |
+| **Description** | Deposit into a Troves vault strategy |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `strategy_id` | string | ✅ | — | Strategy ID |
+| `amount` | string | ✅ | — | Amount to deposit |
+| `token` | string | ❌ | `STRK` | Token symbol |
+| `simulate` | boolean | ❌ | `false` | Dry-run without executing |
+
+---
+
+### `troves_withdraw`
+
+| Property | Value |
+| --- | --- |
+| **Type** | write |
+| **Description** | Withdraw from a Troves vault strategy |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `strategy_id` | string | ✅ | — | Strategy ID |
+| `amount` | string | ✅ | — | Amount to withdraw |
+| `token` | string | ❌ | `STRK` | Token symbol |
+| `simulate` | boolean | ❌ | `false` | Dry-run without executing |
+
+---
+
+## Agent Best Practices
+
+1. **List before depositing** — Call `list_troves_strategies` to verify the strategy exists and check current APY/risk
+2. **Check existing position** — Call `get_troves_position` before depositing to see current exposure
+3. **Simulate first** — Set `simulate: true` on deposit/withdraw to preview fees
+4. **Confirm with user** — Always get explicit confirmation before executing write operations
+
+---
+
+> **CLI equivalents:** [Troves Commands](/docs/cli/troves) — `troves-list`, `troves-position`, `troves-deposit`, `troves-withdraw`

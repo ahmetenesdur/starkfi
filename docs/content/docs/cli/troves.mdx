@@ -1,0 +1,98 @@
+---
+title: Troves Commands
+description: DeFi yield vault strategies — list, deposit, withdraw, and check positions
+---
+
+> **Prerequisite:** Requires an active authenticated session. Run `starkfi auth login` first.
+
+## Overview
+
+Troves commands let you interact with DeFi yield vault strategies on Starknet. Strategies include single-asset vaults (e.g. STRK Evergreen), LP vaults (e.g. Ekubo STRK/USDC), and leveraged strategies — all audited and managed by the Troves protocol.
+
+## Commands
+
+### `troves-list`
+
+List all active vault strategies with APY, TVL, risk tier, and deposit tokens.
+
+```bash
+starkfi troves-list
+starkfi troves-list --json
+```
+
+**Output columns:** ID, Name, APY, TVL, Tokens, Risk Factor, Audited
+
+### `troves-position`
+
+Show your position in a specific strategy — share balance and underlying asset value.
+
+```bash
+starkfi troves-position <strategy-id>
+starkfi troves-position evergreen_strk --json
+```
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `strategy-id` | ✅ | Strategy identifier (from `troves-list`) |
+
+### `troves-deposit`
+
+Deposit tokens into a vault strategy.
+
+```bash
+starkfi troves-deposit <amount> <strategy-id> [-t <token>]
+```
+
+| Argument/Flag | Required | Default | Description |
+| --- | --- | --- | --- |
+| `amount` | ✅ | — | Amount to deposit |
+| `strategy-id` | ✅ | — | Strategy identifier |
+| `-t, --token` | ❌ | STRK | Token symbol to deposit |
+
+**Examples:**
+
+```bash
+starkfi troves-deposit 100 evergreen_strk
+starkfi troves-deposit 0.5 ekubo_cl_strketh -t ETH
+starkfi troves-deposit 100 evergreen_strk --simulate
+```
+
+### `troves-withdraw`
+
+Withdraw tokens from a vault strategy.
+
+```bash
+starkfi troves-withdraw <amount> <strategy-id> [-t <token>]
+```
+
+| Argument/Flag | Required | Default | Description |
+| --- | --- | --- | --- |
+| `amount` | ✅ | — | Amount to withdraw |
+| `strategy-id` | ✅ | — | Strategy identifier |
+| `-t, --token` | ❌ | STRK | Token symbol to withdraw |
+
+**Examples:**
+
+```bash
+starkfi troves-withdraw 50 evergreen_strk
+starkfi troves-withdraw 0.25 ekubo_cl_strketh -t ETH
+```
+
+## Best Practices
+
+1. **List before depositing** — Always run `troves-list` to verify the strategy exists and check the current APY
+2. **Check positions** — Use `troves-position` to see your current deposit before adding more or withdrawing
+3. **Simulate first** — Use `--simulate` on deposit/withdraw to preview fees before executing
+4. **Understand risk** — Check the `riskFactor` and `isAudited` fields before depositing
+
+## Batch Support
+
+Troves operations can be combined with other DeFi operations in a single atomic transaction:
+
+```bash
+starkfi batch --swap "100 USDC STRK" --troves-deposit "100 STRK evergreen_strk"
+```
+
+---
+
+> **MCP equivalents:** [Troves Tools](/docs/mcp/tools-troves) — `list_troves_strategies`, `get_troves_position`, `troves_deposit`, `troves_withdraw`

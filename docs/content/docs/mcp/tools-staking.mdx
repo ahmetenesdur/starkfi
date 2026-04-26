@@ -106,6 +106,8 @@ Withdraw staking rewards from a pool to the user's wallet.
 
 > **Tip:** Use `get_staking_info` first to check the unclaimed rewards amount.
 
+> **⚠️ Warning:** Do **not** use this tool for Endur LST positions (xSTRK). LST yield is embedded in the share price — there are no separate rewards to claim. Use `lst_redeem` or `lst_exit_all` instead. See [LST Tools](/docs/mcp/tools-lst).
+
 ---
 
 ## compound_rewards
@@ -115,6 +117,10 @@ Atomically claim and re-stake rewards in a single transaction (compound interest
 | Param  | Type   | Required | Description                     |
 | ------ | ------ | -------- | ------------------------------- |
 | `pool` | string | Yes      | Pool contract address (`0x...`) |
+
+---
+
+> **⚠️ Warning:** Do **not** use this tool for Endur LST positions. LST yield is automatic via share price appreciation. See [LST Tools](/docs/mcp/tools-lst).
 
 ---
 

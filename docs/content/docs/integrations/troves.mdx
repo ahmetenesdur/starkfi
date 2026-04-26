@@ -1,0 +1,53 @@
+---
+title: Troves Protocol
+description: DeFi yield vault strategies — how StarkFi integrates with Troves
+---
+
+## Overview
+
+[Troves](https://troves.fi) is a DeFi yield vault protocol on Starknet that provides curated vault strategies. Strategies range from single-asset vaults (e.g. STRK Evergreen) to LP strategies (e.g. Ekubo STRK/USDC concentrated liquidity) and leveraged positions.
+
+StarkFi integrates with Troves via the **Starkzap v3 SDK**, using native `TxBuilder.trovesDeposit()` and `trovesWithdraw()` methods for atomic vault operations.
+
+## How StarkFi Uses Troves
+
+| Operation | Starkzap API | StarkFi CLI | MCP Tool |
+| --- | --- | --- | --- |
+| List strategies | `sdk.troves.listStrategies()` | `troves-list` | `list_troves_strategies` |
+| Check position | `sdk.troves.getPosition()` | `troves-position` | `get_troves_position` |
+| Deposit | `TxBuilder.trovesDeposit()` | `troves-deposit` | `troves_deposit` |
+| Withdraw | `TxBuilder.trovesWithdraw()` | `troves-withdraw` | `troves_withdraw` |
+
+## Strategy Properties
+
+Each strategy exposes the following properties:
+
+| Property | Description |
+| --- | --- |
+| `id` | Unique strategy identifier (e.g. `evergreen_strk`) |
+| `name` | Human-readable strategy name |
+| `apy` | Current annual percentage yield |
+| `tvlUsd` | Total value locked in USD |
+| `depositTokens` | Accepted deposit tokens |
+| `riskFactor` | Risk rating (1.0 = low, 5.0 = high) |
+| `isAudited` | Whether the strategy has been audited |
+| `status` | `Active`, `Paused`, or `Deprecated` |
+
+## Batch Support
+
+Troves operations integrate with the batch engine. You can combine vault operations with swaps, staking, and lending in a single atomic transaction:
+
+```typescript
+const tx = await wallet.tx()
+  .swap(usdcToStrk)
+  .trovesDeposit({ strategyId: "evergreen_strk", amount })
+  .send({ feeMode });
+```
+
+---
+
+## See Also
+
+- **[Troves CLI Commands](/docs/cli/troves)** — Full CLI reference
+- **[Troves MCP Tools](/docs/mcp/tools-troves)** — AI agent tool reference
+- **[Starkzap SDK](/docs/integrations/starkzap)** — Core SDK documentation

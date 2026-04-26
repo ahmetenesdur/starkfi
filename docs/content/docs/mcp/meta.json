@@ -9,6 +9,8 @@
 		"tools-staking",
 		"tools-lending",
 		"tools-dca",
+		"tools-troves",
+		"tools-lst",
 		"tools-confidential"
 	]
 }

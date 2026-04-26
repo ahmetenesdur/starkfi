@@ -1,0 +1,128 @@
+---
+title: LST Tools
+description: MCP tools for Endur liquid staking — stake, redeem, check positions and stats
+---
+
+## Overview
+
+LST (Liquid Staking Token) MCP tools let AI agents interact with Endur liquid staking on Starknet. When users stake STRK, they receive xSTRK — a liquid token whose value appreciates as staking yield accrues.
+
+> **⚠️ Critical:** Endur LST yield is **embedded in the share price**. Do **not** call `claim_rewards` for LST positions — there is nothing to claim. Use `lst_redeem` or `lst_exit_all` to realize yield.
+
+## Tools
+
+### `get_lst_position`
+
+| Property | Value |
+| --- | --- |
+| **Type** | read |
+| **Description** | User's liquid staking position — LST shares and equivalent underlying value |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `asset` | string | ❌ | `STRK` | Underlying asset symbol |
+
+**Response:**
+
+```json
+{
+  "asset": "STRK",
+  "lstToken": "xSTRK",
+  "shareBalance": "100.0",
+  "underlyingValue": "105.7",
+  "exchangeRate": "1.057"
+}
+```
+
+---
+
+### `get_lst_stats`
+
+| Property | Value |
+| --- | --- |
+| **Type** | read |
+| **Description** | Endur LST protocol statistics — current APY, total value locked |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `asset` | string | ❌ | `STRK` | Asset to query |
+
+**Response:**
+
+```json
+{
+  "asset": "STRK",
+  "lstToken": "xSTRK",
+  "apy": "4.85%",
+  "tvl": "$12.5M",
+  "exchangeRate": "1.057"
+}
+```
+
+---
+
+### `lst_stake`
+
+| Property | Value |
+| --- | --- |
+| **Type** | write |
+| **Description** | Deposit into Endur liquid staking (e.g. STRK → xSTRK) |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `amount` | string | ✅ | — | Amount to stake |
+| `asset` | string | ❌ | `STRK` | Asset to stake |
+| `simulate` | boolean | ❌ | `false` | Dry-run without executing |
+
+---
+
+### `lst_redeem`
+
+| Property | Value |
+| --- | --- |
+| **Type** | write |
+| **Description** | Redeem a specific amount of LST shares back to the underlying asset |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `amount` | string | ✅ | — | Amount of LST shares to redeem |
+| `asset` | string | ❌ | `STRK` | Underlying asset |
+| `simulate` | boolean | ❌ | `false` | Dry-run without executing |
+
+---
+
+### `lst_exit_all`
+
+| Property | Value |
+| --- | --- |
+| **Type** | write |
+| **Description** | Redeem entire LST position for a given asset |
+
+**Input Schema:**
+
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `asset` | string | ❌ | `STRK` | Asset to exit completely |
+| `simulate` | boolean | ❌ | `false` | Dry-run without executing |
+
+---
+
+## Agent Best Practices
+
+1. **Check position first** — Call `get_lst_position` before any action to understand current exposure
+2. **Never use `claim_rewards`** — LST yield is automatic via share price appreciation; calling claim will fail or yield nothing
+3. **Use `get_lst_stats` for APY** — Always check the live APY before recommending liquid staking to users
+4. **Simulate first** — Set `simulate: true` on stake/redeem/exit to preview fees
+5. **Explain the yield model** — Inform users that xSTRK value grows over time, so redeeming later yields more underlying tokens
+
+---
+
+> **CLI equivalents:** [LST Commands](/docs/cli/lst) — `lst-position`, `lst-stats`, `lst-stake`, `lst-redeem`, `lst-exit-all`

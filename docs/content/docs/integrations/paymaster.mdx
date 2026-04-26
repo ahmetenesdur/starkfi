@@ -19,7 +19,7 @@ The developer pre-funds the Paymaster with credits. Users execute transactions w
 starkfi config set-gasfree on
 ```
 
-Under the hood, transactions are sent with `feeMode: "sponsored"` to the AVNU Paymaster endpoint.
+Under the hood, transactions are sent with `feeMode: { type: "paymaster", gasToken }` to the AVNU Paymaster endpoint.
 
 | Best for             | How it works                                   |
 | -------------------- | ---------------------------------------------- |
@@ -34,7 +34,7 @@ Users pay gas in an ERC-20 token (ETH, USDC, USDT, DAI) instead of the default S
 starkfi config set-gas-token USDC
 ```
 
-Under the hood, the SDK patches the wallet's `executePaymasterTransaction` to inject `{ mode: "default", gasToken: <tokenAddress> }`.
+Under the hood, the SDK uses the v3 discriminated FeeMode union `{ type: "paymaster", gasToken: <tokenAddress> }` to inject the gas token configuration.
 
 | Best for                 | How it works                        |
 | ------------------------ | ----------------------------------- |
