@@ -18,13 +18,13 @@
 		<title>StarkFi | Starknet DeFi CLI + MCP Server + Agent Skills</title>
 		<meta
 			name="description"
-			content="StarkFi — Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 42 MCP tools, 12 Agent Skills, tx simulation, gas abstraction."
+			content="StarkFi — Swap, stake, lend, vault strategies, liquid staking, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 51 MCP tools, 14 Agent Skills, tx simulation, gas abstraction."
 		/>
 
 		<!-- SEO Essentials -->
 		<meta
 			name="keywords"
-			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, DCA, Batch, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain, Telegram Bot"
+			content="StarkFi, Starknet, DeFi, CLI, MCP, AI Agent, Swap, Stake, Lend, DCA, Batch, Troves, Liquid Staking, xSTRK, Endur, Starkzap, Paymaster, Gas Abstraction, Web3, Blockchain, Telegram Bot"
 		/>
 		<meta name="author" content="ahmetenesdur" />
 		<meta name="robots" content="index, follow" />
@@ -43,7 +43,7 @@
 		/>
 		<meta
 			property="og:description"
-			content="Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 42 MCP tools, 12 Agent Skills, tx simulation, gas abstraction."
+			content="Swap, stake, lend, vault strategies, liquid staking, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 51 MCP tools, 14 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta property="og:image" content="https://starkfi.app/og-image.png" />
 		<meta property="og:image:width" content="1200" />
@@ -57,7 +57,7 @@
 		<meta name="twitter:title" content="StarkFi | Starknet DeFi from your Terminal & AI" />
 		<meta
 			name="twitter:description"
-			content="Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 42 MCP tools, 12 Agent Skills, tx simulation, gas abstraction."
+			content="Swap, stake, lend, vault strategies, liquid staking, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 51 MCP tools, 14 Agent Skills, tx simulation, gas abstraction."
 		/>
 		<meta name="twitter:image" content="https://starkfi.app/og-image.png" />
 		<meta name="twitter:site" content="@starkfiapp" />
@@ -69,7 +69,7 @@
 				"@type": "SoftwareApplication",
 				"name": "StarkFi",
 				"url": "https://starkfi.app",
-				"description": "Swap, stake, lend, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 42 MCP tools, 12 Agent Skills, tx simulation, gas abstraction.",
+				"description": "Swap, stake, lend, vault strategies, liquid staking, DCA, batch and rebalance on Starknet from the CLI, AI agents or Telegram. 51 MCP tools, 14 Agent Skills, tx simulation, gas abstraction.",
 				"applicationCategory": "DeveloperApplication",
 				"operatingSystem": "Cross-platform",
 				"offers": {
@@ -295,8 +295,8 @@
 					<p
 						class="text-zinc-600 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
 					>
-						Swap, stake, lend, DCA and batch on Starknet &mdash; from the CLI, AI agents
-						or Telegram. 42 MCP tools, 12 Agent Skills, built-in gas abstraction.
+						Swap, stake, lend, vault strategies, liquid staking, DCA and batch on Starknet &mdash; from the CLI, AI agents
+						or Telegram. 51 MCP tools, 14 Agent Skills, built-in gas abstraction.
 					</p>
 					<div class="flex flex-col items-center gap-6 w-full px-4 sm:px-0">
 						<div
@@ -447,7 +447,7 @@
 							>MCP Tools</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
-							>42</span
+							>51</span
 						>
 					</div>
 					<div
@@ -458,7 +458,7 @@
 							>Commands</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
-							>42<span class="text-pastel-blue">+</span></span
+							>50<span class="text-pastel-blue">+</span></span
 						>
 					</div>
 					<div
@@ -469,7 +469,7 @@
 							>Agent Skills</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-zinc-100"
-							>12</span
+							>14</span
 						>
 					</div>
 					<div
@@ -480,7 +480,7 @@
 							>Protocols</span
 						>
 						<span class="text-4xl md:text-5xl font-display font-light text-pastel-mint"
-							>5</span
+							>7</span
 						>
 					</div>
 				</div>
@@ -552,7 +552,7 @@
 								Batch Transactions
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Combine swap + stake + supply + borrow + repay + withdraw + send + DCA into a single transaction.
+								Combine swap + stake + supply + borrow + repay + withdraw + send + DCA + vault ops into a single transaction.
 								Define steps inline, execute everything atomically.
 							</p>
 						</div>
@@ -590,11 +590,11 @@
 								>
 							</div>
 							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
-								Liquid Staking
+								Staking &amp; LST
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Stake, unstake and claim rewards across pools and validators.
-								Supports STRK, WBTC and BTC variants.
+								Delegation staking across validators + Endur liquid staking (STRK &rarr; xSTRK).
+								Supports STRK, WBTC, tBTC, SolvBTC, LBTC.
 							</p>
 						</div>
 
@@ -634,7 +634,7 @@
 								MCP Server + Skills
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								42 MCP tools + 12 Agent Skills. Let Claude, Cursor or any
+								51 MCP tools + 14 Agent Skills. Let Claude, Cursor or any
 								MCP-compatible agent operate autonomously.
 							</p>
 						</div>
@@ -652,8 +652,8 @@
 								Portfolio &amp; Rebalance
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
-								Full portfolio view with USD values. Set target allocations
-								and auto-rebalance via optimized multi-swap.
+								Full portfolio view with USD values, staking, vault, and LST positions.
+								Set target allocations and auto-rebalance via optimized multi-swap.
 							</p>
 						</div>
 
@@ -689,7 +689,27 @@
 							</h3>
 							<p class="text-zinc-600 text-sm leading-relaxed font-light">
 								AI-powered DeFi on Telegram. Bring your own model &mdash;
-								OpenAI, Claude or Gemini. Chat to swap, stake, lend and DCA.
+								OpenAI, Claude or Gemini. Chat to swap, stake, lend, vault deposit and LST.
+							</p>
+						</div>
+
+						<!-- Feature Card — Troves Vaults -->
+						<div
+							class="frosted-glass spotlight-card p-8 rounded-3xl group cursor-default"
+						>
+							<div
+								class="size-12 rounded-xl bg-gradient-to-br from-pastel-blue/20 to-transparent border border-white/10 flex items-center justify-center mb-8"
+							>
+								<span class="material-symbols-outlined text-pastel-blue text-2xl"
+									>account_balance_wallet</span
+								>
+							</div>
+							<h3 class="text-zinc-100 font-display text-xl font-semibold mb-3">
+								Troves Vaults
+							</h3>
+							<p class="text-zinc-600 text-sm leading-relaxed font-light">
+								Browse DeFi vault strategies, deposit into yield-generating
+								vaults and withdraw anytime. APY, TVL and risk metadata included.
 							</p>
 						</div>
 
@@ -755,7 +775,7 @@
 								</h2>
 								<p class="text-zinc-600 text-lg font-light">
 									Every feature exposed as an MCP tool &mdash; AI agents like Claude or
-									Cursor can execute DeFi operations directly. 12 Agent Skills
+									Cursor can execute DeFi operations directly. 14 Agent Skills
 									bundle multi-step workflows into single commands.
 								</p>
 							</div>
@@ -774,10 +794,10 @@
 										<h3
 											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
-											42 MCP Tools
+											51 MCP Tools
 										</h3>
 										<p class="text-zinc-600 text-sm leading-relaxed font-light">
-											Swap, stake, lend, DCA, send, batch, portfolio — all exposed
+											Swap, stake, lend, DCA, send, batch, portfolio, vaults, LST — all exposed
 											as typed JSON-schema tools for any MCP-compatible agent.
 										</p>
 									</div>
@@ -795,11 +815,11 @@
 										<h3
 											class="text-zinc-100 font-display text-lg font-semibold mb-2"
 										>
-											12 Agent Skills
+											14 Agent Skills
 										</h3>
 										<p class="text-zinc-600 text-sm leading-relaxed font-light">
 											Pre-packaged multi-step workflows — trade, stake, lend,
-											DCA, batch — that agents can invoke with zero config.
+											DCA, batch, vaults, LST — that agents can invoke with zero config.
 										</p>
 									</div>
 								</div>
