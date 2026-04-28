@@ -159,24 +159,34 @@ function parseOperation(type: string, raw: string): BatchOperation {
 			if (parts.length < 3) {
 				throw new StarkfiError(
 					ErrorCode.INVALID_AMOUNT,
-					`Invalid --troves-deposit format: "${raw}". Expected: "100 USDC strategyId"`
+					`Invalid --troves-deposit format: "${raw}". Expected: "100 USDC strategyId" or "100 STRK strategyId 0.005 ETH"`
 				);
 			}
 			return {
 				type: "troves-deposit",
-				params: { amount: parts[0], token: parts[1], strategy_id: parts[2] },
+				params: {
+					amount: parts[0],
+					token: parts[1],
+					strategy_id: parts[2],
+					...(parts.length >= 5 ? { amount2: parts[3], token2: parts[4] } : {}),
+				},
 			};
 		}
 		case "troves-withdraw": {
 			if (parts.length < 3) {
 				throw new StarkfiError(
 					ErrorCode.INVALID_AMOUNT,
-					`Invalid --troves-withdraw format: "${raw}". Expected: "100 USDC strategyId"`
+					`Invalid --troves-withdraw format: "${raw}". Expected: "100 USDC strategyId" or "100 STRK strategyId 0.005 ETH"`
 				);
 			}
 			return {
 				type: "troves-withdraw",
-				params: { amount: parts[0], token: parts[1], strategy_id: parts[2] },
+				params: {
+					amount: parts[0],
+					token: parts[1],
+					strategy_id: parts[2],
+					...(parts.length >= 5 ? { amount2: parts[3], token2: parts[4] } : {}),
+				},
 			};
 		}
 		default:
@@ -252,8 +262,8 @@ Flag formats:
   --withdraw   "<amount> <token> <pool>"                                e.g. "200 USDC Prime"
   --dca-create "<total> <sell> <buy> <perCycle> [freq]"                  e.g. "100 STRK USDC 10 P1D"
   --dca-cancel "<orderIdOrAddress> [provider]"                          e.g. "0x123... avnu"
-  --troves-deposit "<amount> <token> <strategyId>"                      e.g. "100 USDC strategy123"
-  --troves-withdraw "<amount> <token> <strategyId>"                     e.g. "100 USDC strategy123"
+  --troves-deposit "<amount> <token> <strategyId> [amount2 token2]"      e.g. "100 STRK strategyId" or "100 STRK strategyId 0.005 ETH"
+  --troves-withdraw "<amount> <token> <strategyId> [amount2 token2]"     e.g. "100 STRK strategyId" or "100 STRK strategyId 0.005 ETH"
 
 Minimum 2 operations required. Each flag can be repeated.`
 		)

@@ -41,7 +41,7 @@ export function registerTrovesTools(server: McpServer): number {
 		"troves_deposit",
 		{
 			description:
-				"Deposit tokens into a Troves DeFi vault strategy. ALWAYS call list_troves_strategies first to show available strategies and get_swap_quote to verify token availability.",
+				"Deposit tokens into a Troves DeFi vault strategy. ALWAYS call list_troves_strategies first to show available strategies and check depositTokens. For dual-asset strategies (e.g. Ekubo CL LP pools with 2 deposit tokens), you MUST provide amount2 and token2.",
 			inputSchema: z.object({
 				strategy_id: z.string().describe("Troves strategy ID to deposit into"),
 				amount: z.string().describe("Amount to deposit (e.g. '100', '0.5')"),
@@ -50,6 +50,18 @@ export function registerTrovesTools(server: McpServer): number {
 					.optional()
 					.describe(
 						"Token symbol to deposit (default: STRK). Must match a strategy's deposit token."
+					),
+				amount2: z
+					.string()
+					.optional()
+					.describe(
+						"Second token amount for dual-asset strategies (e.g. '0.005'). Required when strategy has 2 deposit tokens."
+					),
+				token2: z
+					.string()
+					.optional()
+					.describe(
+						"Second token symbol for dual-asset strategies (e.g. 'ETH'). Required when strategy has 2 deposit tokens."
 					),
 			}),
 			annotations: {
@@ -65,7 +77,7 @@ export function registerTrovesTools(server: McpServer): number {
 		"troves_withdraw",
 		{
 			description:
-				"Withdraw tokens from a Troves DeFi vault strategy. Call get_troves_position first to check the user's current position.",
+				"Withdraw tokens from a Troves DeFi vault strategy. Call get_troves_position first to check the user's current position. For dual-asset strategies, provide amount2 and token2.",
 			inputSchema: z.object({
 				strategy_id: z.string().describe("Troves strategy ID to withdraw from"),
 				amount: z.string().describe("Amount to withdraw (e.g. '50', '0.25')"),
@@ -74,6 +86,18 @@ export function registerTrovesTools(server: McpServer): number {
 					.optional()
 					.describe(
 						"Token symbol to withdraw (default: STRK). Must match a strategy's deposit token."
+					),
+				amount2: z
+					.string()
+					.optional()
+					.describe(
+						"Second token amount for dual-asset strategies. Required when strategy has 2 deposit tokens."
+					),
+				token2: z
+					.string()
+					.optional()
+					.describe(
+						"Second token symbol for dual-asset strategies. Required when strategy has 2 deposit tokens."
 					),
 			}),
 			annotations: {

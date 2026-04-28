@@ -95,6 +95,8 @@ export interface BatchTrovesParams {
 	strategy_id: string;
 	amount: string;
 	token: string;
+	amount2?: string;
+	token2?: string;
 }
 
 export type BatchParams =
@@ -396,7 +398,15 @@ async function addTrovesDepositCalls(
 ): Promise<void> {
 	const token = resolveToken(params.token, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
-	builder.trovesDeposit({ strategyId: params.strategy_id, amount: parsedAmount });
+	const parsedAmount2 =
+		params.amount2 && params.token2
+			? Amount.parse(params.amount2, resolveToken(params.token2, chainId))
+			: undefined;
+	builder.trovesDeposit({
+		strategyId: params.strategy_id,
+		amount: parsedAmount,
+		amount2: parsedAmount2,
+	});
 }
 
 async function addTrovesWithdrawCalls(
@@ -407,7 +417,15 @@ async function addTrovesWithdrawCalls(
 ): Promise<void> {
 	const token = resolveToken(params.token, chainId);
 	const parsedAmount = Amount.parse(params.amount, token);
-	builder.trovesWithdraw({ strategyId: params.strategy_id, amount: parsedAmount });
+	const parsedAmount2 =
+		params.amount2 && params.token2
+			? Amount.parse(params.amount2, resolveToken(params.token2, chainId))
+			: undefined;
+	builder.trovesWithdraw({
+		strategyId: params.strategy_id,
+		amount: parsedAmount,
+		amount2: parsedAmount2,
+	});
 }
 
 function formatOpSummary(op: BatchOperation): string {
@@ -451,11 +469,13 @@ function formatOpSummary(op: BatchOperation): string {
 		}
 		case "troves-deposit": {
 			const s = p as BatchTrovesParams;
-			return `troves-deposit ${s.amount} ${s.token.toUpperCase()} → ${s.strategy_id}`;
+			const extra1 = s.amount2 && s.token2 ? ` + ${s.amount2} ${s.token2.toUpperCase()}` : "";
+			return `troves-deposit ${s.amount} ${s.token.toUpperCase()}${extra1} → ${s.strategy_id}`;
 		}
 		case "troves-withdraw": {
 			const s = p as BatchTrovesParams;
-			return `troves-withdraw ${s.amount} ${s.token.toUpperCase()} ← ${s.strategy_id}`;
+			const extra2 = s.amount2 && s.token2 ? ` + ${s.amount2} ${s.token2.toUpperCase()}` : "";
+			return `troves-withdraw ${s.amount} ${s.token.toUpperCase()}${extra2} ← ${s.strategy_id}`;
 		}
 		default:
 			return `${op.type}: ${JSON.stringify(p)}`;

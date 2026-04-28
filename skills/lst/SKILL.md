@@ -4,7 +4,7 @@ description: Liquid staking via Endur on Starknet — stake STRK to receive xSTR
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
-    version: 0.1.0
+    version: 0.2.0
     author: ahmetenesdur
     category: transaction
 allowed-tools:
@@ -54,53 +54,59 @@ Endur LST yield is **NOT** a claimable reward. The xSTRK share price increases a
 3. Use `lst-position` to check the user's current xSTRK balance and its STRK value.
 4. **NEVER** suggest using `rewards --claim` or `rewards --compound` for LST positions. Yield is automatic.
 5. When the user asks about "how much yield" from LST, show `lst-position` which displays the current STRK value vs original deposit.
-6. Suggest using `--simulate` first for large operations.
-7. AFTER any transactional operation (stake, redeem, exit-all), verify with `tx-status`.
-8. `lst-exit-all` redeems the entire xSTRK balance — warn the user before executing.
+6. AFTER any transactional operation (stake, redeem, exit-all), verify with `tx-status`.
+7. `lst-exit-all` redeems the entire xSTRK balance — warn the user before executing.
 
 ## Commands
 
 ```bash
 # Check LST position (xSTRK balance and STRK value)
-npx starkfi@latest lst-position [--json]
+npx starkfi@latest lst-position [-a <symbol>] [--json]
 
 # View Endur protocol stats (exchange rate, APR, total staked)
-npx starkfi@latest lst-stats [--json]
+npx starkfi@latest lst-stats [-a <symbol>] [--json]
 
 # Stake STRK to receive xSTRK
-npx starkfi@latest lst-stake <amount> [--simulate] [--json]
+npx starkfi@latest lst-stake <amount> [-a <symbol>] [--json]
 
 # Redeem xSTRK back to STRK (partial)
-npx starkfi@latest lst-redeem <amount> [--simulate] [--json]
+npx starkfi@latest lst-redeem <amount> [-a <symbol>] [--json]
 
 # Redeem all xSTRK back to STRK
-npx starkfi@latest lst-exit-all [--simulate] [--json]
+npx starkfi@latest lst-exit-all [-a <symbol>] [--json]
 ```
 
 ## Parameters
 
+### lst-position / lst-stats
+
+| Parameter    | Type   | Description                                    | Required |
+| ------------ | ------ | ---------------------------------------------- | -------- |
+| `-a, --asset`| string | Underlying asset symbol (default: STRK)        | No       |
+| `--json`     | flag   | Output as JSON                                 | No       |
+
 ### lst-stake
 
-| Parameter    | Type   | Description                        | Required |
-| ------------ | ------ | ---------------------------------- | -------- |
-| `amount`     | number | Amount of STRK to stake            | Yes      |
-| `--simulate` | flag   | Estimate fees without broadcasting | No       |
-| `--json`     | flag   | Output as JSON                     | No       |
+| Parameter    | Type   | Description                                    | Required |
+| ------------ | ------ | ---------------------------------------------- | -------- |
+| `amount`     | number | Amount of the asset to stake                   | Yes      |
+| `-a, --asset`| string | Asset to stake (default: STRK)                 | No       |
+| `--json`     | flag   | Output as JSON                                 | No       |
 
 ### lst-redeem
 
-| Parameter    | Type   | Description                        | Required |
-| ------------ | ------ | ---------------------------------- | -------- |
-| `amount`     | number | Amount of xSTRK to redeem          | Yes      |
-| `--simulate` | flag   | Estimate fees without broadcasting | No       |
-| `--json`     | flag   | Output as JSON                     | No       |
+| Parameter    | Type   | Description                                    | Required |
+| ------------ | ------ | ---------------------------------------------- | -------- |
+| `amount`     | number | Amount of LST shares to redeem                 | Yes      |
+| `-a, --asset`| string | Underlying asset (default: STRK)               | No       |
+| `--json`     | flag   | Output as JSON                                 | No       |
 
 ### lst-exit-all
 
-| Parameter    | Type | Description                        | Required |
-| ------------ | ---- | ---------------------------------- | -------- |
-| `--simulate` | flag | Estimate fees without broadcasting | No       |
-| `--json`     | flag | Output as JSON                     | No       |
+| Parameter    | Type   | Description                                    | Required |
+| ------------ | ------ | ---------------------------------------------- | -------- |
+| `-a, --asset`| string | Asset to exit completely (default: STRK)       | No       |
+| `--json`     | flag   | Output as JSON                                 | No       |
 
 ## Examples
 
@@ -116,7 +122,6 @@ npx starkfi@latest lst-stats
 npx starkfi@latest status
 npx starkfi@latest balance --token STRK
 npx starkfi@latest lst-stats   # Check current exchange rate
-npx starkfi@latest lst-stake 1000 --simulate
 npx starkfi@latest lst-stake 1000
 npx starkfi@latest tx-status <hash>
 ```
@@ -131,7 +136,6 @@ npx starkfi@latest lst-position
 
 ```bash
 npx starkfi@latest lst-position  # Check available xSTRK balance
-npx starkfi@latest lst-redeem 500 --simulate
 npx starkfi@latest lst-redeem 500
 npx starkfi@latest tx-status <hash>
 ```
@@ -159,7 +163,6 @@ npx starkfi@latest validators         # Delegation: validator list
 | Error                  | Action                                                   |
 | ---------------------- | -------------------------------------------------------- |
 | `Insufficient balance` | Check `balance --token STRK` for staking, or `lst-position` for redeem. |
-| `Simulation failed`    | Transaction would revert. Check amount and gas.          |
 | `Not authenticated`    | Run `authenticate-wallet` skill first.                   |
 
 ## Related Skills

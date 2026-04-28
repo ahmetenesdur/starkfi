@@ -48,8 +48,8 @@ npx starkfi@latest batch [--simulate] [--json] \
   --withdraw "<amount> <token> <pool>" \
   --dca-create "<amount> <sell> <buy> <perCycle> [frequency]" \
   --dca-cancel "<orderId>" \
-  --troves-deposit "<amount> <strategy_id> [token]" \
-  --troves-withdraw "<amount> <strategy_id> [token]"
+  --troves-deposit "<amount> <token> <strategyId> [amount2 token2]" \
+  --troves-withdraw "<amount> <token> <strategyId> [amount2 token2]"
 ```
 
 ## Operation Formats
@@ -65,8 +65,8 @@ npx starkfi@latest batch [--simulate] [--json] \
 | `--withdraw`   | `"<amount> <token> <pool>"`                | `--withdraw "200 USDC Prime"`   |
 | `--dca-create` | `"<amount> <sell> <buy> <perCycle> [freq]"` | `--dca-create "1000 USDC ETH 10 P1D"` |
 | `--dca-cancel` | `"<orderId>"`                              | `--dca-cancel "abc123"`         |
-| `--troves-deposit`  | `"<amount> <strategy_id> [token]"`    | `--troves-deposit "100 evergreen_strk"` |
-| `--troves-withdraw` | `"<amount> <strategy_id> [token]"`    | `--troves-withdraw "50 evergreen_strk"` |
+| `--troves-deposit`  | `"<amount> <token> <strategyId> [amount2 token2]"` | `--troves-deposit "100 STRK evergreen_strk"` or `"100 STRK ekubo_cl_strketh 0.005 ETH"` |
+| `--troves-withdraw` | `"<amount> <token> <strategyId> [amount2 token2]"` | `--troves-withdraw "50 STRK evergreen_strk"` or `"50 STRK ekubo_cl_strketh 0.005 ETH"` |
 
 > **Note:** `--stake` accepts either a validator name (e.g. `Karnot`) or a pool contract address (starting with `0x`). The CLI auto-detects the format.
 

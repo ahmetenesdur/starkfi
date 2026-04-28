@@ -1,6 +1,6 @@
 {
 	"name": "starkfi",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"description": "AI-native Starknet DeFi CLI + MCP Server + Agent Skills — Swaps, multi-swap, batch (multicall), staking, liquid staking (LST), lending, DCA, Troves vaults, confidential transfers, simulation, portfolio, gas abstraction",
 	"type": "module",
 	"bin": {
