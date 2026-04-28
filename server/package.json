@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"description": "Backend for starkfi CLI — Privy auth, Starknet wallet management, signing",
 	"type": "module",
+	"packageManager": "pnpm@10.33.2",
 	"scripts": {
 		"dev": "node --env-file=.env --import tsx/esm --watch src/index.ts",
 		"build": "tsc",
