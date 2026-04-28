@@ -6,14 +6,14 @@ import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 export function registerPortfolioCommand(program: Command): void {
 	program
 		.command("portfolio")
-		.description("Show complete DeFi portfolio: balances, staking, lending, and DCA positions")
+		.description("Show complete DeFi portfolio: balances, staking, LST, lending, vaults, and DCA positions")
 		.option("--json", "Output raw JSON instead of formatted table")
 		.addHelpText("after", "\nExamples:\n  $ starkfi portfolio\n  $ starkfi portfolio --json")
 		.action(async (opts) => {
 			await withAuthenticatedWallet(
 				"Loading portfolio...",
 				async (ctx) => {
-					ctx.spinner.text = "Fetching balances, staking & lending positions...";
+					ctx.spinner.text = "Fetching balances, staking, vaults, LST & lending positions...";
 					const portfolio = await getPortfolio(ctx.sdk, ctx.wallet, ctx.session);
 
 					ctx.spinner.stop();
@@ -86,6 +86,45 @@ export function registerPortfolioCommand(program: Command): void {
 						console.log("  No lending positions found.\n");
 					}
 
+					console.log(`\n  Troves Vault Positions\n`);
+
+					if (portfolio.troves.length > 0) {
+						console.log(
+							formatTable(
+								["Strategy", "APY", "Shares", "Amounts", "Risk"],
+								portfolio.troves.map((t) => [
+									t.strategyName,
+									t.apy,
+									t.shares,
+									t.amounts.join(" + "),
+									t.riskFactor.toFixed(1),
+								])
+							)
+						);
+					} else {
+						console.log("  No Troves vault positions found.\n");
+					}
+
+					console.log(`\n  Liquid Staking (Endur)\n`);
+
+					if (portfolio.lst.length > 0) {
+						console.log(
+							formatTable(
+								["Asset", "LST Token", "Shares", "Staked", "Rewards", "APY"],
+								portfolio.lst.map((l) => [
+									l.asset,
+									l.lstSymbol,
+									l.shares,
+									l.staked,
+									l.rewards,
+									l.apy,
+								])
+							)
+						);
+					} else {
+						console.log("  No liquid staking positions found.\n");
+					}
+
 					console.log(`\n  DCA Orders (Active)\n`);
 
 					if (portfolio.dca && portfolio.dca.length > 0) {
@@ -142,6 +181,8 @@ export function registerPortfolioCommand(program: Command): void {
 									: "Price data unavailable",
 							tokens: portfolio.balances.length,
 							stakingPositions: portfolio.staking.length,
+							trovesPositions: portfolio.troves.length,
+							lstPositions: portfolio.lst.length,
 							lendingPositions: portfolio.lending.length,
 							dcaOrders: portfolio.dca?.length ?? 0,
 						})

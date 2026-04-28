@@ -4,7 +4,7 @@ description: View a comprehensive DeFi portfolio dashboard and optimize portfoli
 license: MIT
 compatibility: Requires Node.js 18+ and npx.
 metadata:
-    version: 0.2.0
+    version: 0.3.0
     author: ahmetenesdur
     category: wallet-data
 allowed-tools:
@@ -19,7 +19,7 @@ allowed-tools:
 
 # Portfolio Overview & Optimization
 
-Display a comprehensive DeFi portfolio dashboard aggregating token balances, staking positions, and lending positions — all with USD valuations. Rebalance the portfolio to a target allocation via automated batch swaps.
+Display a comprehensive DeFi portfolio dashboard aggregating token balances, staking positions, Troves vault positions, Endur liquid staking (LST), lending positions, DCA orders, and confidential Tongo balances — all with USD valuations. Rebalance the portfolio to a target allocation via automated batch swaps.
 
 ## Prerequisites
 

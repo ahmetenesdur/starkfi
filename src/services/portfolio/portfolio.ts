@@ -1,4 +1,5 @@
 import type { StarkZap, ChainId } from "starkzap";
+import { getSupportedLSTAssets } from "starkzap";
 import type { Session } from "../auth/session.js";
 import { getBalances } from "../tokens/balances.js";
 import { getTokenUsdPrice } from "../price/price.js";
@@ -12,6 +13,8 @@ import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 import { listDcaOrders } from "../dca/dca.js";
 import { getConfidentialState, createTongoInstance } from "../confidential/confidential.js";
 import { loadTongoConfig } from "../confidential/config.js";
+import { listStrategies, getPosition, type StrategyInfo } from "../troves/troves.js";
+import { getLSTPosition, getLSTStats } from "../lst/lst.js";
 
 export interface PortfolioBalance {
 	symbol: string;
@@ -52,11 +55,31 @@ export interface PortfolioConfidential {
 	pendingBalance: string;
 }
 
+export interface PortfolioTroves {
+	strategyId: string;
+	strategyName: string;
+	shares: string;
+	amounts: string[];
+	apy: string;
+	riskFactor: number;
+}
+
+export interface PortfolioLST {
+	asset: string;
+	lstSymbol: string;
+	shares: string;
+	staked: string;
+	rewards: string;
+	apy: string;
+}
+
 export interface PortfolioData {
 	address: string;
 	network: string;
 	balances: PortfolioBalance[];
 	staking: PortfolioStaking[];
+	troves: PortfolioTroves[];
+	lst: PortfolioLST[];
 	lending: PortfolioLending[];
 	dca: PortfolioDca[];
 	confidential: PortfolioConfidential | null;
@@ -69,17 +92,28 @@ export async function getPortfolio(
 	session: Session
 ): Promise<PortfolioData> {
 	const chainId = resolveChainId(session);
-	const [balancesResult, stakingResult, lendingResult, dcaResult, confResult] =
-		await Promise.allSettled([
-			fetchBalancesWithUsd(wallet, chainId),
-			fetchStaking(sdk, wallet, session),
-			fetchLending(wallet, chainId),
-			fetchDca(wallet),
-			fetchConfidential(wallet, chainId),
-		]);
+	const [
+		balancesResult,
+		stakingResult,
+		trovesResult,
+		lstResult,
+		lendingResult,
+		dcaResult,
+		confResult,
+	] = await Promise.allSettled([
+		fetchBalancesWithUsd(wallet, chainId),
+		fetchStaking(sdk, wallet, session),
+		fetchTroves(wallet),
+		fetchLST(wallet, chainId),
+		fetchLending(wallet, chainId),
+		fetchDca(wallet),
+		fetchConfidential(wallet, chainId),
+	]);
 
 	const balances = balancesResult.status === "fulfilled" ? balancesResult.value : [];
 	const staking = stakingResult.status === "fulfilled" ? stakingResult.value : [];
+	const troves = trovesResult.status === "fulfilled" ? trovesResult.value : [];
+	const lst = lstResult.status === "fulfilled" ? lstResult.value : [];
 	const lending = lendingResult.status === "fulfilled" ? lendingResult.value : [];
 	const dca = dcaResult.status === "fulfilled" ? dcaResult.value : [];
 	const confidential = confResult.status === "fulfilled" ? confResult.value : null;
@@ -92,6 +126,8 @@ export async function getPortfolio(
 		network: resolveNetwork(session),
 		balances,
 		staking,
+		troves,
+		lst,
 		lending,
 		dca,
 		confidential,
@@ -245,5 +281,73 @@ async function fetchConfidential(
 		};
 	} catch {
 		return null;
+	}
+}
+
+const TROVES_POSITION_CONCURRENCY = 5;
+
+async function fetchTroves(wallet: StarkZapWallet): Promise<PortfolioTroves[]> {
+	try {
+		const { strategies } = await listStrategies(wallet);
+
+		return await runConcurrent(
+			strategies,
+			TROVES_POSITION_CONCURRENCY,
+			async (strategy: StrategyInfo) => {
+				try {
+					const position = await getPosition(wallet, strategy.id);
+					if (!position || position.shares === "0") return undefined;
+
+					return {
+						strategyId: strategy.id,
+						strategyName: strategy.name,
+						shares: position.shares,
+						amounts: position.amounts,
+						apy: strategy.apy,
+						riskFactor: strategy.riskFactor,
+					};
+				} catch {
+					// Individual position query failed — skip this strategy
+					return undefined;
+				}
+			}
+		);
+	} catch {
+		return [];
+	}
+}
+
+async function fetchLST(
+	wallet: StarkZapWallet,
+	chainId?: ChainId
+): Promise<PortfolioLST[]> {
+	try {
+		if (!chainId) return [];
+
+		const assets = getSupportedLSTAssets(chainId);
+		if (assets.length === 0) return [];
+
+		return await runConcurrent(assets, 5, async (asset: string) => {
+			const [position, stats] = await Promise.allSettled([
+				getLSTPosition(wallet, asset),
+				getLSTStats(wallet, asset),
+			]);
+
+			const pos = position.status === "fulfilled" ? position.value : null;
+			if (!pos) return undefined;
+
+			const stat = stats.status === "fulfilled" ? stats.value : null;
+
+			return {
+				asset: pos.asset,
+				lstSymbol: pos.lstSymbol,
+				shares: pos.shares,
+				staked: pos.staked,
+				rewards: pos.rewards,
+				apy: stat?.apy ?? "N/A",
+			};
+		});
+	} catch {
+		return [];
 	}
 }
