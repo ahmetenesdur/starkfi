@@ -6,14 +6,17 @@ import { withAuthenticatedWallet } from "../../lib/command-runner.js";
 export function registerPortfolioCommand(program: Command): void {
 	program
 		.command("portfolio")
-		.description("Show complete DeFi portfolio: balances, staking, LST, lending, vaults, and DCA positions")
+		.description(
+			"Show complete DeFi portfolio: balances, staking, LST, lending, vaults, and DCA positions"
+		)
 		.option("--json", "Output raw JSON instead of formatted table")
 		.addHelpText("after", "\nExamples:\n  $ starkfi portfolio\n  $ starkfi portfolio --json")
 		.action(async (opts) => {
 			await withAuthenticatedWallet(
 				"Loading portfolio...",
 				async (ctx) => {
-					ctx.spinner.text = "Fetching balances, staking, vaults, LST & lending positions...";
+					ctx.spinner.text =
+						"Fetching balances, staking, vaults, LST & lending positions...";
 					const portfolio = await getPortfolio(ctx.sdk, ctx.wallet, ctx.session);
 
 					ctx.spinner.stop();

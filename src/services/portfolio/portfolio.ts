@@ -317,10 +317,7 @@ async function fetchTroves(wallet: StarkZapWallet): Promise<PortfolioTroves[]> {
 	}
 }
 
-async function fetchLST(
-	wallet: StarkZapWallet,
-	chainId?: ChainId
-): Promise<PortfolioLST[]> {
+async function fetchLST(wallet: StarkZapWallet, chainId?: ChainId): Promise<PortfolioLST[]> {
 	try {
 		if (!chainId) return [];
 
