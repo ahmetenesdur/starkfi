@@ -1,11 +1,19 @@
-import { Amount, fromAddress, type ChainId } from "starkzap";
+import { Amount, fromAddress, type ChainId, type LendingActionInput } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import type { TxResult } from "../../lib/types.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { resolvePoolAddress } from "./pools.js";
-import { getPosition, repay, addCollateral } from "./lending.js";
+import { repay, addCollateral } from "./lending.js";
 import { DEFAULT_WARNING_THRESHOLD } from "./health.js";
+import {
+	addCollateralAmountForTarget,
+	assertProjectedHealth,
+	fixedHealthFactor,
+	fixedHealthFactorToNumber,
+	repayAmountForTarget,
+	toFixedHealthFactor,
+} from "./rebalance-math.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 export type RebalanceStrategy = "repay" | "add-collateral" | "auto";
@@ -30,137 +38,135 @@ export interface LendingRebalanceResult {
 	simulation?: SimulationResult;
 }
 
+/** Reported for positions whose health factor is unbounded (no debt). */
+const UNBOUNDED_HF = 9999;
+
 export async function autoRebalanceLending(
 	wallet: StarkZapWallet,
 	params: LendingRebalanceParams,
 	chainId?: ChainId
 ): Promise<LendingRebalanceResult> {
-	const pool = await resolvePoolAddress(wallet, params.pool);
 	const targetHF = params.targetHealthFactor ?? DEFAULT_WARNING_THRESHOLD;
+	// Validate before touching the network.
+	toFixedHealthFactor(targetHF);
 
-	const position = await getPosition(
-		wallet,
-		pool.address,
-		params.collateralToken,
-		params.debtToken,
-		chainId
-	);
-	if (!position) {
+	const pool = await resolvePoolAddress(wallet, params.pool);
+	const poolAddress = fromAddress(pool.address);
+	const collateralToken = resolveToken(params.collateralToken, chainId);
+	const debtToken = resolveToken(params.debtToken, chainId);
+
+	// One read gives token amounts and USD values from the same oracle prices.
+	const position = await wallet.lending().getPosition({
+		collateralToken,
+		debtToken,
+		poolAddress,
+	});
+
+	if (position.collateralShares === 0n && position.nominalDebt === 0n) {
 		throw new StarkfiError(
 			ErrorCode.REBALANCE_FAILED,
 			`No active position for ${params.collateralToken}/${params.debtToken} in pool ${pool.name ?? pool.address}`
 		);
 	}
 
-	const currentHF = position.healthFactor ?? 9999;
-	if (currentHF >= targetHF) {
+	const values = {
+		collateralAmount: position.collateralAmount ?? 0n,
+		debtAmount: position.debtAmount ?? 0n,
+		collateralValue: position.collateralValue,
+		debtValue: position.debtValue,
+	};
+
+	const currentFixed = fixedHealthFactor(values.collateralValue, values.debtValue);
+	const currentHF =
+		currentFixed === null ? UNBOUNDED_HF : fixedHealthFactorToNumber(currentFixed);
+	if (currentFixed === null || currentFixed >= toFixedHealthFactor(targetHF)) {
 		throw new StarkfiError(
 			ErrorCode.REBALANCE_FAILED,
 			`Position already healthy. HF: ${currentHF.toFixed(2)}, target: ${targetHF}`
 		);
 	}
 
-	const collateralToken = resolveToken(params.collateralToken, chainId);
-	const debtToken = resolveToken(params.debtToken, chainId);
-
-	const health = await wallet.lending().getHealth({
-		collateralToken,
-		debtToken,
-		poolAddress: fromAddress(pool.address),
-	});
-
-	const collUSD = Number(health.collateralValue) / 1e18;
-	const debtUSD = Number(health.debtValue) / 1e18;
-
-	if (collUSD <= 0 || debtUSD <= 0) {
-		throw new StarkfiError(
-			ErrorCode.REBALANCE_FAILED,
-			"Unable to determine USD values for position tokens"
-		);
-	}
-
-	const repayUSD = debtUSD - collUSD / targetHF;
-	const addCollUSD = targetHF * debtUSD - collUSD;
-
-	const repayAmount =
-		repayUSD > 0
-			? repayUSD / (debtUSD / Number(Amount.fromRaw(health.debtValue, debtToken).toUnit()))
-			: 0;
-	const addCollAmount =
-		addCollUSD > 0
-			? addCollUSD /
-				(collUSD / Number(Amount.fromRaw(health.collateralValue, collateralToken).toUnit()))
-			: 0;
-
 	let action: "repay" | "add-collateral";
+	let baseAmount: bigint;
 
-	if (params.strategy === "auto") {
-		const debtBalanceNum = parseFloat((await wallet.balanceOf(debtToken)).toUnit());
+	if (params.strategy === "repay") {
+		action = "repay";
+		baseAmount = repayAmountForTarget(values, targetHF);
+	} else if (params.strategy === "add-collateral") {
+		action = "add-collateral";
+		baseAmount = addCollateralAmountForTarget(values, targetHF);
+	} else {
+		const repayBase = repayAmountForTarget(values, targetHF);
+		const debtBalance = (await wallet.balanceOf(debtToken)).toBase();
 
-		if (repayAmount > 0 && debtBalanceNum >= repayAmount) {
+		if (repayBase > 0n && debtBalance >= repayBase) {
 			action = "repay";
+			baseAmount = repayBase;
 		} else {
-			const collBalanceNum = parseFloat((await wallet.balanceOf(collateralToken)).toUnit());
-			if (addCollAmount > 0 && collBalanceNum >= addCollAmount) {
+			const addBase = addCollateralAmountForTarget(values, targetHF);
+			const collBalance = (await wallet.balanceOf(collateralToken)).toBase();
+			if (addBase > 0n && collBalance >= addBase) {
 				action = "add-collateral";
+				baseAmount = addBase;
 			} else {
 				throw new StarkfiError(
 					ErrorCode.INSUFFICIENT_BALANCE,
-					`Insufficient balance. Need ~${repayAmount.toFixed(4)} ${params.debtToken} to repay ` +
-						`or ~${addCollAmount.toFixed(4)} ${params.collateralToken} to add collateral.`
+					`Insufficient balance. Need ${Amount.fromRaw(repayBase, debtToken).toUnit()} ${params.debtToken} to repay ` +
+						`or ${Amount.fromRaw(addBase, collateralToken).toUnit()} ${params.collateralToken} to add collateral.`
 				);
 			}
 		}
-	} else {
-		action = params.strategy;
 	}
 
-	const executeAmount = action === "repay" ? repayAmount : addCollAmount;
-	const executeToken = action === "repay" ? params.debtToken : params.collateralToken;
-	const executeTokenObj = action === "repay" ? debtToken : collateralToken;
-	const amountStr = Amount.parse(executeAmount.toFixed(executeTokenObj.decimals), executeTokenObj)
-		.toUnit()
-		.toString();
+	const executeToken = action === "repay" ? debtToken : collateralToken;
+	const executeSymbol = action === "repay" ? params.debtToken : params.collateralToken;
+	const amount = Amount.fromRaw(baseAmount, executeToken);
+	const amountStr = amount.toUnit();
 
-	// SDK-native health projection replaces manual arithmetic
-	const poolAddr = fromAddress(pool.address);
-	const parsedAmount = Amount.parse(amountStr, executeTokenObj);
-
-	const actionInput =
+	// Quote exactly the call that will be executed: `repay` for repayments, and a
+	// zero-debt `borrow` carrying collateral for add-collateral (see addCollateral()).
+	const actionInput: LendingActionInput =
 		action === "repay"
 			? {
-					action: "repay" as const,
+					action: "repay",
+					request: { collateralToken, debtToken, amount, poolAddress },
+				}
+			: {
+					action: "borrow",
 					request: {
 						collateralToken,
 						debtToken,
-						amount: parsedAmount,
-						poolAddress: poolAddr,
-					},
-				}
-			: {
-					action: "deposit" as const,
-					request: {
-						token: collateralToken,
-						amount: parsedAmount,
-						poolAddress: poolAddr,
+						amount: Amount.fromRaw(0n, debtToken),
+						collateralAmount: amount,
+						poolAddress,
 					},
 				};
 
 	const quote = await wallet.lending().quoteHealth({
 		action: actionInput,
-		health: { collateralToken, debtToken, poolAddress: poolAddr },
+		health: { collateralToken, debtToken, poolAddress },
 	});
 
-	const projected = quote.projected;
-	const projectedDebt = projected ? Number(projected.debtValue) : 0;
+	if (!quote.simulation.ok) {
+		throw new StarkfiError(
+			ErrorCode.SIMULATION_FAILED,
+			`Refusing to rebalance: ${action} of ${amountStr} ${executeSymbol.toUpperCase()} would fail: ${quote.simulation.reason}`
+		);
+	}
+
+	const projectedFixed = assertProjectedHealth({
+		current: quote.current,
+		projected: quote.projected,
+		targetHealthFactor: targetHF,
+	});
 	const estimatedNewHF =
-		projected && projectedDebt > 0 ? Number(projected.collateralValue) / projectedDebt : 9999;
+		projectedFixed === null ? UNBOUNDED_HF : fixedHealthFactorToNumber(projectedFixed);
 
 	if (params.simulate) {
 		return {
 			action,
 			amount: amountStr,
-			token: executeToken.toUpperCase(),
+			token: executeSymbol.toUpperCase(),
 			previousHealthFactor: currentHF,
 			estimatedNewHealthFactor: estimatedNewHF,
 		};
@@ -188,7 +194,7 @@ export async function autoRebalanceLending(
 	return {
 		action,
 		amount: amountStr,
-		token: executeToken.toUpperCase(),
+		token: executeSymbol.toUpperCase(),
 		previousHealthFactor: currentHF,
 		estimatedNewHealthFactor: estimatedNewHF,
 		txHash: txResult.hash,

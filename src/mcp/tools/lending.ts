@@ -210,7 +210,7 @@ export function registerLendingTools(server: McpServer): number {
 		"auto_rebalance_lending",
 		{
 			description:
-				"Automatically adjust a lending position's health factor via repay or add-collateral. Supports simulation mode.",
+				"Automatically adjust a lending position's health factor (collateral USD / debt USD) via repay or add-collateral. Refuses to act unless the provider's projected health factor reaches the target and improves on the current one. Supports simulation mode.",
 			inputSchema: z.object({
 				pool: z.string().describe("Pool name or address"),
 				collateral_token: z.string().describe("Collateral token symbol"),
