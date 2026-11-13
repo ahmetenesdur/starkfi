@@ -27,6 +27,8 @@ CLI / MCP → Auth Server → Privy TEE
 
 The **Auth Server** acts as a proxy — it forwards signing requests to the TEE and returns only the resulting signature. The server itself never holds or processes private keys.
 
+Wallets are Privy **app-managed** server wallets: the auth server authenticates to Privy with the app secret, not with a per-user key, so whoever operates the auth server can request signatures for any user's wallet. Users trust the operator of the auth server they log in to.
+
 ### Confidential Key Storage
 
 Tongo Cash private keys are stored locally with strict permissions:
