@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/ahmetenesdur/starkfi/actions/workflows/ci.yml"><img src="https://github.com/ahmetenesdur/starkfi/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a>
   <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/v/starkfi?style=flat-square&color=CB3837&logo=npm&logoColor=white" alt="npm version"/></a>
   <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/dm/starkfi?style=flat-square&color=blue" alt="npm downloads"/></a>
   <a href="https://docs.starkfi.app"><img src="https://img.shields.io/badge/docs-starkfi.app-blue?style=flat-square" alt="Documentation"/></a>
