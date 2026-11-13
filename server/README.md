@@ -52,9 +52,9 @@ pnpm dev                # Starts on http://localhost:3001
 
 ### Paymaster
 
-| Endpoint          | Auth | Description                                      |
-| ----------------- | ---- | ------------------------------------------------ |
-| `POST /paymaster` | JWT  | Proxy gasless/gasfree requests to AVNU Paymaster |
+| Endpoint          | Auth | Rate Limit                                               | Description                                                                                                   |
+| ----------------- | ---- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST /paymaster` | JWT  | 60 req/min/IP · 30 req/min/user · 50 executions/day/user | Proxies `paymaster_buildTransaction` and `paymaster_executeTransaction` to AVNU; any other method is rejected |
 
 ### Health
 
@@ -67,15 +67,15 @@ pnpm dev                # Starts on http://localhost:3001
 
 ## Security
 
-| Layer             | Implementation                                                                  |
-| ----------------- | ------------------------------------------------------------------------------- |
-| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures |
-| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                      |
-| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP                                     |
-| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                    |
-| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                |
-| **Body limit**    | 1MB max request body                                                            |
-| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                      |
+| Layer             | Implementation                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures              |
+| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                                   |
+| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP · Paymaster: see above (in-memory, per instance) |
+| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                                 |
+| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                             |
+| **Body limit**    | 1MB max request body                                                                         |
+| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                                   |
 
 ---
 
