@@ -45,10 +45,9 @@ pnpm dev                # Starts on http://localhost:3001
 
 ### Transaction Signing
 
-| Endpoint             | Auth | Rate Limit | Description                              |
-| -------------------- | ---- | ---------- | ---------------------------------------- |
-| `POST /sign/hash`    | JWT  | 30 req/min | Sign Starknet payload hash via Privy TEE |
-| `POST /sign/message` | JWT  | 30 req/min | Sign message via Privy TEE               |
+| Endpoint          | Auth | Rate Limit | Description                              |
+| ----------------- | ---- | ---------- | ---------------------------------------- |
+| `POST /sign/hash` | JWT  | 30 req/min | Sign Starknet payload hash via Privy TEE |
 
 ### Paymaster
 

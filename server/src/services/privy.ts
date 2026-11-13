@@ -182,21 +182,3 @@ export async function signHash(walletId: string, hash: string): Promise<{ signat
 		throw new ApiError(500, `Hash signing failed: ${msg}`, "SIGN_HASH_FAILED");
 	}
 }
-
-export async function signMessage(
-	walletId: string,
-	message: string | Record<string, unknown>
-): Promise<{ signature: string }> {
-	const privy = getPrivyClient();
-	try {
-		const msgContent = typeof message === "string" ? message : JSON.stringify(message);
-		const response = await privy.wallets().rawSign(walletId, {
-			params: { hash: msgContent },
-		});
-		return { signature: response.signature };
-	} catch (error) {
-		const msg = error instanceof Error ? error.message : String(error);
-		console.error("[SIGN_MSG_FAILED]", { walletId, error: msg });
-		throw new ApiError(500, `Message signing failed: ${msg}`, "SIGN_MSG_FAILED");
-	}
-}

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { signHashSchema, signMessageSchema } from "../lib/validation.js";
-import { signHash as privySignHash, signMessage as privySignMsg } from "../services/privy.js";
+import { signHashSchema } from "../lib/validation.js";
+import { signHash as privySignHash } from "../services/privy.js";
 import { authMiddleware, requireWalletOwnership, type JwtPayload } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 
@@ -19,15 +19,6 @@ sign.post("/hash", signRateLimit, zValidator("json", signHashSchema), async (c) 
 	requireWalletOwnership(c, walletId);
 
 	const result = await privySignHash(walletId, hash);
-	return c.json(result);
-});
-
-sign.post("/message", signRateLimit, zValidator("json", signMessageSchema), async (c) => {
-	const { walletId, message } = c.req.valid("json");
-
-	requireWalletOwnership(c, walletId);
-
-	const result = await privySignMsg(walletId, message);
 	return c.json(result);
 });
 

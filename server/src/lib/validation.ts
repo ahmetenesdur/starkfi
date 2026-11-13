@@ -28,8 +28,3 @@ export const signHashSchema = z.object({
 		.min(1, "hash is required")
 		.regex(/^0x[0-9a-fA-F]+$/, "Invalid Starknet hash"),
 });
-
-export const signMessageSchema = z.object({
-	walletId: z.string().min(1, "walletId is required"),
-	message: z.union([z.string().min(1), z.record(z.string(), z.unknown())]),
-});
