@@ -2,7 +2,7 @@
 name: multi-swap
 description: Execute multiple token swaps in a single Starknet transaction via Fibrous (default). Supports per-provider selection (avnu, ekubo, or auto to race all). Supports 2-3 swap pairs bundled into one multicall. Use this skill when the user wants to swap multiple token pairs at once, do batch swaps, execute several trades simultaneously, perform parallel swaps, or do bulk trading in one transaction. Also trigger when the user mentions "two swaps", "three swaps", "swap X and Y at the same time", or wants to convert multiple tokens in a single call.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur

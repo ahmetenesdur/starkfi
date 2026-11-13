@@ -2,7 +2,7 @@
 name: confidential
 description: Manage confidential (private) transfers via Tongo Cash on Starknet — setup, fund, transfer, withdraw, ragequit, rollover using ZK proofs. Use this skill when the user wants to send tokens privately, hide transfer amounts, use zero-knowledge proofs, set up Tongo, fund or withdraw from a confidential account, perform an emergency exit (ragequit), or activate pending balance (rollover). Also trigger when the user says "send privately", "confidential transfer", "hide my transaction", "Tongo Cash", "ZK transfer", or any variation about privacy-preserving transfers — even if they don't use the word "confidential".
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur
