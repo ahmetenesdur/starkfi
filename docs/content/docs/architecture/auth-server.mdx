@@ -79,6 +79,7 @@ The server employs a strict security architecture designed around **access minim
 | `PUBLIC_URL`         | No       | Public-facing URL of the server (for CORS and redirects).                             |
 | `AVNU_API_KEY`       | No       | AVNU Paymaster API key. Required for developer-sponsored (gasfree) transactions.     |
 | `AVNU_PAYMASTER_URL` | No       | AVNU Paymaster endpoint URL. Defaults to `https://starknet.paymaster.avnu.fi/v1`.    |
+| `TRUST_PROXY`        | No       | Where rate limiting reads the client IP. `false` (default): the TCP peer; `X-Forwarded-For`, `X-Real-IP` and `CF-Connecting-IP` are ignored because clients can forge them. `cloudflare`: `CF-Connecting-IP` (only if the origin is reachable solely through Cloudflare). A number `N`: the Nth `X-Forwarded-For` entry from the right, for `N` trusted proxy hops (`1` behind a single platform load balancer). |
 
 ## Local Setup
 

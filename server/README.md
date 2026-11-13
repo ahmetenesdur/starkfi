@@ -12,17 +12,18 @@ pnpm dev                # Starts on http://localhost:3001
 
 ## Environment Variables
 
-| Variable             | Required | Description                                        |
-| -------------------- | -------- | -------------------------------------------------- |
-| `PRIVY_APP_ID`       | **Yes**  | Application ID from the Privy Dashboard            |
-| `PRIVY_APP_SECRET`   | **Yes**  | Secret key for app-managed wallet access           |
-| `JWT_SECRET`         | **Yes**  | High-entropy string (min 32 chars) for JWT signing |
-| `PORT`               | No       | Server port (default: `3001`)                      |
-| `NODE_ENV`           | No       | `development`, `production`, or `test`             |
-| `ALLOWED_ORIGINS`    | No       | Comma-separated CORS allowlist                     |
-| `PUBLIC_URL`         | No       | Public-facing URL for CORS and redirects           |
-| `AVNU_API_KEY`       | No       | AVNU Paymaster API key for sponsored transactions  |
-| `AVNU_PAYMASTER_URL` | No       | Paymaster endpoint (default: AVNU production)      |
+| Variable             | Required | Description                                                                                                                                                   |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PRIVY_APP_ID`       | **Yes**  | Application ID from the Privy Dashboard                                                                                                                       |
+| `PRIVY_APP_SECRET`   | **Yes**  | Secret key for app-managed wallet access                                                                                                                      |
+| `JWT_SECRET`         | **Yes**  | High-entropy string (min 32 chars) for JWT signing                                                                                                            |
+| `PORT`               | No       | Server port (default: `3001`)                                                                                                                                 |
+| `NODE_ENV`           | No       | `development`, `production`, or `test`                                                                                                                        |
+| `ALLOWED_ORIGINS`    | No       | Comma-separated CORS allowlist                                                                                                                                |
+| `PUBLIC_URL`         | No       | Public-facing URL for CORS and redirects                                                                                                                      |
+| `AVNU_API_KEY`       | No       | AVNU Paymaster API key for sponsored transactions                                                                                                             |
+| `AVNU_PAYMASTER_URL` | No       | Paymaster endpoint (default: AVNU production)                                                                                                                 |
+| `TRUST_PROXY`        | No       | Client IP source for rate limits: `false` (default, TCP peer), `cloudflare`, or the number of trusted proxy hops (e.g. `1` behind one platform load balancer) |
 
 ---
 
