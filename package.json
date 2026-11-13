@@ -21,6 +21,7 @@
 		"build": "tsup",
 		"dev": "tsx --import ./scripts/stub-peers-loader.mjs src/index.ts",
 		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
 		"lint": "eslint src/",
 		"lint:fix": "eslint src/ --fix",
 		"format": "prettier --write src/",
@@ -67,8 +68,9 @@
 	},
 	"homepage": "https://starkfi.app",
 	"engines": {
-		"node": ">=18"
+		"node": ">=22"
 	},
+	"packageManager": "pnpm@10.33.2",
 	"pnpm": {
 		"onlyBuiltDependencies": [
 			"esbuild"
@@ -92,6 +94,7 @@
 		"tsx": "^4.22.3",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.59.4",
+		"vitest": "^5.1.0",
 		"zod": "^4.4.3"
 	},
 	"dependencies": {
