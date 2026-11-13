@@ -38,10 +38,9 @@ pnpm dev                # Starts on http://localhost:3001
 
 ### Wallet
 
-| Endpoint              | Auth | Rate Limit | Description                            |
-| --------------------- | ---- | ---------- | -------------------------------------- |
-| `POST /wallet/find`   | JWT  | —          | Get wallet address for current session |
-| `POST /wallet/create` | JWT  | —          | Provision new app-managed wallet       |
+| Endpoint            | Auth | Rate Limit | Description                            |
+| ------------------- | ---- | ---------- | -------------------------------------- |
+| `POST /wallet/find` | JWT  | —          | Get wallet address for current session |
 
 ### Transaction Signing
 
