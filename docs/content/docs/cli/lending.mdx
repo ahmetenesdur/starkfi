@@ -301,6 +301,8 @@ starkfi lend-auto -p <pool> --collateral-token <symbol> --borrow-token <symbol>
 
 Shows the action taken, amount, previous and estimated new health factor, and transaction hash.
 
+The amount is sized from the position's own token amounts and USD values (the pool's oracle prices), so it is correct for tokens of any decimals. Health factor here is collateral USD value divided by debt USD value. Before sending anything, `lend-auto` asks the lending provider for a projected post-action health factor and a preflight simulation. It refuses to execute (and `--simulate` reports an error) if the simulation fails, if no projection is available, or if the projected health factor does not reach `--target-hf` or does not improve on the current one.
+
 **Examples:**
 
 ```bash

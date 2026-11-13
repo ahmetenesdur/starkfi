@@ -2,7 +2,7 @@
 name: portfolio
 description: View a comprehensive DeFi portfolio dashboard and optimize portfolio allocation via automated rebalancing. Use this skill when the user wants an overview, summary, dashboard, total value, net worth, portfolio rebalancing, target allocation, or wants to see all their DeFi positions across Starknet at once. Also trigger when the user asks "what do I have", "show me everything", "how much am I worth", "my positions", "my investments", "rebalance my portfolio", "I want 50% ETH", "optimize my holdings", or any request for a holistic view of their Starknet holdings — even if they don't explicitly say "portfolio".
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.3.0
     author: ahmetenesdur

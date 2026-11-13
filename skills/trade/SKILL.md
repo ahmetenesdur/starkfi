@@ -2,7 +2,7 @@
 name: trade
 description: Swap tokens on Starknet via Fibrous DEX aggregator. Supports per-provider selection (avnu, ekubo, or auto to race all). Use this skill when the user wants to swap, exchange, trade, convert, buy, or sell one token for another on Starknet. Also use when the user asks about token prices, exchange rates, DEX routing, best swap route, or wants to check how much they would receive for a given amount — even if they don't explicitly say "swap".
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur

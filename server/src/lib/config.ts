@@ -1,10 +1,29 @@
 import { z } from "zod";
 
+export type TrustProxy = { mode: "none" } | { mode: "cloudflare" } | { mode: "hops"; hops: number };
+
+export const trustProxySchema = z
+	.string()
+	.trim()
+	.toLowerCase()
+	.regex(
+		/^(false|cloudflare|[1-9][0-9]*)$/,
+		'TRUST_PROXY must be "false", "cloudflare", or the number of trusted proxy hops'
+	)
+	.default("false")
+	.transform((value): TrustProxy => {
+		if (value === "false") return { mode: "none" };
+		if (value === "cloudflare") return { mode: "cloudflare" };
+		return { mode: "hops", hops: Number(value) };
+	});
+
 const envSchema = z.object({
 	PORT: z.coerce.number().default(3001),
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 	ALLOWED_ORIGINS: z.string().optional().default(""),
 	PUBLIC_URL: z.string().optional().default(""),
+	// Which reverse proxy (if any) may set the client IP used for rate limiting.
+	TRUST_PROXY: trustProxySchema,
 
 	PRIVY_APP_ID: z.string().min(1, "PRIVY_APP_ID is required"),
 	PRIVY_APP_SECRET: z.string().min(1, "PRIVY_APP_SECRET is required"),

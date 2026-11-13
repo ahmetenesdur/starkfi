@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { findWalletSchema, createWalletSchema } from "../lib/validation.js";
-import { findExistingWallet, createAgentWallet, saveWalletIdToUser } from "../services/privy.js";
+import { findWalletSchema } from "../lib/validation.js";
+import { findExistingWallet } from "../services/privy.js";
 import { authMiddleware, type JwtPayload } from "../middleware/auth.js";
 
 type Variables = { jwtPayload: JwtPayload };
@@ -25,19 +25,6 @@ wallet.post("/find", zValidator("json", findWalletSchema), async (c) => {
 	}
 
 	return c.json({ wallet: existing });
-});
-
-wallet.post("/create", zValidator("json", createWalletSchema), async (c) => {
-	c.req.valid("json");
-
-	const jwtPayload = c.get("jwtPayload");
-	const userId = jwtPayload.userId;
-
-	const newWallet = await createAgentWallet();
-
-	await saveWalletIdToUser(userId, newWallet.id);
-
-	return c.json({ wallet: newWallet });
 });
 
 export default wallet;

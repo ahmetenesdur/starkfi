@@ -4,11 +4,15 @@
 	"description": "Backend for starkfi CLI — Privy auth, Starknet wallet management, signing",
 	"type": "module",
 	"packageManager": "pnpm@10.33.2",
+	"engines": {
+		"node": ">=22.12"
+	},
 	"scripts": {
 		"dev": "node --env-file=.env --import tsx/esm --watch src/index.ts",
-		"build": "tsc",
+		"build": "tsc -p tsconfig.build.json",
 		"start": "node dist/src/index.js",
 		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
 		"lint": "eslint src/",
 		"lint:fix": "eslint src/ --fix",
 		"format": "prettier --write .",
@@ -28,9 +32,11 @@
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.6.0",
+		"jiti": "^2.7.0",
 		"prettier": "^3.8.3",
 		"tsx": "^4.22.3",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.59.4"
+		"typescript-eslint": "^8.59.4",
+		"vitest": "^5.1.0"
 	}
 }

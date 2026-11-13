@@ -27,6 +27,8 @@ CLI / MCP → Auth Server → Privy TEE
 
 The **Auth Server** acts as a proxy — it forwards signing requests to the TEE and returns only the resulting signature. The server itself never holds or processes private keys.
 
+Wallets are Privy **app-managed** server wallets: the auth server authenticates to Privy with the app secret, not with a per-user key, so whoever operates the auth server can request signatures for any user's wallet. Users trust the operator of the auth server they log in to.
+
 ### Confidential Key Storage
 
 Tongo Cash private keys are stored locally with strict permissions:
@@ -60,6 +62,7 @@ All authenticated endpoints require a valid JWT token:
 | ----------------- | -------------- |
 | Auth endpoints    | 5 req/min/IP   |
 | Signing endpoints | 30 req/min/IP  |
+| Paymaster         | 60 req/min/IP, 30 req/min/user, 50 sponsored executions/day/user |
 
 ### Session Lifecycle
 
@@ -193,7 +196,8 @@ Both CLI (`formatError()`) and MCP (`withErrorHandling()`) use the same error sa
 | ✅ | JWT-based auth with 7-day expiry + 5-min buffer |
 | ✅ | API keys encrypted with AES-256-GCM at rest |
 | ✅ | Per-user MCP process isolation in Telegram Bot |
-| ✅ | Rate limiting on auth (5/min) and signing (30/min) |
+| ✅ | Rate limiting on auth (5/min), signing (30/min) and paymaster (per IP, per user, daily execution cap) |
+| ✅ | Paymaster proxy forwards only the two methods the CLI uses |
 | ✅ | Sensitive data masked in all error outputs |
 
 ---

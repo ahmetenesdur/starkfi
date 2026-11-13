@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { loginSchema, verifySchema } from "../lib/validation.js";
+import { ApiError } from "../lib/errors.js";
 import {
 	sendOtp,
 	verifyOtp,
@@ -36,16 +37,16 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 	let isExisting = true;
 
 	if (wallet) {
-		const accessible = await testWalletAccess(wallet.id);
-		if (!accessible) {
-			console.warn("[WALLET_REPROVISION]", {
-				email,
-				oldWalletId: wallet.id,
-				reason: "Wallet requires owner authorization, re-provisioning as app-managed",
-			});
-			wallet = await createAgentWallet();
-			await saveWalletIdToUser(userId, wallet.id);
-			isExisting = false;
+		// Never swap in a new wallet for an existing one: the user's funds live at
+		// the old address. Surface the problem instead.
+		if (!(await testWalletAccess(wallet.id))) {
+			console.warn("[WALLET_NOT_SERVER_SIGNABLE]", { email, walletId: wallet.id });
+			throw new ApiError(
+				409,
+				"Your existing wallet requires owner authorization and cannot be used by StarkFi. " +
+					"No new wallet was created. Please contact support.",
+				"WALLET_REQUIRES_OWNER_AUTHORIZATION"
+			);
 		}
 	} else {
 		wallet = await createAgentWallet();

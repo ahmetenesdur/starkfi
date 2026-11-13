@@ -2,7 +2,7 @@
 name: lst
 description: Liquid staking via Endur on Starknet — stake STRK to receive xSTRK, redeem xSTRK back to STRK, check positions, and view protocol stats. Yield is embedded in the xSTRK share price (no manual claim needed). Use this skill when the user mentions liquid staking, LST, xSTRK, Endur, liquid staking token, share price, instant staking, tradeable staking position, or wants a staking token they can trade or use in DeFi — even if they don't say "liquid staking" explicitly.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.2.0
     author: ahmetenesdur

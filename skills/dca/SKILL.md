@@ -2,7 +2,7 @@
 name: dca
 description: Create, preview, list, and cancel recurring Dollar-Cost Averaging (DCA) buy orders on Starknet via AVNU or Ekubo. Use this skill when the user wants to set up automatic recurring purchases, dollar-cost average into a token, create a DCA order, schedule periodic buys, invest regularly, buy every day/week/month, or manage existing DCA orders. Also trigger when the user says "recurring buy", "scheduled purchase", "buy X of Y every day", or any variation about automated periodic investing — even if they don't use the term "DCA" explicitly.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur

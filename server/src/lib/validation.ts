@@ -17,19 +17,10 @@ export const findWalletSchema = z.object({
 	email: z.string().email("Invalid email address").max(254),
 });
 
-export const createWalletSchema = z.object({
-	userId: z.string().min(1).optional(),
-});
-
 export const signHashSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
 	hash: z
 		.string()
 		.min(1, "hash is required")
 		.regex(/^0x[0-9a-fA-F]+$/, "Invalid Starknet hash"),
-});
-
-export const signMessageSchema = z.object({
-	walletId: z.string().min(1, "walletId is required"),
-	message: z.union([z.string().min(1), z.record(z.string(), z.unknown())]),
 });

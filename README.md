@@ -5,10 +5,11 @@
 </p>
 
 <p align="center">
-  A production-grade CLI, MCP server, and Telegram bot that gives both developers and AI agents full access to Starknet DeFi — powered by the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
+  A CLI and MCP server that give developers and AI agents access to Starknet DeFi (swaps, staking, lending, DCA, vaults and more), built on the <a href="https://github.com/keep-starknet-strange/starkzap">Starkzap SDK</a>.
 </p>
 
 <p align="center">
+  <a href="https://github.com/ahmetenesdur/starkfi/actions/workflows/ci.yml"><img src="https://github.com/ahmetenesdur/starkfi/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a>
   <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/v/starkfi?style=flat-square&color=CB3837&logo=npm&logoColor=white" alt="npm version"/></a>
   <a href="https://www.npmjs.com/package/starkfi"><img src="https://img.shields.io/npm/dm/starkfi?style=flat-square&color=blue" alt="npm downloads"/></a>
   <a href="https://docs.starkfi.app"><img src="https://img.shields.io/badge/docs-starkfi.app-blue?style=flat-square" alt="Documentation"/></a>
@@ -30,7 +31,9 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 - 🔒 **Confidential Transfers** — Privacy-preserving transfers via Tongo Cash (ZK proofs)
 - 📅 **DCA** — Recurring buy orders via AVNU and Ekubo
 - 🧪 **Simulate Everything** — Dry-run any transaction before broadcasting
-- 💬 **Telegram Bot** — Chat-based DeFi via natural language with BYOAI model
+- 💬 **Telegram Bot** — Chat-based DeFi via natural language with BYOAI model ([separate repository](https://github.com/ahmetenesdur/starkfi-telegram-bot))
+
+> **Auth server required.** Login, transaction signing and sponsored (gasfree) transactions go through the StarkFi auth server in [`server/`](server/), which holds the Privy credentials. The CLI uses the hosted instance by default; point `STARKFI_API_URL` at your own deployment to self-host.
 
 ---
 
@@ -111,7 +114,7 @@ Add to your AI client config (Cursor, Claude Desktop, Antigravity):
 
 → **[Full MCP Documentation](https://docs.starkfi.app/docs/mcp)** · **[Tool Schemas (MCP.md)](MCP.md)**
 
-### Agent Skills (12 Workflows)
+### Agent Skills (14 Workflows)
 
 ```bash
 npx skills add ahmetenesdur/starkfi
@@ -166,14 +169,18 @@ StarkFi leverages **all core Starkzap v3 modules**:
 
 ## Development
 
+Requires Node.js 22+ and pnpm.
+
 ```bash
 git clone https://github.com/ahmetenesdur/starkfi.git
 cd starkfi
 pnpm install
 
-pnpm build          # Compile TypeScript → dist/
-pnpm dev -- --help  # Run with tsx (hot-reload)
+pnpm build          # Bundle the CLI → dist/
+pnpm dev -- --help  # Run from source with tsx
+pnpm typecheck      # tsc --noEmit
 pnpm lint           # ESLint
+pnpm test           # Vitest
 pnpm format         # Prettier
 ```
 
@@ -181,6 +188,7 @@ pnpm format         # Prettier
 
 ```bash
 cd server && pnpm install && cp .env.example .env && pnpm dev
+pnpm typecheck && pnpm lint && pnpm test   # same checks as CI
 ```
 
 → **[Development Guide](https://docs.starkfi.app/docs/architecture/contributing)**
@@ -191,7 +199,7 @@ cd server && pnpm install && cp .env.example .env && pnpm dev
 
 1. **Fork** the repository and create a feature branch
 2. **Install** dependencies: `pnpm install`
-3. **Build** and verify: `pnpm build && pnpm lint`
+3. **Verify**: `pnpm typecheck && pnpm lint && pnpm test && pnpm build` (and the same in `server/` if you touched it)
 4. **Submit** a pull request with a clear description
 
 For bugs and feature requests, [open an issue](https://github.com/ahmetenesdur/starkfi/issues).

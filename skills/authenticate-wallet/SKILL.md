@@ -2,7 +2,7 @@
 name: authenticate-wallet
 description: Authenticate, manage sessions, and deploy Starknet wallets with StarkFi. Handles email OTP login (two-step), session checks, address display, account deployment, and logout. Use this skill whenever the user wants to sign in, log in, check their session, see their wallet address, deploy their account, or log out — even if they don't say "authenticate" explicitly.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur

@@ -2,7 +2,7 @@
 name: troves
 description: Deposit and withdraw from Troves DeFi yield vault strategies on Starknet. View available strategies, check positions, and manage vault deposits. Use this skill when the user mentions Troves, vault, yield vault, DeFi vault, strategy, yield farming, vault deposit, vault withdraw, earning yield through vaults, passive yield strategies, or wants to deposit into or withdraw from a yield strategy — even if they don't say "Troves" explicitly.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.3.0
     author: ahmetenesdur

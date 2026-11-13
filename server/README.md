@@ -12,17 +12,18 @@ pnpm dev                # Starts on http://localhost:3001
 
 ## Environment Variables
 
-| Variable             | Required | Description                                        |
-| -------------------- | -------- | -------------------------------------------------- |
-| `PRIVY_APP_ID`       | **Yes**  | Application ID from the Privy Dashboard            |
-| `PRIVY_APP_SECRET`   | **Yes**  | Secret key for app-managed wallet access           |
-| `JWT_SECRET`         | **Yes**  | High-entropy string (min 32 chars) for JWT signing |
-| `PORT`               | No       | Server port (default: `3001`)                      |
-| `NODE_ENV`           | No       | `development`, `production`, or `test`             |
-| `ALLOWED_ORIGINS`    | No       | Comma-separated CORS allowlist                     |
-| `PUBLIC_URL`         | No       | Public-facing URL for CORS and redirects           |
-| `AVNU_API_KEY`       | No       | AVNU Paymaster API key for sponsored transactions  |
-| `AVNU_PAYMASTER_URL` | No       | Paymaster endpoint (default: AVNU production)      |
+| Variable             | Required | Description                                                                                                                                                   |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PRIVY_APP_ID`       | **Yes**  | Application ID from the Privy Dashboard                                                                                                                       |
+| `PRIVY_APP_SECRET`   | **Yes**  | Secret key for app-managed wallet access                                                                                                                      |
+| `JWT_SECRET`         | **Yes**  | High-entropy string (min 32 chars) for JWT signing                                                                                                            |
+| `PORT`               | No       | Server port (default: `3001`)                                                                                                                                 |
+| `NODE_ENV`           | No       | `development`, `production`, or `test`                                                                                                                        |
+| `ALLOWED_ORIGINS`    | No       | Comma-separated CORS allowlist                                                                                                                                |
+| `PUBLIC_URL`         | No       | Public-facing URL for CORS and redirects                                                                                                                      |
+| `AVNU_API_KEY`       | No       | AVNU Paymaster API key for sponsored transactions                                                                                                             |
+| `AVNU_PAYMASTER_URL` | No       | Paymaster endpoint (default: AVNU production)                                                                                                                 |
+| `TRUST_PROXY`        | No       | Client IP source for rate limits: `false` (default, TCP peer), `cloudflare`, or the number of trusted proxy hops (e.g. `1` behind one platform load balancer) |
 
 ---
 
@@ -37,23 +38,21 @@ pnpm dev                # Starts on http://localhost:3001
 
 ### Wallet
 
-| Endpoint              | Auth | Rate Limit | Description                            |
-| --------------------- | ---- | ---------- | -------------------------------------- |
-| `POST /wallet/find`   | JWT  | —          | Get wallet address for current session |
-| `POST /wallet/create` | JWT  | —          | Provision new app-managed wallet       |
+| Endpoint            | Auth | Rate Limit | Description                            |
+| ------------------- | ---- | ---------- | -------------------------------------- |
+| `POST /wallet/find` | JWT  | —          | Get wallet address for current session |
 
 ### Transaction Signing
 
-| Endpoint             | Auth | Rate Limit | Description                              |
-| -------------------- | ---- | ---------- | ---------------------------------------- |
-| `POST /sign/hash`    | JWT  | 30 req/min | Sign Starknet payload hash via Privy TEE |
-| `POST /sign/message` | JWT  | 30 req/min | Sign message via Privy TEE               |
+| Endpoint          | Auth | Rate Limit | Description                              |
+| ----------------- | ---- | ---------- | ---------------------------------------- |
+| `POST /sign/hash` | JWT  | 30 req/min | Sign Starknet payload hash via Privy TEE |
 
 ### Paymaster
 
-| Endpoint          | Auth | Description                                      |
-| ----------------- | ---- | ------------------------------------------------ |
-| `POST /paymaster` | JWT  | Proxy gasless/gasfree requests to AVNU Paymaster |
+| Endpoint          | Auth | Rate Limit                                               | Description                                                                                                   |
+| ----------------- | ---- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST /paymaster` | JWT  | 60 req/min/IP · 30 req/min/user · 50 executions/day/user | Proxies `paymaster_buildTransaction` and `paymaster_executeTransaction` to AVNU; any other method is rejected |
 
 ### Health
 
@@ -66,15 +65,15 @@ pnpm dev                # Starts on http://localhost:3001
 
 ## Security
 
-| Layer             | Implementation                                                                  |
-| ----------------- | ------------------------------------------------------------------------------- |
-| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures |
-| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                      |
-| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP                                     |
-| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                    |
-| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                |
-| **Body limit**    | 1MB max request body                                                            |
-| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                      |
+| Layer             | Implementation                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures              |
+| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                                   |
+| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP · Paymaster: see above (in-memory, per instance) |
+| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                                 |
+| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                             |
+| **Body limit**    | 1MB max request body                                                                         |
+| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                                   |
 
 ---
 

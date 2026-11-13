@@ -2,7 +2,7 @@
 name: staking
 description: Stake, unstake, claim, and compound rewards for STRK, WBTC, tBTC, SolvBTC, and LBTC on Starknet. View validators, pools, and staking positions. Use this skill when the user mentions staking, delegating, validators, staking pools, rewards, compounding, unstaking, earning yield, passive income on crypto, or wants to earn on their STRK or BTC tokens — even if they don't say "stake" explicitly.
 license: MIT
-compatibility: Requires Node.js 18+ and npx.
+compatibility: Requires Node.js 22+ and npx.
 metadata:
     version: 0.1.0
     author: ahmetenesdur
