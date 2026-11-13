@@ -1,4 +1,9 @@
-import { PrivyClient } from "@privy-io/node";
+import {
+	AuthenticationError,
+	NotFoundError,
+	PermissionDeniedError,
+	PrivyClient,
+} from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
 import { config } from "../lib/config.js";
 
@@ -74,35 +79,44 @@ export async function verifyOtp(
 	return { userId: data.user.id, userToken: data.privy_access_token };
 }
 
+/**
+ * Returns the user's recorded server wallet, or null only when the user has no
+ * wallet on record. Any failure to load a recorded wallet is an error: callers
+ * create a wallet on null, and that must never silently replace an existing one.
+ */
 export async function findExistingWallet(
 	email: string
 ): Promise<{ id: string; address: string; publicKey: string } | null> {
 	const privy = getPrivyClient();
+
+	let serverWalletId: unknown;
 	try {
 		const user = await privy.users().getByEmailAddress({ address: email });
-		const serverWalletId = user.custom_metadata?.server_wallet_id as string | undefined;
+		serverWalletId = user.custom_metadata?.server_wallet_id;
+	} catch (error) {
+		if (error instanceof NotFoundError) return null;
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error("[FIND_WALLET_ERROR]", { email, error: msg });
+		throw new ApiError(502, "Failed to look up wallet", "WALLET_LOOKUP_FAILED");
+	}
 
-		if (serverWalletId) {
-			try {
-				const wallet = await privy.wallets().get(serverWalletId);
-				return {
-					id: wallet.id,
-					address: wallet.address,
-					publicKey: wallet.public_key ?? wallet.address,
-				};
-			} catch {
-				console.warn("[WALLET_NOT_FOUND]", { serverWalletId, email });
-			}
-		}
+	if (typeof serverWalletId !== "string" || serverWalletId === "") return null;
 
-		return null;
+	try {
+		const wallet = await privy.wallets().get(serverWalletId);
+		return {
+			id: wallet.id,
+			address: wallet.address,
+			publicKey: wallet.public_key ?? wallet.address,
+		};
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
-		if (msg.includes("not found") || msg.includes("404")) {
-			return null;
-		}
-		console.error("[FIND_WALLET_ERROR]", { email, error: msg });
-		throw new ApiError(500, "Failed to look up wallet", "WALLET_LOOKUP_FAILED");
+		console.error("[WALLET_LOAD_FAILED]", { serverWalletId, email, error: msg });
+		throw new ApiError(
+			502,
+			"Your account has a wallet on record that could not be loaded. No new wallet was created; please try again later.",
+			"WALLET_LOOKUP_FAILED"
+		);
 	}
 }
 
@@ -148,8 +162,10 @@ export async function saveWalletIdToUser(userId: string, walletId: string): Prom
 	}
 }
 
-// Tests if a wallet can be accessed without user authorization.
-// Returns false if the wallet requires owner authorization (user-owned wallet).
+// Tests if the server can sign with a wallet without the owner's authorization.
+// Returns false if Privy rejects the request as unauthorized (e.g. a user-owned
+// wallet that needs an authorization signature). Other failures (network, 5xx)
+// return true: login proceeds and signing will surface the real error later.
 export async function testWalletAccess(walletId: string): Promise<boolean> {
 	const privy = getPrivyClient();
 	try {
@@ -159,11 +175,10 @@ export async function testWalletAccess(walletId: string): Promise<boolean> {
 		});
 		return true;
 	} catch (error) {
-		const msg = error instanceof Error ? error.message : String(error);
-		if (msg.includes("authorization") || msg.includes("401")) {
+		if (error instanceof AuthenticationError || error instanceof PermissionDeniedError) {
 			return false;
 		}
-		// Other errors (network, etc.) — assume accessible to avoid unnecessary re-provisioning
+		const msg = error instanceof Error ? error.message : String(error);
 		console.warn("[WALLET_ACCESS_CHECK_ERROR]", { walletId, error: msg });
 		return true;
 	}
