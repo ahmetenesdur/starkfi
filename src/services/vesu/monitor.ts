@@ -1,5 +1,5 @@
 import type { StarkZapWallet } from "../starkzap/client.js";
-import { getPosition, type LendingPosition } from "./lending.js";
+import { getPosition, getPositionForTokens, type LendingPosition } from "./lending.js";
 import { resolvePoolAddress } from "./pools.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { ChainId } from "starkzap";
@@ -106,41 +106,32 @@ export async function monitorPosition(
 
 export async function monitorAllPositions(
 	wallet: StarkZapWallet,
-	config?: Partial<MonitorConfig>,
-	chainId?: ChainId
+	config?: Partial<MonitorConfig>
 ): Promise<MonitorResult[]> {
 	const cfg = resolveConfig(config);
 	const userPositions = await wallet.lending().getPositions();
 	const borrowPositions = userPositions.filter((p) => p.type === "borrow");
 
-	if (borrowPositions.length === 0) return [];
-
 	const results: MonitorResult[] = [];
 
 	for (const pos of borrowPositions) {
-		try {
-			const debtSymbol = pos.debt?.token.symbol;
-			if (!debtSymbol) continue;
+		if (!pos.debt) continue;
 
-			const position = await getPosition(
-				wallet,
-				pos.pool.id.toString(),
-				pos.collateral.token.symbol,
-				debtSymbol,
-				chainId
-			);
-			if (!position) continue;
+		const poolAddress = pos.pool.id.toString();
+		// Use the tokens the provider reported, so a token missing from StarkFi's
+		// symbol list cannot fail the scan. Read errors propagate: a failed read
+		// must not look like a position that does not exist.
+		const position = await getPositionForTokens(
+			wallet,
+			poolAddress,
+			pos.collateral.token,
+			pos.debt.token
+		);
+		if (!position) continue;
 
-			results.push(
-				toMonitorResult(
-					{ address: pos.pool.id.toString(), name: pos.pool.name ?? null },
-					position,
-					cfg
-				)
-			);
-		} catch {
-			// Non-critical: skip positions that fail to load.
-		}
+		results.push(
+			toMonitorResult({ address: poolAddress, name: pos.pool.name ?? null }, position, cfg)
+		);
 	}
 
 	return results;

@@ -1,5 +1,5 @@
 import { Amount, fromAddress } from "starkzap";
-import type { LendingPosition as SdkLendingPosition, ChainId } from "starkzap";
+import type { LendingPosition as SdkLendingPosition, ChainId, Token } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
@@ -189,6 +189,11 @@ export async function addCollateral(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
+/**
+ * Reads the position for a collateral/debt pair. Returns null only when the pool
+ * reports no position (no collateral shares and no debt); every other failure,
+ * such as an RPC error, propagates so it is never mistaken for "no position".
+ */
 export async function getPosition(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
@@ -196,49 +201,54 @@ export async function getPosition(
 	debtTokenSymbol: string,
 	chainId?: ChainId
 ): Promise<LendingPosition | null> {
-	const collateralToken = resolveToken(collateralTokenSymbol, chainId);
-	const debtToken = resolveToken(debtTokenSymbol, chainId);
+	return getPositionForTokens(
+		wallet,
+		poolAddress,
+		resolveToken(collateralTokenSymbol, chainId),
+		resolveToken(debtTokenSymbol, chainId)
+	);
+}
 
-	try {
-		const sdk: SdkLendingPosition = await wallet.lending().getPosition({
-			collateralToken,
-			debtToken,
-			poolAddress: resolveOptionalPool(poolAddress),
-		});
+export async function getPositionForTokens(
+	wallet: StarkZapWallet,
+	poolAddress: string | undefined,
+	collateralToken: Token,
+	debtToken: Token
+): Promise<LendingPosition | null> {
+	const sdk: SdkLendingPosition = await wallet.lending().getPosition({
+		collateralToken,
+		debtToken,
+		poolAddress: resolveOptionalPool(poolAddress),
+	});
 
-		if (sdk.collateralShares === 0n && sdk.nominalDebt === 0n) return null;
+	if (sdk.collateralShares === 0n && sdk.nominalDebt === 0n) return null;
 
-		const collFormatted =
-			sdk.collateralAmount != null
-				? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
-				: "0";
-		const debtFormatted =
-			sdk.debtAmount != null
-				? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true)
-				: "0";
+	const collFormatted =
+		sdk.collateralAmount != null
+			? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
+			: "0";
+	const debtFormatted =
+		sdk.debtAmount != null ? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true) : "0";
 
-		let healthFactor: number | undefined;
-		let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
+	let healthFactor: number | undefined;
+	let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
 
-		if (sdk.collateralValue > 0n || sdk.debtValue > 0n) {
-			healthFactor =
-				sdk.debtValue > 0n
-					? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
-					: 9999;
-			riskLevel = classifyRisk(healthFactor, resolveConfig());
-		}
-
-		return {
-			collateralAsset: collateralTokenSymbol.toUpperCase(),
-			debtAsset: debtTokenSymbol.toUpperCase(),
-			collateralAmount: collFormatted,
-			debtAmount: debtFormatted,
-			healthFactor,
-			riskLevel,
-		};
-	} catch {
-		return null;
+	if (sdk.collateralValue > 0n || sdk.debtValue > 0n) {
+		healthFactor =
+			sdk.debtValue > 0n
+				? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
+				: 9999;
+		riskLevel = classifyRisk(healthFactor, resolveConfig());
 	}
+
+	return {
+		collateralAsset: collateralToken.symbol.toUpperCase(),
+		debtAsset: debtToken.symbol.toUpperCase(),
+		collateralAmount: collFormatted,
+		debtAmount: debtFormatted,
+		healthFactor,
+		riskLevel,
+	};
 }
 
 export async function getSuppliedBalance(

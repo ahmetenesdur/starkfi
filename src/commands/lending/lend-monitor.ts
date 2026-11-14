@@ -54,7 +54,7 @@ export function registerLendMonitorCommand(program: Command): void {
 					);
 					results = [result];
 				} else {
-					results = await monitorAllPositions(wallet, config, chainId);
+					results = await monitorAllPositions(wallet, config);
 				}
 
 				spinner.stop();
