@@ -7,14 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@fatsolutions/tongo-sdk':
-        specifier: ^1.5.0
-        version: 1.5.0(typescript@5.9.3)(zod@4.4.3)
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.4.0(jiti@2.7.0))
+      '@fatsolutions/tongo-sdk':
+        specifier: ^1.5.0
+        version: 1.5.0(typescript@5.9.3)(zod@4.4.3)
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.4.3)
