@@ -57,7 +57,14 @@ export default defineConfig({
 	bundle: true,
 	treeshake: true,
 	minify: true,
-	splitting: false,
+	// Starkzap loads optional modules (bridges, ethers) with dynamic import().
+	// Without splitting, esbuild inlines them and wraps the modules they share
+	// with the rest of the bundle, zod among them, in lazy initialisers; the MCP
+	// SDK's module-level schemas then ran before zod's classic schemas existed
+	// and the built CLI crashed at startup ("TypeError: ... is not a
+	// constructor"). With splitting, dynamic imports become separate chunks and
+	// modules initialise in import order. src/bundle.test.ts runs the built CLI.
+	splitting: true,
 	sourcemap: true,
 	clean: true,
 
