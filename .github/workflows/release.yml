@@ -1,0 +1,79 @@
+name: Release
+
+# Publishing a GitHub release publishes the package to npm.
+#
+# npm authenticates this workflow through trusted publishing (OIDC), so the repository stores no npm token,
+# and npm attaches a provenance attestation to the package. One-time setup on npmjs.com: the package's
+# Settings > Trusted publishing > GitHub Actions, with this repository, the workflow filename "release.yml"
+# and "npm publish" allowed.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      # Trusted publishing needs Node 22.14 or later and npm 11.5.1 or later.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Check the tag against package.json
+        id: package
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+          if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+            echo "::notice::$name@$version is already on npm, so there is nothing to publish"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install
+        if: steps.package.outputs.publish == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        if: steps.package.outputs.publish == 'true'
+        run: pnpm typecheck
+
+      - name: Lint
+        if: steps.package.outputs.publish == 'true'
+        run: pnpm lint
+
+      - name: Format
+        if: steps.package.outputs.publish == 'true'
+        run: pnpm format:check
+
+      - name: Test
+        if: steps.package.outputs.publish == 'true'
+        run: pnpm test
+
+      # "prepublishOnly" builds dist/ before the package is packed.
+      - name: Publish
+        if: steps.package.outputs.publish == 'true'
+        run: npm publish
