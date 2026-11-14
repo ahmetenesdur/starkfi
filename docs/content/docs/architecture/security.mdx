@@ -54,7 +54,7 @@ All authenticated endpoints require a valid JWT token:
 | **Issued on**    | Successful OTP verification  |
 | **Expiry**       | 7 days                       |
 | **Expiry Buffer**| 5 minutes (prevents mid-request failures) |
-| **Revocation**   | `starkfi auth logout` revokes every token of the account on the auth server |
+| **Revocation**   | `starkfi auth logout` revokes every token of the account on the auth server (CLI releases after v0.7.2) |
 | **Storage**      | Local `session.json` via XDG-compliant paths  |
 
 ### Rate Limiting
@@ -76,7 +76,7 @@ Login → OTP → Verify → JWT issued → Session saved locally
 
 Sessions persist across terminal restarts. Expired sessions are automatically detected and cleared — users are prompted to re-authenticate.
 
-`starkfi auth logout` asks the auth server that issued the session to revoke it, then deletes the local session file. Revocation increments a per-account session epoch stored in Privy, so it invalidates **every** token issued to the account so far, on every device. If the server cannot be reached, the local file is still deleted and `logout` warns that the token remains valid on the server until its expiry date; logging in again later and running `logout` while the server is reachable revokes it.
+`starkfi auth logout` asks the auth server that issued the session to revoke it, then deletes the local session file. Revocation increments a per-account session epoch stored in Privy, so it invalidates **every** token issued to the account so far, on every device. If the server cannot be reached, the local file is still deleted and `logout` warns that the token remains valid on the server until its expiry date; logging in again later and running `logout` while the server is reachable revokes it. This needs a CLI release after v0.7.2 and an auth server built from the same code; v0.7.2 and earlier only delete the local file, leaving the token valid on the server until it expires.
 
 ---
 

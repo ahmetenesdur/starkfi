@@ -9,11 +9,16 @@ description: StarkFi — Starknet DeFi from your terminal and AI agents
 
 No browser needed. No wallet extension. Just authenticate with your email and start interacting with DeFi protocols directly.
 
-## Get Started in 60 Seconds
+## Get Started
+
+> **The hosted auth server is offline.** Sign-in and transactions go through a StarkFi auth server. The hosted default (`https://starkfi-production.up.railway.app`) currently answers `404 Application not found`, so [run your own](/docs/authentication#self-hosting-the-auth-server) and point the CLI at it first.
 
 No install needed — just run with `npx`:
 
 ```bash
+# Point the CLI at your auth server
+export STARKFI_API_URL=http://localhost:3001
+
 # Authenticate
 npx starkfi@latest auth login you@email.com
 npx starkfi@latest auth verify you@email.com 123456   # check your email for the code

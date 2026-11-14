@@ -16,7 +16,7 @@ StarkFi exposes **51 MCP tools** via stdio transport. AI clients (Cursor, Claude
 
 ```
 
-> **Prerequisite:** Authenticate via `npx starkfi@latest auth login` before the MCP server can execute transactions.
+> **Prerequisite:** Authenticate via `npx starkfi@latest auth login` before the MCP server can execute transactions. The hosted auth server is currently offline: run your own from [`server/`](server/) and set `STARKFI_API_URL` before logging in ([guide](https://docs.starkfi.app/docs/authentication#self-hosting-the-auth-server)).
 
 → **[Full Setup Guide](https://docs.starkfi.app/docs/mcp/setup)**
 

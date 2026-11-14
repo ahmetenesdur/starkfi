@@ -38,11 +38,12 @@ StarkFi defines 36 typed error codes organized by domain:
 
 ### Authentication & Session
 
-| Code              | When                   | Resolution                        |
-| ----------------- | ---------------------- | --------------------------------- |
-| `AUTH_REQUIRED`   | No active session      | Run `starkfi auth login`          |
-| `AUTH_FAILED`     | Login or verify failed | Check email/OTP and retry         |
-| `SESSION_EXPIRED` | JWT token expired      | Re-authenticate with `auth login` |
+| Code                      | When                                                                 | Resolution                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `AUTH_REQUIRED`           | No active session                                                    | Run `starkfi auth login`                                                                                     |
+| `AUTH_FAILED`             | Login or verify failed                                               | Check email/OTP and retry                                                                                    |
+| `SESSION_EXPIRED`         | JWT token expired, or revoked by `auth logout`                       | Re-authenticate with `auth login`                                                                            |
+| `AUTH_SERVER_UNAVAILABLE` | The auth server is unreachable or did not answer as starkfi-server   | [Run your own auth server](/docs/authentication#self-hosting-the-auth-server), set `STARKFI_API_URL`, log in again |
 
 ### Wallet
 

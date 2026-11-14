@@ -88,7 +88,7 @@ These environment variables override configuration for advanced use cases:
 
 | Variable                 | Purpose                                                              | Default          |
 | ------------------------ | -------------------------------------------------------------------- | ---------------- |
-| `STARKFI_API_URL`        | StarkFi auth server URL                                              | Built-in default |
+| `STARKFI_API_URL`        | Auth server for `auth login` / `auth verify`; later commands use the server recorded in the session. The hosted default is offline: [self-host](/docs/authentication#self-hosting-the-auth-server) | `https://starkfi-production.up.railway.app` |
 | `AVNU_PAYMASTER_API_KEY` | API key for AVNU Paymaster (optional, for authenticated access) | —                |
 
 ---

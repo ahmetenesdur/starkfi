@@ -165,6 +165,8 @@ Closes an entire lending position atomically — repays all debt and withdraws a
 
 The amounts come from the position's exact on-chain base units. Interest keeps accruing between the read and execution, so the repayment approval and the requested withdrawal are 1% above the amounts read. Vesu V2 caps a repayment at the outstanding debt and a withdrawal at the position's collateral, and transfers only those amounts, so the extra 1% is never charged; at most that much token allowance to the pool remains afterwards.
 
+> **Known issue in v0.7.2 and earlier:** `lend-close` (and the `close_position` MCP tool) fails with `Invalid unit amount` for any position with debt. Fixed on `main`; use the release after v0.7.2.
+
 ```bash
 starkfi lend-close -p <pool> --collateral-token <symbol> --borrow-token <symbol>
 ```

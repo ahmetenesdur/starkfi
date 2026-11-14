@@ -33,13 +33,16 @@ Most DeFi tools are built for humans clicking buttons. StarkFi is built for **ag
 - 🧪 **Simulate Everything** — Dry-run any transaction before broadcasting
 - 💬 **Telegram Bot** — Chat-based DeFi via natural language with BYOAI model ([separate repository](https://github.com/ahmetenesdur/starkfi-telegram-bot))
 
-> **Auth server required.** Login, transaction signing and sponsored (gasfree) transactions go through the StarkFi auth server in [`server/`](server/), which holds the Privy credentials. The CLI uses the hosted instance by default; point `STARKFI_API_URL` at your own deployment to self-host.
+> **The hosted auth server is offline.** Login, transaction signing and gas sponsorship go through the StarkFi auth server in [`server/`](server/), which holds the Privy credentials. The CLI defaults to the hosted instance at `https://starkfi-production.up.railway.app`, which is currently offline (it answers `404 Application not found`), so `auth login` and every transaction need an auth server you run yourself, selected with `STARKFI_API_URL`. See [Self-hosting the auth server](#self-hosting-the-auth-server).
 
 ---
 
 ## Quick Start
 
 ```bash
+# 0. Point the CLI at your auth server (see "Self-hosting the auth server" below)
+export STARKFI_API_URL=http://localhost:3001
+
 # 1. Authenticate
 npx starkfi@latest auth login user@example.com
 npx starkfi@latest auth verify user@example.com <OTP_CODE>
@@ -56,6 +59,20 @@ npx starkfi@latest portfolio
 ```
 
 → **[Full Quick Start Guide](https://docs.starkfi.app/docs/quick-start)**
+
+### Self-hosting the auth server
+
+You need Node.js 22.12+, pnpm, and a [Privy](https://dashboard.privy.io) app with email login enabled (its App ID and App secret).
+
+```bash
+git clone https://github.com/ahmetenesdur/starkfi.git
+cd starkfi/server
+pnpm install
+cp .env.example .env    # set PRIVY_APP_ID, PRIVY_APP_SECRET and JWT_SECRET (openssl rand -base64 32)
+pnpm dev                # http://localhost:3001; check it with: curl http://localhost:3001/health
+```
+
+Then `export STARKFI_API_URL=http://localhost:3001` in the shell where you log in. The session records that server, and every later command, including the MCP server, signs and sponsors transactions through it, so keep it running; log in again after switching servers. Gasfree (sponsored) mode also needs `AVNU_API_KEY` on the server. Details: [Auth Server](https://docs.starkfi.app/docs/architecture/auth-server) · [Self-hosting guide](https://docs.starkfi.app/docs/authentication#self-hosting-the-auth-server).
 
 ---
 
