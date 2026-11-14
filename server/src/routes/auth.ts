@@ -8,7 +8,6 @@ import {
 	findExistingWallet,
 	createAgentWallet,
 	saveWalletIdToUser,
-	testWalletAccess,
 } from "../services/privy.js";
 import { generateToken } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -38,9 +37,15 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 
 	if (wallet) {
 		// Never swap in a new wallet for an existing one: the user's funds live at
-		// the old address. Surface the problem instead.
-		if (!(await testWalletAccess(wallet.id))) {
-			console.warn("[WALLET_NOT_SERVER_SIGNABLE]", { email, walletId: wallet.id });
+		// the old address. Surface the problem instead. An owned wallet needs the
+		// owner's authorization signature for every signing request, so the server
+		// cannot use it; this is read from the wallet record, without signing.
+		if (wallet.ownerId !== null) {
+			console.warn("[WALLET_NOT_SERVER_SIGNABLE]", {
+				email,
+				walletId: wallet.id,
+				ownerId: wallet.ownerId,
+			});
 			throw new ApiError(
 				409,
 				"Your existing wallet requires owner authorization and cannot be used by StarkFi. " +

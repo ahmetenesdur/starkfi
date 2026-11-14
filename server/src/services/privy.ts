@@ -1,9 +1,4 @@
-import {
-	AuthenticationError,
-	NotFoundError,
-	PermissionDeniedError,
-	PrivyClient,
-} from "@privy-io/node";
+import { NotFoundError, PrivyClient } from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
 import { config } from "../lib/config.js";
 
@@ -79,14 +74,26 @@ export async function verifyOtp(
 	return { userId: data.user.id, userToken: data.privy_access_token };
 }
 
+export interface ServerWallet {
+	id: string;
+	address: string;
+	publicKey: string;
+	/**
+	 * Key quorum that owns the wallet, or null for an app-owned wallet. Privy
+	 * requires authorization signatures from the owner for every action with an
+	 * owned wallet (POST /v1/wallets/{id}/rpc, which rawSign uses), so the server
+	 * can sign with its app secret alone only when this is null.
+	 * https://docs.privy.io/api-reference/authorization-signatures
+	 */
+	ownerId: string | null;
+}
+
 /**
  * Returns the user's recorded server wallet, or null only when the user has no
  * wallet on record. Any failure to load a recorded wallet is an error: callers
  * create a wallet on null, and that must never silently replace an existing one.
  */
-export async function findExistingWallet(
-	email: string
-): Promise<{ id: string; address: string; publicKey: string } | null> {
+export async function findExistingWallet(email: string): Promise<ServerWallet | null> {
 	const privy = getPrivyClient();
 
 	let serverWalletId: unknown;
@@ -108,6 +115,7 @@ export async function findExistingWallet(
 			id: wallet.id,
 			address: wallet.address,
 			publicKey: wallet.public_key ?? wallet.address,
+			ownerId: wallet.owner_id,
 		};
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -120,11 +128,7 @@ export async function findExistingWallet(
 	}
 }
 
-export async function createAgentWallet(): Promise<{
-	id: string;
-	address: string;
-	publicKey: string;
-}> {
+export async function createAgentWallet(): Promise<ServerWallet> {
 	const privy = getPrivyClient();
 	try {
 		const wallet = await privy.wallets().create({
@@ -135,6 +139,7 @@ export async function createAgentWallet(): Promise<{
 			id: wallet.id,
 			address: wallet.address,
 			publicKey: wallet.public_key ?? wallet.address,
+			ownerId: wallet.owner_id,
 		};
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -159,28 +164,6 @@ export async function saveWalletIdToUser(userId: string, walletId: string): Prom
 			error: msg,
 		});
 		throw new ApiError(500, "Failed to save wallet metadata", "METADATA_SAVE_FAILED");
-	}
-}
-
-// Tests if the server can sign with a wallet without the owner's authorization.
-// Returns false if Privy rejects the request as unauthorized (e.g. a user-owned
-// wallet that needs an authorization signature). Other failures (network, 5xx)
-// return true: login proceeds and signing will surface the real error later.
-export async function testWalletAccess(walletId: string): Promise<boolean> {
-	const privy = getPrivyClient();
-	try {
-		const testHash = "0x0000000000000000000000000000000000000000000000000000000000000001";
-		await privy.wallets().rawSign(walletId, {
-			params: { hash: testHash },
-		});
-		return true;
-	} catch (error) {
-		if (error instanceof AuthenticationError || error instanceof PermissionDeniedError) {
-			return false;
-		}
-		const msg = error instanceof Error ? error.message : String(error);
-		console.warn("[WALLET_ACCESS_CHECK_ERROR]", { walletId, error: msg });
-		return true;
 	}
 }
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthenticationError, InternalServerError, NotFoundError } from "@privy-io/node";
+import { InternalServerError, NotFoundError } from "@privy-io/node";
 import type * as PrivyNode from "@privy-io/node";
 import app from "../index.js";
 
@@ -23,8 +23,14 @@ vi.mock("@privy-io/node", async (importOriginal) => ({
 	},
 }));
 
-const existingWallet = { id: "wallet-old", address: "0xold", public_key: "0xoldpk" };
-const newWallet = { id: "wallet-new", address: "0xnew", public_key: "0xnewpk" };
+// Privy wallet records: owner_id is null for app-owned wallets the server can sign with.
+const existingWallet = {
+	id: "wallet-old",
+	address: "0xold",
+	public_key: "0xoldpk",
+	owner_id: null,
+};
+const newWallet = { id: "wallet-new", address: "0xnew", public_key: "0xnewpk", owner_id: null };
 let peer = 0;
 
 function verify() {
@@ -71,17 +77,17 @@ function expectNoReplacement() {
 }
 
 describe("POST /auth/verify wallet handling", () => {
-	it("returns the existing wallet when the server can sign with it", async () => {
+	it("returns an existing app-owned wallet without signing anything", async () => {
 		privy.users.getByEmailAddress.mockResolvedValue({
 			custom_metadata: { server_wallet_id: existingWallet.id },
 		});
 		privy.wallets.get.mockResolvedValue(existingWallet);
-		privy.wallets.rawSign.mockResolvedValue({ signature: "0xsig" });
 
 		const res = await verify();
 
 		expect(res.status).toBe(200);
 		expect(await res.json()).toMatchObject({ walletId: "wallet-old", isExisting: true });
+		expect(privy.wallets.rawSign).not.toHaveBeenCalled();
 		expectNoReplacement();
 	});
 
@@ -89,10 +95,7 @@ describe("POST /auth/verify wallet handling", () => {
 		privy.users.getByEmailAddress.mockResolvedValue({
 			custom_metadata: { server_wallet_id: existingWallet.id },
 		});
-		privy.wallets.get.mockResolvedValue(existingWallet);
-		privy.wallets.rawSign.mockRejectedValue(
-			new AuthenticationError(401, undefined, "Missing authorization signature", headers)
-		);
+		privy.wallets.get.mockResolvedValue({ ...existingWallet, owner_id: "key-quorum-1" });
 
 		const res = await verify();
 
@@ -100,22 +103,7 @@ describe("POST /auth/verify wallet handling", () => {
 		expect(await res.json()).toMatchObject({
 			error: { code: "WALLET_REQUIRES_OWNER_AUTHORIZATION" },
 		});
-		expectNoReplacement();
-	});
-
-	it("does not treat unrelated errors that mention 'authorization' as a reason to act", async () => {
-		privy.users.getByEmailAddress.mockResolvedValue({
-			custom_metadata: { server_wallet_id: existingWallet.id },
-		});
-		privy.wallets.get.mockResolvedValue(existingWallet);
-		privy.wallets.rawSign.mockRejectedValue(
-			new InternalServerError(503, undefined, "authorization service unavailable", headers)
-		);
-
-		const res = await verify();
-
-		expect(res.status).toBe(200);
-		expect(await res.json()).toMatchObject({ walletId: "wallet-old", isExisting: true });
+		expect(privy.wallets.rawSign).not.toHaveBeenCalled();
 		expectNoReplacement();
 	});
 
