@@ -40,7 +40,7 @@ healthFactor = collateralValueUSD × maxLtv / debtValueUSD
 
 `lend-status`, `lend-monitor`, `lend-auto` and the matching MCP tools all use this definition, and show the pair's max LTV next to the health factor.
 
-> **Changed after v0.7.2.** v0.7.2 and earlier report `collateralValueUSD / debtValueUSD` without the max LTV, so their health factor reads higher than the risk-adjusted value (1.25 instead of 1.0 at a max LTV of 0.8) and their risk alerts fire late. On those versions, multiply the reported value by the pair's max LTV.
+> **Changed in v0.8.0.** v0.7.2 and earlier report `collateralValueUSD / debtValueUSD` without the max LTV, so their health factor reads higher than the risk-adjusted value (1.25 instead of 1.0 at a max LTV of 0.8) and their risk alerts fire late. On those versions, multiply the reported value by the pair's max LTV.
 
 Risk levels:
 

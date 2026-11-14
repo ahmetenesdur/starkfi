@@ -95,7 +95,7 @@ starkfi auth logout
 
 Deletes your stored session. You'll need to re-authenticate to use any commands.
 
-From the release after v0.7.2, `logout` first asks the auth server that issued the session to revoke it, which invalidates every session of your account on every device; if the server is unreachable, the local session is still deleted and `logout` tells you the token stays valid on the server until it expires. v0.7.2 and earlier only delete the local file: the token stays valid on the server for the rest of its 7-day lifetime.
+Since v0.8.0, `logout` first asks the auth server that issued the session to revoke it, which invalidates every session of your account on every device; if the server is unreachable, the local session is still deleted and `logout` tells you the token stays valid on the server until it expires. v0.7.2 and earlier only delete the local file: the token stays valid on the server for the rest of its 7-day lifetime.
 
 ## Session Details
 
