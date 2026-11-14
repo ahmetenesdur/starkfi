@@ -196,8 +196,9 @@ export function registerLendCloseCommand(program: Command): void {
 						const sim = await simulateTransaction(builder, ctx.chainId);
 						handleSimulationResult(sim, ctx.spinner, opts, {
 							pool: pool.name ?? pool.address,
-							debt: `${position.debtAmount} ${position.debtAsset}`,
-							collateral: `${position.collateralAmount} ${position.collateralAsset}`,
+							// Amounts are already formatted with their symbol ("USDC 1,234.57").
+							debt: position.debtAmount,
+							collateral: position.collateralAmount,
 						});
 						return;
 					}
