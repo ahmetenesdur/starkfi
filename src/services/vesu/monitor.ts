@@ -9,6 +9,7 @@ import {
 	DEFAULT_WARNING_THRESHOLD,
 	DEFAULT_DANGER_THRESHOLD,
 	DEFAULT_CRITICAL_THRESHOLD,
+	UNBOUNDED_HEALTH_FACTOR,
 	type MonitorConfig,
 	type RiskLevel,
 } from "./health.js";
@@ -29,6 +30,8 @@ export interface MonitorResult {
 	debtToken: string;
 	collateralAmount: string;
 	debtAmount: string;
+	/** The pair's maximum LTV; the health factor is collateral × maxLtv / debt. */
+	maxLtv: number;
 	healthFactor: number;
 	riskLevel: RiskLevel;
 	alert: string | null;
@@ -65,7 +68,7 @@ function toMonitorResult(
 	position: LendingPosition,
 	cfg: MonitorConfig
 ): MonitorResult {
-	const hf = position.healthFactor ?? 9999;
+	const hf = position.healthFactor ?? UNBOUNDED_HEALTH_FACTOR;
 	const riskLevel = classifyRisk(hf, cfg);
 
 	return {
@@ -75,6 +78,7 @@ function toMonitorResult(
 		debtToken: position.debtAsset,
 		collateralAmount: position.collateralAmount,
 		debtAmount: position.debtAmount,
+		maxLtv: position.maxLtv,
 		healthFactor: hf,
 		riskLevel,
 		alert: buildAlert(riskLevel, hf),

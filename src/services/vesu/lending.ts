@@ -1,4 +1,4 @@
-import { Amount, fromAddress } from "starkzap";
+import { Amount, fromAddress, vesuPresets } from "starkzap";
 import type { LendingPosition as SdkLendingPosition, ChainId, Token } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
@@ -6,13 +6,25 @@ import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { TxResult } from "../../lib/types.js";
 import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 import { getTokenUsdPrice } from "../price/price.js";
-import { classifyRisk, resolveConfig } from "./health.js";
+import { classifyRisk, resolveConfig, UNBOUNDED_HEALTH_FACTOR } from "./health.js";
+import {
+	fixedHealthFactor,
+	fixedHealthFactorToNumber,
+	LTV_SCALE,
+	type PositionValues,
+} from "./rebalance-math.js";
 
 export interface LendingPosition {
 	collateralAsset: string;
 	debtAsset: string;
 	collateralAmount: string;
 	debtAmount: string;
+	/** The pair's maximum LTV (e.g. 0.8); above it Vesu liquidates the position. */
+	maxLtv: number;
+	/**
+	 * collateral value × max LTV / debt value. Below 1.0 the position can be
+	 * liquidated; UNBOUNDED_HEALTH_FACTOR when there is no debt.
+	 */
 	healthFactor?: number;
 	riskLevel?: "SAFE" | "WARNING" | "DANGER" | "CRITICAL" | "UNKNOWN";
 }
@@ -215,6 +227,26 @@ export async function getPositionForTokens(
 	collateralToken: Token,
 	debtToken: Token
 ): Promise<LendingPosition | null> {
+	const snapshot = await readPosition(wallet, poolAddress, collateralToken, debtToken);
+	return snapshot ? toLendingPosition(snapshot) : null;
+}
+
+/** A position read in exact on-chain units, with the pair's liquidation parameter. */
+export interface PositionSnapshot extends PositionValues {
+	collateralToken: Token;
+	debtToken: Token;
+}
+
+/**
+ * Reads a position's base-unit amounts, USD values and the pair's max LTV.
+ * Returns null only when the pool reports no collateral shares and no debt.
+ */
+export async function readPosition(
+	wallet: StarkZapWallet,
+	poolAddress: string | undefined,
+	collateralToken: Token,
+	debtToken: Token
+): Promise<PositionSnapshot | null> {
 	const sdk: SdkLendingPosition = await wallet.lending().getPosition({
 		collateralToken,
 		debtToken,
@@ -223,29 +255,74 @@ export async function getPositionForTokens(
 
 	if (sdk.collateralShares === 0n && sdk.nominalDebt === 0n) return null;
 
-	const collFormatted =
-		sdk.collateralAmount != null
-			? Amount.fromRaw(sdk.collateralAmount, collateralToken).toFormatted(true)
-			: "0";
-	const debtFormatted =
-		sdk.debtAmount != null ? Amount.fromRaw(sdk.debtAmount, debtToken).toFormatted(true) : "0";
+	return {
+		collateralToken,
+		debtToken,
+		collateralAmount: sdk.collateralAmount ?? 0n,
+		debtAmount: sdk.debtAmount ?? 0n,
+		collateralValue: sdk.collateralValue,
+		debtValue: sdk.debtValue,
+		maxLtv: await getPairMaxLtv(wallet, poolAddress, collateralToken, debtToken),
+	};
+}
+
+/**
+ * The pair's `max_ltv` (1e18 scale) from the Vesu pool's `pair_config`: the
+ * loan-to-value ratio above which Vesu liquidates the position. Starkzap reads
+ * the same field internally but does not expose it.
+ */
+export async function getPairMaxLtv(
+	wallet: StarkZapWallet,
+	poolAddress: string | undefined,
+	collateralToken: Token,
+	debtToken: Token
+): Promise<bigint> {
+	const result = await wallet.getProvider().callContract({
+		contractAddress: poolAddress ? fromAddress(poolAddress) : defaultVesuPool(wallet),
+		entrypoint: "pair_config",
+		calldata: [collateralToken.address, debtToken.address],
+	});
+	// PairConfig { max_ltv: u64, liquidation_factor: u64, debt_cap: u128 }
+	const maxLtv = result[0];
+	if (maxLtv == null) {
+		throw new StarkfiError(
+			ErrorCode.LENDING_FAILED,
+			`Vesu pair_config returned no max_ltv for ${collateralToken.symbol}/${debtToken.symbol}`
+		);
+	}
+	return BigInt(maxLtv);
+}
+
+// Same default Starkzap's Vesu provider uses when no pool is given.
+function defaultVesuPool(wallet: StarkZapWallet) {
+	const chain = wallet.getChainId().toLiteral();
+	const pool = vesuPresets[chain]?.defaultPool;
+	if (!pool) {
+		throw new StarkfiError(ErrorCode.LENDING_FAILED, `No default Vesu pool for ${chain}`);
+	}
+	return pool;
+}
+
+export function toLendingPosition(snapshot: PositionSnapshot): LendingPosition {
+	const { collateralToken, debtToken, collateralValue, debtValue, maxLtv } = snapshot;
 
 	let healthFactor: number | undefined;
 	let riskLevel: LendingPosition["riskLevel"] = "UNKNOWN";
 
-	if (sdk.collateralValue > 0n || sdk.debtValue > 0n) {
-		healthFactor =
-			sdk.debtValue > 0n
-				? Number((sdk.collateralValue * 1000n) / sdk.debtValue) / 1000
-				: 9999;
+	if (collateralValue > 0n || debtValue > 0n) {
+		const fixed = fixedHealthFactor(collateralValue, debtValue, maxLtv);
+		healthFactor = fixed === null ? UNBOUNDED_HEALTH_FACTOR : fixedHealthFactorToNumber(fixed);
 		riskLevel = classifyRisk(healthFactor, resolveConfig());
 	}
 
 	return {
 		collateralAsset: collateralToken.symbol.toUpperCase(),
 		debtAsset: debtToken.symbol.toUpperCase(),
-		collateralAmount: collFormatted,
-		debtAmount: debtFormatted,
+		collateralAmount: Amount.fromRaw(snapshot.collateralAmount, collateralToken).toFormatted(
+			true
+		),
+		debtAmount: Amount.fromRaw(snapshot.debtAmount, debtToken).toFormatted(true),
+		maxLtv: Number(maxLtv) / Number(LTV_SCALE),
 		healthFactor,
 		riskLevel,
 	};

@@ -216,7 +216,7 @@ starkfi lend-status -p Prime --collateral-token ETH          # Supply position
 starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC  # With HF
 ```
 
-Shows supplied yield balance, collateral value, debt value, health factor, and risk level:
+Shows supplied yield balance, collateral and debt amounts, the pair's max LTV, health factor, and risk level. The health factor is collateral value × max LTV / debt value, so **below 1.0 Vesu can liquidate the position** (see [Health Factor](/docs/integrations/vesu#health-factor)).
 
 | Risk Level   | Health Factor |
 | ------------ | ------------- |
@@ -260,7 +260,7 @@ starkfi lend-monitor -p <pool> --collateral-token <symbol> --borrow-token <symbo
 | **DANGER**   | 1.05 – 1.1    | 🔴 Repay/add   |
 | **CRITICAL** | ≤ 1.05        | 🚨 Liquidation  |
 
-Shows collateral amount, debt amount, health factor, risk level, and actionable recommendations for each position.
+Shows collateral amount, debt amount, the pair's max LTV, health factor (collateral value × max LTV / debt value; below 1.0 the position can be liquidated), risk level, and actionable recommendations for each position.
 
 **Examples:**
 
@@ -301,7 +301,7 @@ starkfi lend-auto -p <pool> --collateral-token <symbol> --borrow-token <symbol>
 
 Shows the action taken, amount, previous and estimated new health factor, and transaction hash.
 
-The amount is sized from the position's own token amounts and USD values (the pool's oracle prices), so it is correct for tokens of any decimals. Health factor here is collateral USD value divided by debt USD value. Before sending anything, `lend-auto` asks the lending provider for a projected post-action health factor and a preflight simulation. It refuses to execute (and `--simulate` reports an error) if the simulation fails, if no projection is available, or if the projected health factor does not reach `--target-hf` or does not improve on the current one.
+The amount is sized from the position's own token amounts and USD values (the pool's oracle prices), so it is correct for tokens of any decimals. Health factor here is the same risk-adjusted value as everywhere else: collateral value × the pair's max LTV / debt value, where 1.0 is the liquidation point. Before sending anything, `lend-auto` asks the lending provider for a projected post-action health factor and a preflight simulation. It refuses to execute (and `--simulate` reports an error) if the simulation fails, if no projection is available, or if the projected health factor does not reach `--target-hf` or does not improve on the current one.
 
 **Examples:**
 

@@ -20,7 +20,7 @@ const MCP_INSTRUCTIONS = `StarkFi is a Starknet DeFi toolkit. You can:
 - Execute multi-swaps (2-3 pairs) and batch multiple DeFi operations in a single transaction
 - Stake/unstake tokens across validators, claim and compound rewards
 - Supply, borrow, repay, withdraw, and close positions on Vesu V2 lending pools
-- Monitor lending health factors with 4-level risk alerts (HEALTHY/WARNING/DANGER/CRITICAL)
+- Monitor lending health factors (1.0 = liquidation) with 4-level risk alerts (SAFE/WARNING/DANGER/CRITICAL)
 - Auto-rebalance lending positions via repay or add-collateral strategies
 - Create, preview, list, and cancel Dollar-Cost Averaging (DCA) recurring buy orders via AVNU or Ekubo
 - Fund, transfer, withdraw, and manage confidential (private) balances via Tongo Cash

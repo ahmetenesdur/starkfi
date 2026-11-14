@@ -7,6 +7,7 @@ import * as lendingService from "../../services/vesu/lending.js";
 import { resolvePoolAddress } from "../../services/vesu/pools.js";
 import { createSpinner, formatResult, formatTable, formatError } from "../../lib/format.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { HEALTH_FACTOR_HELP, UNBOUNDED_HEALTH_FACTOR } from "../../services/vesu/health.js";
 
 export function registerLendStatusCommand(program: Command): void {
 	program
@@ -20,7 +21,7 @@ export function registerLendStatusCommand(program: Command): void {
 		)
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-status\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC"
+			`\n${HEALTH_FACTOR_HELP}\n\nExamples:\n  $ starkfi lend-status\n  $ starkfi lend-status -p Prime --collateral-token ETH\n  $ starkfi lend-status -p Prime --collateral-token ETH --borrow-token USDC`
 		)
 		.action(async (opts) => {
 			if (!opts.pool) {
@@ -119,30 +120,26 @@ export function registerLendStatusCommand(program: Command): void {
 					resultObj["collateral"] =
 						`${position.collateralAmount} ${position.collateralAsset}`;
 					resultObj["debt"] = `${position.debtAmount} ${position.debtAsset}`;
+					resultObj["maxLtv"] = `${(position.maxLtv * 100).toFixed(2)}%`;
 
 					if (position.healthFactor !== undefined) {
-						let hfStr =
-							position.healthFactor === Infinity
+						const hfStr =
+							position.healthFactor >= UNBOUNDED_HEALTH_FACTOR
 								? "∞"
 								: position.healthFactor.toFixed(2);
-						let riskStrFormatted: string = position.riskLevel ?? "UNKNOWN";
+						const color =
+							position.riskLevel === "SAFE"
+								? chalk.green
+								: position.riskLevel === "WARNING"
+									? chalk.yellow
+									: position.riskLevel === "DANGER"
+										? chalk.red
+										: position.riskLevel === "CRITICAL"
+											? chalk.bgRed.white
+											: (s: string) => s;
 
-						if (position.riskLevel === "SAFE") riskStrFormatted = chalk.green("SAFE");
-						else if (position.riskLevel === "WARNING")
-							riskStrFormatted = chalk.yellow("WARNING");
-						else if (position.riskLevel === "DANGER")
-							riskStrFormatted = chalk.red("DANGER");
-						else if (position.riskLevel === "CRITICAL")
-							riskStrFormatted = chalk.bgRed.white("CRITICAL");
-
-						if (position.healthFactor === Infinity) hfStr = chalk.green(hfStr);
-						else if (position.healthFactor > 1.3) hfStr = chalk.green(hfStr);
-						else if (position.healthFactor > 1.1) hfStr = chalk.yellow(hfStr);
-						else if (position.healthFactor > 1.05) hfStr = chalk.red(hfStr);
-						else hfStr = chalk.bgRed.white(hfStr);
-
-						resultObj["healthFactor"] = hfStr;
-						resultObj["riskLevel"] = riskStrFormatted;
+						resultObj["healthFactor"] = color(hfStr);
+						resultObj["riskLevel"] = color(position.riskLevel ?? "UNKNOWN");
 					}
 				}
 

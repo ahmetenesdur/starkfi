@@ -35,7 +35,7 @@ export function registerLendingTools(server: McpServer): number {
 		"get_lending_position",
 		{
 			description:
-				"Get the user's lending position (supplied collateral and outstanding debt) in a specific Vesu pool.",
+				"Get the user's lending position in a specific Vesu pool: collateral, debt, the pair's max LTV, and health factor (collateral value × max LTV / debt value; below 1.0 the position can be liquidated).",
 			inputSchema: z.object({
 				pool: z
 					.string()
@@ -182,7 +182,7 @@ export function registerLendingTools(server: McpServer): number {
 		"monitor_lending_position",
 		{
 			description:
-				"Monitor health factors across lending positions. Returns alerts and recommendations when health factor drops below thresholds. Omit pool to scan all pools.",
+				"Monitor health factors across lending positions. Health factor = collateral value × the pair's max LTV / debt value; below 1.0 Vesu can liquidate the position. Returns alerts and recommendations when the health factor drops below thresholds (WARNING ≤ 1.3, DANGER ≤ 1.1, CRITICAL ≤ 1.05). Omit pool to scan all pools.",
 			inputSchema: z.object({
 				pool: z
 					.string()
@@ -210,7 +210,7 @@ export function registerLendingTools(server: McpServer): number {
 		"auto_rebalance_lending",
 		{
 			description:
-				"Automatically adjust a lending position's health factor (collateral USD / debt USD) via repay or add-collateral. Refuses to act unless the provider's projected health factor reaches the target and improves on the current one. Supports simulation mode.",
+				"Automatically adjust a lending position's health factor (collateral value × the pair's max LTV / debt value; 1.0 = liquidation) via repay or add-collateral. Refuses to act unless the provider's projected health factor reaches the target and improves on the current one. Supports simulation mode.",
 			inputSchema: z.object({
 				pool: z.string().describe("Pool name or address"),
 				collateral_token: z.string().describe("Collateral token symbol"),
@@ -237,7 +237,7 @@ export function registerLendingTools(server: McpServer): number {
 		"lending_quote_health",
 		{
 			description:
-				"Simulate the impact of a lending action (borrow, repay, deposit, withdraw) on position health factor WITHOUT executing. Returns current and projected health.",
+				"Simulate the impact of a lending action on the position's health factor (collateral value × the pair's max LTV / debt value; 1.0 = liquidation) WITHOUT executing. Returns current and projected health; the projection is available for borrow and repay only.",
 			inputSchema: z.object({
 				pool: z.string().describe("Pool name or address"),
 				collateral_token: z.string().describe("Collateral token symbol"),
