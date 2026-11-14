@@ -1,8 +1,10 @@
+import { Amount, type ChainId } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
-import { getPosition, getPositionForTokens, type LendingPosition } from "./lending.js";
+import { readPosition, toLendingPosition, type PositionSnapshot } from "./lending.js";
 import { resolvePoolAddress } from "./pools.js";
+import { resolveToken } from "../tokens/tokens.js";
+import { addCollateralAmountForTarget, repayAmountForTarget } from "./rebalance-math.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
-import type { ChainId } from "starkzap";
 import {
 	resolveConfig,
 	classifyRisk,
@@ -51,23 +53,47 @@ function buildAlert(riskLevel: RiskLevel, hf: number): string | null {
 	}
 }
 
-function buildRecommendation(position: LendingPosition, targetHF: number): string | null {
-	if (!position.healthFactor || position.healthFactor >= targetHF) return null;
+/**
+ * Exact amounts that bring the position back to the target health factor, from
+ * the base-unit amounts and USD values of the position read.
+ */
+function buildRecommendation(
+	snapshot: PositionSnapshot,
+	healthFactor: number,
+	targetHF: number
+): string | null {
+	if (healthFactor >= targetHF) return null;
 
+	const { collateralToken, debtToken } = snapshot;
 	const parts: string[] = [];
-	if (parseFloat(position.debtAmount) > 0) parts.push(`Repay some ${position.debtAsset}`);
-	if (parseFloat(position.collateralAmount) > 0)
-		parts.push(`add more ${position.collateralAsset} collateral`);
+
+	if (snapshot.debtAmount > 0n) {
+		const repay = repayAmountForTarget(snapshot, targetHF);
+		if (repay > 0n) {
+			parts.push(`repay ${Amount.fromRaw(repay, debtToken).toUnit()} ${debtToken.symbol}`);
+		}
+	}
+
+	if (snapshot.collateralAmount > 0n && snapshot.collateralValue > 0n && snapshot.maxLtv > 0n) {
+		const add = addCollateralAmountForTarget(snapshot, targetHF);
+		if (add > 0n) {
+			parts.push(
+				`add ${Amount.fromRaw(add, collateralToken).toUnit()} ${collateralToken.symbol} collateral`
+			);
+		}
+	}
 
 	if (parts.length === 0) return null;
-	return `${parts.join(" or ")} to reach safe level (${targetHF})`;
+	const text = parts.join(" or ");
+	return `${text[0]!.toUpperCase()}${text.slice(1)} to reach health factor ${targetHF}`;
 }
 
 function toMonitorResult(
 	pool: { address: string; name: string | null },
-	position: LendingPosition,
+	snapshot: PositionSnapshot,
 	cfg: MonitorConfig
 ): MonitorResult {
+	const position = toLendingPosition(snapshot);
 	const hf = position.healthFactor ?? UNBOUNDED_HEALTH_FACTOR;
 	const riskLevel = classifyRisk(hf, cfg);
 
@@ -82,7 +108,7 @@ function toMonitorResult(
 		healthFactor: hf,
 		riskLevel,
 		alert: buildAlert(riskLevel, hf),
-		recommendation: buildRecommendation(position, cfg.warningThreshold),
+		recommendation: buildRecommendation(snapshot, hf, cfg.warningThreshold),
 	};
 }
 
@@ -96,16 +122,21 @@ export async function monitorPosition(
 ): Promise<MonitorResult> {
 	const cfg = resolveConfig(config);
 	const pool = await resolvePoolAddress(wallet, poolInput);
-	const position = await getPosition(wallet, pool.address, collateralToken, debtToken, chainId);
+	const snapshot = await readPosition(
+		wallet,
+		pool.address,
+		resolveToken(collateralToken, chainId),
+		resolveToken(debtToken, chainId)
+	);
 
-	if (!position) {
+	if (!snapshot) {
 		throw new StarkfiError(
 			ErrorCode.MONITOR_FAILED,
 			`No active position found for ${collateralToken}/${debtToken} in pool ${pool.name ?? pool.address}`
 		);
 	}
 
-	return toMonitorResult(pool, position, cfg);
+	return toMonitorResult(pool, snapshot, cfg);
 }
 
 export async function monitorAllPositions(
@@ -125,16 +156,16 @@ export async function monitorAllPositions(
 		// Use the tokens the provider reported, so a token missing from StarkFi's
 		// symbol list cannot fail the scan. Read errors propagate: a failed read
 		// must not look like a position that does not exist.
-		const position = await getPositionForTokens(
+		const snapshot = await readPosition(
 			wallet,
 			poolAddress,
 			pos.collateral.token,
 			pos.debt.token
 		);
-		if (!position) continue;
+		if (!snapshot) continue;
 
 		results.push(
-			toMonitorResult({ address: poolAddress, name: pos.pool.name ?? null }, position, cfg)
+			toMonitorResult({ address: poolAddress, name: pos.pool.name ?? null }, snapshot, cfg)
 		);
 	}
 

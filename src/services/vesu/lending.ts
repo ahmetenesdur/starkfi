@@ -245,21 +245,12 @@ export async function getPosition(
 	debtTokenSymbol: string,
 	chainId?: ChainId
 ): Promise<LendingPosition | null> {
-	return getPositionForTokens(
+	const snapshot = await readPosition(
 		wallet,
 		poolAddress,
 		resolveToken(collateralTokenSymbol, chainId),
 		resolveToken(debtTokenSymbol, chainId)
 	);
-}
-
-export async function getPositionForTokens(
-	wallet: StarkZapWallet,
-	poolAddress: string | undefined,
-	collateralToken: Token,
-	debtToken: Token
-): Promise<LendingPosition | null> {
-	const snapshot = await readPosition(wallet, poolAddress, collateralToken, debtToken);
 	return snapshot ? toLendingPosition(snapshot) : null;
 }
 
