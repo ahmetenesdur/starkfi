@@ -12,6 +12,7 @@
 	},
 	"files": [
 		"dist",
+		"!dist/**/*.map",
 		"skills",
 		"README.md",
 		"MCP.md",
