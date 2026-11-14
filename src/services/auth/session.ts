@@ -59,23 +59,29 @@ export function clearSession(): void {
 	}
 }
 
-// Decode JWT payload (no signature verification — client-side expiry check only).
-function isSessionExpired(token: string): boolean {
+// Decode the JWT payload's exp (no signature verification — client-side use only).
+export function sessionTokenExpiry(token: string): Date | null {
 	try {
 		const parts = token.split(".");
-		if (parts.length !== 3 || !parts[1]) return false;
+		if (parts.length !== 3 || !parts[1]) return null;
 
-		const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString()) as {
-			exp?: number;
-		};
-		if (!payload.exp) return false;
-
-		// Buffer before actual expiry to avoid mid-request failures
-		const SESSION_EXPIRY_BUFFER_SECONDS = 300;
-		return Date.now() >= (payload.exp - SESSION_EXPIRY_BUFFER_SECONDS) * 1000;
+		const payload: unknown = JSON.parse(Buffer.from(parts[1], "base64url").toString());
+		if (typeof payload !== "object" || payload === null || !("exp" in payload)) return null;
+		return typeof payload.exp === "number" && payload.exp > 0
+			? new Date(payload.exp * 1000)
+			: null;
 	} catch {
-		return false;
+		return null;
 	}
+}
+
+function isSessionExpired(token: string): boolean {
+	const expiry = sessionTokenExpiry(token);
+	if (!expiry) return false;
+
+	// Buffer before actual expiry to avoid mid-request failures
+	const SESSION_EXPIRY_BUFFER_MS = 300_000;
+	return Date.now() >= expiry.getTime() - SESSION_EXPIRY_BUFFER_MS;
 }
 
 export function requireSession(): Session {

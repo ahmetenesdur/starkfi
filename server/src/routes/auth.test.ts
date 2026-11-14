@@ -6,6 +6,7 @@ import app from "../index.js";
 const privy = vi.hoisted(() => ({
 	users: {
 		getByEmailAddress: vi.fn(),
+		_get: vi.fn(),
 		setCustomMetadata: vi.fn(),
 	},
 	wallets: {
@@ -32,6 +33,8 @@ const existingWallet = {
 };
 const newWallet = { id: "wallet-new", address: "0xnew", public_key: "0xnewpk", owner_id: null };
 let peer = 0;
+// The user's Privy custom metadata, as stored by setCustomMetadata.
+let storedMetadata: Record<string, unknown> = {};
 
 function verify() {
 	peer++;
@@ -64,7 +67,17 @@ beforeEach(() => {
 		)
 	);
 	privy.wallets.create.mockResolvedValue(newWallet);
-	privy.users.setCustomMetadata.mockResolvedValue({});
+	storedMetadata = {};
+	privy.users._get.mockImplementation(async (id: string) => ({
+		id,
+		custom_metadata: storedMetadata,
+	}));
+	privy.users.setCustomMetadata.mockImplementation(
+		async (id: string, body: { custom_metadata: Record<string, unknown> }) => {
+			storedMetadata = body.custom_metadata;
+			return { id, custom_metadata: storedMetadata };
+		}
+	);
 });
 
 afterEach(() => {
@@ -134,5 +147,67 @@ describe("POST /auth/verify wallet handling", () => {
 		expect(privy.users.setCustomMetadata).toHaveBeenCalledWith("did:privy:user", {
 			custom_metadata: { server_wallet_id: "wallet-new" },
 		});
+	});
+});
+
+describe("POST /auth/logout", () => {
+	function post(path: string, token: string) {
+		peer++;
+		return app.request(
+			path,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+				body: JSON.stringify({ walletId: existingWallet.id, hash: "0x1" }),
+			},
+			{ incoming: { socket: { remoteAddress: `203.0.113.${peer}` } } }
+		);
+	}
+
+	async function login(): Promise<string> {
+		const res = await verify();
+		expect(res.status).toBe(200);
+		return ((await res.json()) as { token: string }).token;
+	}
+
+	beforeEach(() => {
+		storedMetadata = { server_wallet_id: existingWallet.id };
+		privy.users.getByEmailAddress.mockImplementation(async () => ({
+			custom_metadata: storedMetadata,
+		}));
+		privy.wallets.get.mockResolvedValue(existingWallet);
+		privy.wallets.rawSign.mockResolvedValue({ signature: "0xsig" });
+	});
+
+	it("revokes the presented token, and every other token of the account, on the server", async () => {
+		const token = await login();
+		const otherDevice = await login();
+		expect((await post("/sign/hash", token)).status).toBe(200);
+
+		const res = await post("/auth/logout", token);
+
+		expect(res.status).toBe(200);
+		// Stored next to the wallet id, which must survive the update.
+		expect(storedMetadata).toEqual({ server_wallet_id: existingWallet.id, session_epoch: 1 });
+		for (const revoked of [token, otherDevice]) {
+			const reuse = await post("/sign/hash", revoked);
+			expect(reuse.status).toBe(401);
+			expect(await reuse.json()).toMatchObject({ error: { code: "SESSION_REVOKED" } });
+		}
+	});
+
+	it("issues working tokens again after a logout", async () => {
+		await post("/auth/logout", await login());
+
+		const fresh = await login();
+
+		expect((await post("/sign/hash", fresh)).status).toBe(200);
+	});
+
+	it("does not revoke anything for an invalid token", async () => {
+		const res = await post("/auth/logout", "not-a-jwt");
+
+		expect(res.status).toBe(401);
+		expect(privy.users.setCustomMetadata).not.toHaveBeenCalled();
 	});
 });

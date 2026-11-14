@@ -3,11 +3,18 @@ import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import { ApiError } from "../lib/errors.js";
 import { config } from "../lib/config.js";
+import { getSessionEpoch } from "../services/privy.js";
 
 export interface JwtPayload {
 	userId: string;
 	walletId: string;
 	walletAddress: string;
+	/**
+	 * The user's session epoch when the token was issued. Logout increments the
+	 * stored epoch, which revokes every older token. Tokens issued before
+	 * revocation existed carry none and count as epoch 0.
+	 */
+	sessionEpoch?: number;
 	exp?: number;
 	iat?: number;
 	iss?: string;
@@ -25,7 +32,9 @@ export const JWT_AUDIENCE = "starkfi-cli";
 const TOKEN_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
 
 export async function generateToken(
-	payload: Omit<JwtPayload, "exp" | "iat" | "iss" | "aud">
+	payload: Omit<JwtPayload, "exp" | "iat" | "iss" | "aud" | "sessionEpoch"> & {
+		sessionEpoch: number;
+	}
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
 	const payloadWithClaims = {
@@ -58,9 +67,14 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 	if (
 		typeof payload?.exp !== "number" ||
 		typeof payload.userId !== "string" ||
-		typeof payload.walletId !== "string"
+		typeof payload.walletId !== "string" ||
+		(payload.sessionEpoch !== undefined && typeof payload.sessionEpoch !== "number")
 	) {
 		throw new ApiError(401, "Invalid token", "UNAUTHORIZED");
+	}
+
+	if ((payload.sessionEpoch ?? 0) !== (await getSessionEpoch(payload.userId))) {
+		throw new ApiError(401, "Session revoked. Log in again.", "SESSION_REVOKED");
 	}
 
 	await next();

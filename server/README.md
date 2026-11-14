@@ -31,10 +31,11 @@ pnpm dev                # Starts on http://localhost:3001
 
 ### Authentication
 
-| Endpoint            | Auth | Rate Limit | Description                                   |
-| ------------------- | ---- | ---------- | --------------------------------------------- |
-| `POST /auth/login`  | —    | 5 req/min  | Sends email OTP                               |
-| `POST /auth/verify` | —    | 5 req/min  | Validates OTP, provisions wallet, returns JWT |
+| Endpoint            | Auth | Rate Limit | Description                                         |
+| ------------------- | ---- | ---------- | --------------------------------------------------- |
+| `POST /auth/login`  | —    | 5 req/min  | Sends email OTP                                     |
+| `POST /auth/verify` | —    | 5 req/min  | Validates OTP, provisions wallet, returns JWT       |
+| `POST /auth/logout` | JWT  | 5 req/min  | Revokes every session token of the caller's account |
 
 ### Wallet
 
@@ -65,15 +66,16 @@ pnpm dev                # Starts on http://localhost:3001
 
 ## Security
 
-| Layer             | Implementation                                                                               |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures              |
-| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                                   |
-| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP · Paymaster: see above (in-memory, per instance) |
-| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                                 |
-| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                             |
-| **Body limit**    | 1MB max request body                                                                         |
-| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                                   |
+| Layer             | Implementation                                                                                                                                        |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Key isolation** | Private keys generated and stored in Privy TEE — server only proxies signatures                                                                       |
+| **Auth**          | JWT with 7-day expiry, 5-min buffer for mid-request safety                                                                                            |
+| **Rate limiting** | Auth: 5 req/min/IP · Signing: 30 req/min/IP · Paymaster: see above (in-memory, per instance)                                                          |
+| **CORS**          | Configurable allowlist via `ALLOWED_ORIGINS`                                                                                                          |
+| **Headers**       | `secureHeaders()` (X-Content-Type-Options, etc.)                                                                                                      |
+| **Body limit**    | 1MB max request body                                                                                                                                  |
+| **Revocation**    | `POST /auth/logout` bumps a session epoch kept in the user's Privy metadata; older JWTs are rejected. Every authenticated request reads it from Privy |
+| **Shutdown**      | Graceful SIGTERM/SIGINT with 5s force-kill                                                                                                            |
 
 ---
 

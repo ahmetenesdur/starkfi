@@ -1,4 +1,4 @@
-import { NotFoundError, PrivyClient } from "@privy-io/node";
+import { NotFoundError, PrivyClient, type User } from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
 import { config } from "../lib/config.js";
 
@@ -151,8 +151,11 @@ export async function createAgentWallet(): Promise<ServerWallet> {
 export async function saveWalletIdToUser(userId: string, walletId: string): Promise<void> {
 	const privy = getPrivyClient();
 	try {
+		// setCustomMetadata replaces the whole object; keep the session epoch.
+		const user = await privy.users()._get(userId);
 		await privy.users().setCustomMetadata(userId, {
 			custom_metadata: {
+				...user.custom_metadata,
 				server_wallet_id: walletId,
 			},
 		});
@@ -164,6 +167,60 @@ export async function saveWalletIdToUser(userId: string, walletId: string): Prom
 			error: msg,
 		});
 		throw new ApiError(500, "Failed to save wallet metadata", "METADATA_SAVE_FAILED");
+	}
+}
+
+/**
+ * Session revocation. Each user's Privy custom metadata (where the server
+ * already records `server_wallet_id`) holds a session epoch; every JWT carries
+ * the epoch it was issued under. Logging out increments the epoch, which
+ * invalidates every token issued before it, on every server instance.
+ */
+const SESSION_EPOCH_KEY = "session_epoch";
+
+function sessionEpochOf(metadata: User["custom_metadata"]): number {
+	const epoch = metadata?.[SESSION_EPOCH_KEY];
+	return typeof epoch === "number" && Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;
+}
+
+async function getUserById(userId: string) {
+	try {
+		return await getPrivyClient().users()._get(userId);
+	} catch (error) {
+		if (error instanceof NotFoundError) {
+			throw new ApiError(401, "Unauthorized", "UNAUTHORIZED");
+		}
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error("[SESSION_CHECK_FAILED]", { userId, error: msg });
+		throw new ApiError(
+			502,
+			"Could not verify the session. Please try again.",
+			"SESSION_CHECK_FAILED"
+		);
+	}
+}
+
+/** The user's current session epoch; tokens issued under an older one are revoked. */
+export async function getSessionEpoch(userId: string): Promise<number> {
+	return sessionEpochOf((await getUserById(userId)).custom_metadata);
+}
+
+/** Revokes every token issued to the user so far. */
+export async function revokeSessions(userId: string): Promise<void> {
+	const user = await getUserById(userId);
+	try {
+		await getPrivyClient()
+			.users()
+			.setCustomMetadata(userId, {
+				custom_metadata: {
+					...user.custom_metadata,
+					[SESSION_EPOCH_KEY]: sessionEpochOf(user.custom_metadata) + 1,
+				},
+			});
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error("[SESSION_REVOKE_FAILED]", { userId, error: msg });
+		throw new ApiError(502, "Failed to revoke the session", "SESSION_REVOKE_FAILED");
 	}
 }
 

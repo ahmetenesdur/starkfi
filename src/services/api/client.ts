@@ -44,7 +44,8 @@ export function authServerUnavailable(baseUrl: string, reason: string): StarkfiE
 		ErrorCode.AUTH_SERVER_UNAVAILABLE,
 		`StarkFi auth server unavailable at ${baseUrl} (${reason}). ` +
 			`Login, transaction signing and gas sponsorship depend on it. ${fix} ` +
-			`Self-hosting guide: ${SELF_HOSTING_GUIDE_URL}`
+			`Self-hosting guide: ${SELF_HOSTING_GUIDE_URL}`,
+		{ serverUrl: baseUrl, reason }
 	);
 }
 

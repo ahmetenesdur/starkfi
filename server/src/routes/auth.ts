@@ -8,11 +8,15 @@ import {
 	findExistingWallet,
 	createAgentWallet,
 	saveWalletIdToUser,
+	getSessionEpoch,
+	revokeSessions,
 } from "../services/privy.js";
-import { generateToken } from "../middleware/auth.js";
+import { authMiddleware, generateToken, type JwtPayload } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 
-const auth = new Hono();
+type Variables = { jwtPayload: JwtPayload };
+
+const auth = new Hono<{ Variables: Variables }>();
 
 const authRateLimit = rateLimit({ maxRequests: 5, windowMs: 60_000 });
 
@@ -63,6 +67,7 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 		userId,
 		walletId: wallet.id,
 		walletAddress: wallet.address,
+		sessionEpoch: await getSessionEpoch(userId),
 	});
 
 	return c.json({
@@ -73,6 +78,13 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 		token,
 		isExisting,
 	});
+});
+
+// Revokes every session token of the caller's account (all devices), not only
+// the one presented. The CLI's `auth logout` calls this.
+auth.post("/logout", authRateLimit, authMiddleware, async (c) => {
+	await revokeSessions(c.get("jwtPayload").userId);
+	return c.json({ success: true });
 });
 
 export default auth;
