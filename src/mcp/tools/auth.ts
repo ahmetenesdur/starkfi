@@ -8,7 +8,7 @@ export function registerAuthAndConfigTools(server: McpServer): number {
 		"get_auth_status",
 		{
 			description:
-				"Check authentication status and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
+				"Check authentication status, StarkFi auth server reachability (needed for login, signing and gas sponsorship) and Fibrous API health on Starknet. Use this to verify the user's active wallet.",
 			inputSchema: z.object({}),
 			annotations: { readOnlyHint: true, destructiveHint: false },
 		},
