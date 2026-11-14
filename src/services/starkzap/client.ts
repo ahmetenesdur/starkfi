@@ -14,6 +14,7 @@ import { ConfigService } from "../config/config.js";
 import type { Network } from "../../lib/types.js";
 import { resolveNetwork, resolveChainId } from "../../lib/resolve-network.js";
 import { initPriceService } from "../price/price.js";
+import { apiSignHash, authServerFetch, sessionServerUrl } from "../api/client.js";
 
 import {
 	AVNU_PAYMASTER_URL,
@@ -47,12 +48,17 @@ export function resolveFeeModeConfig(
 	};
 }
 
+/** The auth server that sponsors and relays paymaster calls for a session. */
+export interface AuthServerSession {
+	baseUrl: string;
+	token: string;
+}
+
 export function createSDK(
 	network: Network = "mainnet",
 	rpcUrl?: string,
 	needsPaymaster = false,
-	paymasterUrl?: string,
-	paymasterHeaders?: Record<string, string>,
+	authServer?: AuthServerSession,
 	logging?: LoggerConfig
 ): StarkZap {
 	const config: ConstructorParameters<typeof StarkZap>[0] = { network };
@@ -61,9 +67,25 @@ export function createSDK(
 	if (needsPaymaster) {
 		const defaultUrl = network === "sepolia" ? AVNU_PAYMASTER_SEPOLIA_URL : AVNU_PAYMASTER_URL;
 		config.paymaster = {
-			nodeUrl: paymasterUrl ?? defaultUrl,
+			nodeUrl: authServer ? `${authServer.baseUrl}/paymaster` : defaultUrl,
 			...(AVNU_PAYMASTER_API_KEY ? { apiKey: AVNU_PAYMASTER_API_KEY } : {}),
-			...(paymasterHeaders ? { headers: paymasterHeaders } : {}),
+			...(authServer
+				? {
+						headers: { Authorization: `Bearer ${authServer.token}` },
+						// Report an unreachable or replaced auth server clearly instead of
+						// a JSON-RPC parse error from the paymaster client.
+						baseFetch: (input: RequestInfo | URL, init?: RequestInit) =>
+							authServerFetch(
+								authServer.baseUrl,
+								typeof input === "string"
+									? input
+									: input instanceof URL
+										? input.href
+										: input.url,
+								init
+							),
+					}
+				: {}),
 		};
 	}
 
@@ -87,8 +109,9 @@ export async function connectWallet(sdk: StarkZap, session: Session): Promise<Wa
 			resolve: async () => ({
 				walletId: session.walletId,
 				publicKey: session.publicKey,
-				serverUrl: session.serverUrl,
-				headers: { Authorization: `Bearer ${session.token}` },
+				// Sign through StarkFi's API client rather than the SDK's built-in
+				// serverUrl fetch, so auth server outages surface as one clear error.
+				rawSign: (walletId: string, hash: string) => apiSignHash(session, walletId, hash),
 			}),
 		},
 		accountPreset: "argentXV050",
@@ -124,20 +147,11 @@ export async function initSDKAndWallet(session: Session): Promise<SDKAndWallet> 
 
 	const network = resolveNetwork(session);
 
-	const paymasterUrl =
-		session.type === "privy" && session.serverUrl
-			? session.serverUrl.replace("/sign/hash", "/paymaster")
-			: undefined;
-
-	const paymasterHeaders =
-		paymasterUrl && session.token ? { Authorization: `Bearer ${session.token}` } : undefined;
-
 	const sdk = createSDK(
 		network,
 		rpcUrl,
 		needsPaymaster,
-		paymasterUrl,
-		paymasterHeaders,
+		{ baseUrl: sessionServerUrl(session), token: session.token },
 		configService.get("verbose") === true ? { logger: console, logLevel: "debug" } : undefined
 	);
 	const wallet = await connectWallet(sdk, session);

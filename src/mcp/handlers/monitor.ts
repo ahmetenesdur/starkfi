@@ -37,7 +37,7 @@ export async function handleMonitorLendingPosition(args: {
 			return jsonResult({ success: true, positions: [result] });
 		}
 
-		const positions = await monitorAllPositions(wallet, config, chainId);
+		const positions = await monitorAllPositions(wallet, config);
 		const alerts = positions.filter((p) => p.alert !== null);
 		return jsonResult({ success: true, positions, alertCount: alerts.length });
 	});

@@ -4,8 +4,8 @@ import type { TxResult } from "../../lib/types.js";
 import type { SimulationResult } from "../simulate/simulate.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { resolvePoolAddress } from "./pools.js";
-import { repay, addCollateral } from "./lending.js";
-import { DEFAULT_WARNING_THRESHOLD } from "./health.js";
+import { repay, addCollateral, readPosition } from "./lending.js";
+import { DEFAULT_WARNING_THRESHOLD, UNBOUNDED_HEALTH_FACTOR } from "./health.js";
 import {
 	addCollateralAmountForTarget,
 	assertProjectedHealth,
@@ -38,9 +38,6 @@ export interface LendingRebalanceResult {
 	simulation?: SimulationResult;
 }
 
-/** Reported for positions whose health factor is unbounded (no debt). */
-const UNBOUNDED_HF = 9999;
-
 export async function autoRebalanceLending(
 	wallet: StarkZapWallet,
 	params: LendingRebalanceParams,
@@ -55,30 +52,20 @@ export async function autoRebalanceLending(
 	const collateralToken = resolveToken(params.collateralToken, chainId);
 	const debtToken = resolveToken(params.debtToken, chainId);
 
-	// One read gives token amounts and USD values from the same oracle prices.
-	const position = await wallet.lending().getPosition({
-		collateralToken,
-		debtToken,
-		poolAddress,
-	});
+	// One read gives token amounts and USD values from the same oracle prices,
+	// plus the pair's max LTV that defines the health factor.
+	const values = await readPosition(wallet, pool.address, collateralToken, debtToken);
 
-	if (position.collateralShares === 0n && position.nominalDebt === 0n) {
+	if (!values) {
 		throw new StarkfiError(
 			ErrorCode.REBALANCE_FAILED,
 			`No active position for ${params.collateralToken}/${params.debtToken} in pool ${pool.name ?? pool.address}`
 		);
 	}
 
-	const values = {
-		collateralAmount: position.collateralAmount ?? 0n,
-		debtAmount: position.debtAmount ?? 0n,
-		collateralValue: position.collateralValue,
-		debtValue: position.debtValue,
-	};
-
-	const currentFixed = fixedHealthFactor(values.collateralValue, values.debtValue);
+	const currentFixed = fixedHealthFactor(values.collateralValue, values.debtValue, values.maxLtv);
 	const currentHF =
-		currentFixed === null ? UNBOUNDED_HF : fixedHealthFactorToNumber(currentFixed);
+		currentFixed === null ? UNBOUNDED_HEALTH_FACTOR : fixedHealthFactorToNumber(currentFixed);
 	if (currentFixed === null || currentFixed >= toFixedHealthFactor(targetHF)) {
 		throw new StarkfiError(
 			ErrorCode.REBALANCE_FAILED,
@@ -157,10 +144,13 @@ export async function autoRebalanceLending(
 	const projectedFixed = assertProjectedHealth({
 		current: quote.current,
 		projected: quote.projected,
+		maxLtv: values.maxLtv,
 		targetHealthFactor: targetHF,
 	});
 	const estimatedNewHF =
-		projectedFixed === null ? UNBOUNDED_HF : fixedHealthFactorToNumber(projectedFixed);
+		projectedFixed === null
+			? UNBOUNDED_HEALTH_FACTOR
+			: fixedHealthFactorToNumber(projectedFixed);
 
 	if (params.simulate) {
 		return {

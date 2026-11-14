@@ -4,11 +4,15 @@ import { readFileSync } from "node:fs";
 const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 
 /**
- * esbuild plugin: stub out optional starkzap peer dependencies.
+ * esbuild plugin: stub out starkzap's optional bridge peer dependencies.
  *
- * StarkZap v3 ships modules (confidential/tongo, bridge/solana) that
- * statically import optional peer dependencies StarkFi doesn't use.
- * Without stubs, esbuild fails to resolve them at bundle time.
+ * Starkzap's bridge code lazily imports @hyperlane-xyz/* and @solana/web3.js.
+ * StarkFi does not use bridging and does not install them, so esbuild would
+ * fail to resolve them at bundle time; the stub resolves them to an empty module.
+ *
+ * @fatsolutions/tongo-sdk must NOT be stubbed: it is a runtime dependency and
+ * the confidential (Tongo Cash) commands construct its Account class.
+ * src/bundle.test.ts builds with this config and checks the real SDK is bundled.
  *
  * Note: @cartridge/controller is NOT stubbed because starkzap uses
  * dynamic import() for it, which esbuild handles gracefully.
@@ -18,7 +22,6 @@ const stubOptionalPeers = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	setup(build: any) {
 		const stubPackages = [
-			/^@fatsolutions\/tongo-sdk$/,
 			/^@hyperlane-xyz\/sdk$/,
 			/^@hyperlane-xyz\/registry$/,
 			/^@hyperlane-xyz\/utils$/,
@@ -33,17 +36,10 @@ const stubOptionalPeers = {
 			}));
 		}
 
-		build.onLoad(
-			{ filter: /.*/, namespace: "optional-peer-stub" },
-			() => ({
-				contents: [
-					"const noop = () => ({});",
-					"export default undefined;",
-					"export const Account = noop;",
-				].join("\n"),
-				loader: "js",
-			})
-		);
+		build.onLoad({ filter: /.*/, namespace: "optional-peer-stub" }, () => ({
+			contents: "export default undefined;",
+			loader: "js",
+		}));
 	},
 };
 
@@ -57,7 +53,14 @@ export default defineConfig({
 	bundle: true,
 	treeshake: true,
 	minify: true,
-	splitting: false,
+	// Starkzap loads optional modules (bridges, ethers) with dynamic import().
+	// Without splitting, esbuild inlines them and wraps the modules they share
+	// with the rest of the bundle, zod among them, in lazy initialisers; the MCP
+	// SDK's module-level schemas then ran before zod's classic schemas existed
+	// and the built CLI crashed at startup ("TypeError: ... is not a
+	// constructor"). With splitting, dynamic imports become separate chunks and
+	// modules initialise in import order. src/bundle.test.ts runs the built CLI.
+	splitting: true,
 	sourcemap: true,
 	clean: true,
 

@@ -5,15 +5,16 @@ description: Configure StarkFi MCP server in Claude, Cursor, Antigravity, and ot
 
 ## Step 1: Authenticate
 
-Before the MCP server can execute any transactions, you must authenticate the CLI locally:
+Before the MCP server can execute any transactions, you must authenticate the CLI locally. The hosted auth server is currently offline, so first start your own and point the CLI at it ([Self-hosting the auth server](/docs/authentication#self-hosting-the-auth-server)):
 
 ```bash
+export STARKFI_API_URL=http://localhost:3001   # your auth server
 npx starkfi@latest auth login user@example.com
 # Check your email for the OTP code
 npx starkfi@latest auth verify user@example.com 123456
 ```
 
-This creates a local session that the MCP server uses for all operations. The session persists across restarts.
+This creates a local session that the MCP server uses for all operations. The session persists across restarts and records which auth server issued it; the MCP server signs and sponsors transactions through that server, so keep it running.
 
 ## Step 2: Configure Your AI Client
 
@@ -71,9 +72,9 @@ Any MCP-compatible client can connect. The server uses **stdio transport** (stan
 
 ## Environment Variables
 
-| Variable          | Required | Default                 | Description             |
-| ----------------- | -------- | ----------------------- | ----------------------- |
-| `STARKFI_API_URL` | No       | `http://localhost:3001` | Backend auth server URL |
+| Variable          | Required | Default                                       | Description                                                                                                  |
+| ----------------- | -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `STARKFI_API_URL` | No       | `https://starkfi-production.up.railway.app` (offline) | Auth server used by `auth login` / `auth verify`. Later commands use the server recorded in the session. |
 
 ## Step 3: Verify Connection
 

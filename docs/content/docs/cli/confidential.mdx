@@ -5,6 +5,8 @@ description: Privacy-preserving transfers via Tongo Cash — fund, transfer, wit
 
 > **Prerequisite:** All confidential commands require an active authenticated session and Tongo credentials. Run `starkfi auth login` first, then `starkfi conf-setup`.
 
+> **Known issue in v0.7.2 and earlier:** the published package shipped a stub instead of the Tongo SDK, so every confidential command except `conf-setup` fails with a `TypeError: … is not a constructor`. Fixed on `main`; use the release after v0.7.2, or run the CLI from source.
+
 ## Typical Flow
 
 ```

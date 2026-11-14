@@ -1,10 +1,18 @@
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 
 /**
- * Sizing math for lending auto-rebalance.
+ * Health factor and sizing math for Vesu positions.
  *
- * Health factor follows the definition used everywhere else in StarkFi
- * (`getPosition`, `lend-monitor`): collateral USD value / debt USD value.
+ * Health factor is risk-adjusted, and 1.0 is the liquidation boundary:
+ *
+ *   healthFactor = collateralValue * maxLtv / debtValue
+ *
+ * `maxLtv` is the pair's `max_ltv` from the Vesu pool's `pair_config`. Vesu
+ * liquidates a position exactly when it is not collateralized, i.e. when
+ * `collateral_value * max_ltv < debt_value * SCALE` (`is_collateralized` in
+ * vesu-v2 `src/common.cairo`, checked by `liquidate_position` in `src/pool.cairo`).
+ * The same comparison is what Starkzap uses for `isCollateralized` in its
+ * projected health quotes.
  *
  * Starkzap reports `collateralValue` / `debtValue` as USD on a 1e18 scale and
  * `collateralAmount` / `debtAmount` in token base units. Both come from the same
@@ -22,7 +30,12 @@ export interface PositionValues {
 	collateralValue: bigint;
 	/** Debt USD value, 1e18 scale. */
 	debtValue: bigint;
+	/** The pair's maximum loan-to-value ratio, 1e18 scale (Vesu `max_ltv`). */
+	maxLtv: bigint;
 }
+
+/** Scale of Vesu's `max_ltv` (and of Starkzap's USD values). */
+export const LTV_SCALE = 10n ** 18n;
 
 /** Health factors are handled as fixed-point integers with 6 decimals. */
 export const HF_SCALE = 1_000_000n;
@@ -42,12 +55,18 @@ export function fixedHealthFactorToNumber(hf: bigint): number {
 }
 
 /**
- * collateralValue / debtValue as a 6-decimal fixed-point integer, rounded half up.
+ * collateralValue * maxLtv / debtValue as a 6-decimal fixed-point integer,
+ * rounded down so a position is never reported healthier than it is: a
+ * liquidatable position always reads below 1.000000.
  * Returns null when there is no debt (health factor is unbounded).
  */
-export function fixedHealthFactor(collateralValue: bigint, debtValue: bigint): bigint | null {
+export function fixedHealthFactor(
+	collateralValue: bigint,
+	debtValue: bigint,
+	maxLtv: bigint
+): bigint | null {
 	if (debtValue <= 0n) return null;
-	return (collateralValue * HF_SCALE * 2n + debtValue) / (2n * debtValue);
+	return (collateralValue * maxLtv * HF_SCALE) / (debtValue * LTV_SCALE);
 }
 
 function ceilDiv(numerator: bigint, denominator: bigint): bigint {
@@ -55,17 +74,31 @@ function ceilDiv(numerator: bigint, denominator: bigint): bigint {
 }
 
 /**
- * Debt-token base units to repay so that collateralValue / (debtValue - repaid) >= target.
+ * How far the position is from the target, in units of USD(1e18) * HF_SCALE * LTV_SCALE:
  *
- *   repaidUsd = debtValue - collateralValue / target
+ *   debtValue * target - collateralValue * maxLtv
+ *
+ * Positive when the position is below the target.
+ */
+function shortfall(position: PositionValues, target: bigint): bigint {
+	return (
+		position.debtValue * target * LTV_SCALE -
+		position.collateralValue * position.maxLtv * HF_SCALE
+	);
+}
+
+/**
+ * Debt-token base units to repay so that collateralValue * maxLtv / (debtValue - repaid) >= target.
+ *
+ *   repaidUsd = debtValue - collateralValue * maxLtv / target
  *   amount    = repaidUsd * debtAmount / debtValue          (rounded up)
  *
  * Returns 0n when the position already meets the target. Never exceeds debtAmount.
  */
 export function repayAmountForTarget(position: PositionValues, targetHealthFactor: number): bigint {
 	const target = toFixedHealthFactor(targetHealthFactor);
-	const shortfall = position.debtValue * target - position.collateralValue * HF_SCALE;
-	if (shortfall <= 0n) return 0n;
+	const missing = shortfall(position, target);
+	if (missing <= 0n) return 0n;
 
 	if (position.debtAmount <= 0n) {
 		throw new StarkfiError(
@@ -74,14 +107,14 @@ export function repayAmountForTarget(position: PositionValues, targetHealthFacto
 		);
 	}
 
-	const amount = ceilDiv(shortfall * position.debtAmount, position.debtValue * target);
+	const amount = ceilDiv(missing * position.debtAmount, position.debtValue * target * LTV_SCALE);
 	return amount > position.debtAmount ? position.debtAmount : amount;
 }
 
 /**
- * Collateral-token base units to add so that (collateralValue + added) / debtValue >= target.
+ * Collateral-token base units to add so that (collateralValue + added) * maxLtv / debtValue >= target.
  *
- *   addedUsd = target * debtValue - collateralValue
+ *   addedUsd = target * debtValue / maxLtv - collateralValue
  *   amount   = addedUsd * collateralAmount / collateralValue   (rounded up)
  *
  * The collateral price is implied by the existing collateral, so a position with
@@ -92,8 +125,15 @@ export function addCollateralAmountForTarget(
 	targetHealthFactor: number
 ): bigint {
 	const target = toFixedHealthFactor(targetHealthFactor);
-	const shortfall = position.debtValue * target - position.collateralValue * HF_SCALE;
-	if (shortfall <= 0n) return 0n;
+	const missing = shortfall(position, target);
+	if (missing <= 0n) return 0n;
+
+	if (position.maxLtv <= 0n) {
+		throw new StarkfiError(
+			ErrorCode.REBALANCE_FAILED,
+			"Cannot size added collateral: the pair's max LTV is 0, so collateral does not raise the health factor"
+		);
+	}
 
 	if (position.collateralAmount <= 0n || position.collateralValue <= 0n) {
 		throw new StarkfiError(
@@ -102,7 +142,10 @@ export function addCollateralAmountForTarget(
 		);
 	}
 
-	return ceilDiv(shortfall * position.collateralAmount, position.collateralValue * HF_SCALE);
+	return ceilDiv(
+		missing * position.collateralAmount,
+		position.collateralValue * position.maxLtv * HF_SCALE
+	);
 }
 
 /**
@@ -113,9 +156,10 @@ export function addCollateralAmountForTarget(
 export function assertProjectedHealth(params: {
 	current: { collateralValue: bigint; debtValue: bigint };
 	projected: { collateralValue: bigint; debtValue: bigint } | null | undefined;
+	maxLtv: bigint;
 	targetHealthFactor: number;
 }): bigint | null {
-	const { current, projected, targetHealthFactor } = params;
+	const { current, projected, maxLtv, targetHealthFactor } = params;
 	const target = toFixedHealthFactor(targetHealthFactor);
 
 	if (!projected) {
@@ -125,8 +169,8 @@ export function assertProjectedHealth(params: {
 		);
 	}
 
-	const currentHf = fixedHealthFactor(current.collateralValue, current.debtValue);
-	const projectedHf = fixedHealthFactor(projected.collateralValue, projected.debtValue);
+	const currentHf = fixedHealthFactor(current.collateralValue, current.debtValue, maxLtv);
+	const projectedHf = fixedHealthFactor(projected.collateralValue, projected.debtValue, maxLtv);
 
 	// null = no debt left, which is both on target and an improvement.
 	if (projectedHf === null) return null;

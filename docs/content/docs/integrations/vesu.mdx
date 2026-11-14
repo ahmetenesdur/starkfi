@@ -30,22 +30,28 @@ Pools are discovered dynamically via the SDK — no hardcoded list. Run `starkfi
 
 ## Health Factor
 
-Health factor is computed from SDK-provided USD values:
+StarkFi reports a risk-adjusted health factor, where **1.0 is the liquidation point**:
 
 ```
-healthFactor = collateralValueUSD / debtValueUSD
+healthFactor = collateralValueUSD × maxLtv / debtValueUSD
 ```
+
+`maxLtv` is the pair's maximum loan-to-value ratio (`max_ltv` in the pool's `pair_config`). Vesu V2 liquidates a position as soon as `collateral × max_ltv < debt`, so the health factor drops below 1.0 exactly when liquidation becomes possible. Collateral and debt values are the pool's own oracle valuations, read through the Starkzap SDK. For example, with a max LTV of 0.8, a position with $1,200 of collateral and $1,000 of debt has a health factor of 0.96 and can already be liquidated.
+
+`lend-status`, `lend-monitor`, `lend-auto` and the matching MCP tools all use this definition, and show the pair's max LTV next to the health factor.
+
+> **Changed after v0.7.2.** v0.7.2 and earlier report `collateralValueUSD / debtValueUSD` without the max LTV, so their health factor reads higher than the risk-adjusted value (1.25 instead of 1.0 at a max LTV of 0.8) and their risk alerts fire late. On those versions, multiply the reported value by the pair's max LTV.
 
 Risk levels:
 
-| Risk Level   | Health Factor | Meaning                   |
-| ------------ | ------------- | ------------------------- |
-| **SAFE**     | > 1.3         | Position is healthy       |
-| **WARNING**  | 1.1 – 1.3     | Monitor closely           |
-| **DANGER**   | 1.05 – 1.1    | At risk of liquidation    |
-| **CRITICAL** | ≤ 1.05        | Imminent liquidation risk |
+| Risk Level   | Health Factor | Meaning                                           |
+| ------------ | ------------- | ------------------------------------------------- |
+| **SAFE**     | > 1.3         | Position is healthy                               |
+| **WARNING**  | 1.1 – 1.3     | Monitor closely                                   |
+| **DANGER**   | 1.05 – 1.1    | Close to liquidation                              |
+| **CRITICAL** | ≤ 1.05        | Liquidation imminent; below 1.0 it can happen now |
 
-> **Important:** Monitor your health factor regularly with `starkfi lend-status`. If it drops below 1.0, your position can be liquidated.
+> **Important:** Monitor your health factor regularly with `starkfi lend-status`. Below 1.0, your position can be liquidated.
 
 ## Technical Details
 

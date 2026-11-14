@@ -8,12 +8,15 @@ import {
 	findExistingWallet,
 	createAgentWallet,
 	saveWalletIdToUser,
-	testWalletAccess,
+	getSessionEpoch,
+	revokeSessions,
 } from "../services/privy.js";
-import { generateToken } from "../middleware/auth.js";
+import { authMiddleware, generateToken, type JwtPayload } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 
-const auth = new Hono();
+type Variables = { jwtPayload: JwtPayload };
+
+const auth = new Hono<{ Variables: Variables }>();
 
 const authRateLimit = rateLimit({ maxRequests: 5, windowMs: 60_000 });
 
@@ -38,9 +41,15 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 
 	if (wallet) {
 		// Never swap in a new wallet for an existing one: the user's funds live at
-		// the old address. Surface the problem instead.
-		if (!(await testWalletAccess(wallet.id))) {
-			console.warn("[WALLET_NOT_SERVER_SIGNABLE]", { email, walletId: wallet.id });
+		// the old address. Surface the problem instead. An owned wallet needs the
+		// owner's authorization signature for every signing request, so the server
+		// cannot use it; this is read from the wallet record, without signing.
+		if (wallet.ownerId !== null) {
+			console.warn("[WALLET_NOT_SERVER_SIGNABLE]", {
+				email,
+				walletId: wallet.id,
+				ownerId: wallet.ownerId,
+			});
 			throw new ApiError(
 				409,
 				"Your existing wallet requires owner authorization and cannot be used by StarkFi. " +
@@ -58,6 +67,7 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 		userId,
 		walletId: wallet.id,
 		walletAddress: wallet.address,
+		sessionEpoch: await getSessionEpoch(userId),
 	});
 
 	return c.json({
@@ -68,6 +78,13 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 		token,
 		isExisting,
 	});
+});
+
+// Revokes every session token of the caller's account (all devices), not only
+// the one presented. The CLI's `auth logout` calls this.
+auth.post("/logout", authRateLimit, authMiddleware, async (c) => {
+	await revokeSessions(c.get("jwtPayload").userId);
+	return c.json({ success: true });
 });
 
 export default auth;

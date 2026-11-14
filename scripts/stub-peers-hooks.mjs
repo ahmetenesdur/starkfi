@@ -1,17 +1,16 @@
 /**
- * Module resolution hooks — stub optional peer dependencies of starkzap.
+ * Module resolution hooks — stub starkzap's optional bridge peer dependencies.
  *
- * StarkZap v2 statically imports optional peers (@fatsolutions/tongo-sdk,
- * @hyperlane-xyz/*, @solana/web3.js) for features StarkFi doesn't use
- * (confidential transfers, bridging). Without stubs, Node.js fails to
- * resolve these at import time.
+ * Starkzap's bridge code lazily imports @hyperlane-xyz/* and @solana/web3.js.
+ * StarkFi does not use bridging and does not install them, so they resolve to
+ * an empty module. @fatsolutions/tongo-sdk is a real dependency (confidential
+ * transfers) and is never stubbed.
  *
  * This file is registered by stub-peers-loader.mjs via module.register().
  * The hooks run in Node.js's hooks thread (separate from the main thread).
  */
 
 const STUBBED = new Set([
-	"@fatsolutions/tongo-sdk",
 	"@hyperlane-xyz/sdk",
 	"@hyperlane-xyz/registry",
 	"@hyperlane-xyz/utils",
@@ -32,11 +31,7 @@ export async function load(url, context, nextLoad) {
 		return {
 			shortCircuit: true,
 			format: "module",
-			source: [
-				"const noop = () => ({});",
-				"export default undefined;",
-				"export const Account = noop;",
-			].join("\n"),
+			source: "export default undefined;",
 		};
 	}
 	return nextLoad(url, context);

@@ -1,20 +1,29 @@
 import type { Command } from "commander";
 import { loadSession } from "../../services/auth/session.js";
 import { checkFibrousHealth } from "../../services/fibrous/health.js";
+import {
+	authServerUrl,
+	checkAuthServerHealth,
+	sessionServerUrl,
+} from "../../services/api/client.js";
 import { createSpinner, formatResult, success, warn, formatError } from "../../lib/format.js";
 import { resolveNetwork } from "../../lib/resolve-network.js";
 
 export function registerStatusCommand(program: Command): void {
 	program
 		.command("status")
-		.description("Check authentication status and Fibrous API health")
+		.description("Check authentication status, auth server and Fibrous API health")
 		.addHelpText("after", "\nExamples:\n  $ starkfi status")
 		.action(async () => {
 			const spinner = createSpinner("Checking status...").start();
 
 			try {
 				const session = loadSession();
-				const health = await checkFibrousHealth();
+				const serverUrl = session ? sessionServerUrl(session) : authServerUrl();
+				const [health, authServer] = await Promise.all([
+					checkFibrousHealth(),
+					checkAuthServerHealth(serverUrl),
+				]);
 
 				spinner.stop();
 
@@ -31,6 +40,12 @@ export function registerStatusCommand(program: Command): void {
 						})
 					);
 					console.log();
+				}
+
+				if (authServer.ok) {
+					console.log(success(`Auth server (${serverUrl}): Online`));
+				} else {
+					console.log(warn(`Auth server: ${authServer.message}`));
 				}
 
 				if (health.ok) {

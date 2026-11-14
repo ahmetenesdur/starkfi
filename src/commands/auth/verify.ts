@@ -1,8 +1,7 @@
 import type { Command } from "commander";
-import { apiVerify } from "../../services/api/client.js";
+import { apiVerify, authServerUrl } from "../../services/api/client.js";
 import { saveSession } from "../../services/auth/session.js";
 import { createSpinner, success, formatResult, formatError } from "../../lib/format.js";
-import { STARKFI_API_URL_DEFAULT } from "../../lib/config.js";
 import { createSDK, connectWallet, resolveFeeModeConfig } from "../../services/starkzap/client.js";
 import { ConfigService } from "../../services/config/config.js";
 import { getOrCreateAuthCommand } from "../../lib/command.js";
@@ -24,8 +23,8 @@ export function registerVerifyCommand(program: Command): void {
 
 				const result = await apiVerify(email, code);
 
-				const serverUrl =
-					(process.env.STARKFI_API_URL ?? STARKFI_API_URL_DEFAULT) + "/sign/hash";
+				// The session token is only valid on the server that issued it.
+				const serverUrl = `${authServerUrl()}/sign/hash`;
 
 				const tempSession = {
 					type: "privy" as const,

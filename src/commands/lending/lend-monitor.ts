@@ -6,6 +6,7 @@ import { requireSession } from "../../services/auth/session.js";
 import { initSDKAndWallet } from "../../services/starkzap/client.js";
 import { createSpinner } from "../../lib/format.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
+import { HEALTH_FACTOR_HELP, UNBOUNDED_HEALTH_FACTOR } from "../../services/vesu/health.js";
 
 export function registerLendMonitorCommand(program: Command): void {
 	program
@@ -18,7 +19,7 @@ export function registerLendMonitorCommand(program: Command): void {
 		.option("--json", "Output raw JSON")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-monitor\n  $ starkfi lend-monitor -p Prime --collateral-token ETH --borrow-token USDC"
+			`\n${HEALTH_FACTOR_HELP}\n\nExamples:\n  $ starkfi lend-monitor\n  $ starkfi lend-monitor -p Prime --collateral-token ETH --borrow-token USDC`
 		)
 		.action(async (opts) => {
 			const spinner = createSpinner("Monitoring lending positions...").start();
@@ -54,7 +55,7 @@ export function registerLendMonitorCommand(program: Command): void {
 					);
 					results = [result];
 				} else {
-					results = await monitorAllPositions(wallet, config, chainId);
+					results = await monitorAllPositions(wallet, config);
 				}
 
 				spinner.stop();
@@ -70,7 +71,8 @@ export function registerLendMonitorCommand(program: Command): void {
 				}
 
 				for (const r of results) {
-					let hfStr = r.healthFactor >= 9999 ? "∞" : r.healthFactor.toFixed(2);
+					let hfStr =
+						r.healthFactor >= UNBOUNDED_HEALTH_FACTOR ? "∞" : r.healthFactor.toFixed(2);
 					let riskStr: string = r.riskLevel;
 
 					if (r.riskLevel === "SAFE") {
@@ -92,6 +94,7 @@ export function registerLendMonitorCommand(program: Command): void {
 						pair: `${r.collateralToken} / ${r.debtToken}`,
 						collateral: r.collateralAmount,
 						debt: r.debtAmount,
+						maxLtv: `${(r.maxLtv * 100).toFixed(2)}%`,
 						healthFactor: hfStr,
 						riskLevel: riskStr,
 					};
@@ -122,7 +125,7 @@ export function registerLendAutoCommand(program: Command): void {
 		.option("--simulate", "Estimate fees and validate without executing")
 		.addHelpText(
 			"after",
-			"\nExamples:\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --strategy repay\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate"
+			`\n${HEALTH_FACTOR_HELP}\n\nExamples:\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --strategy repay\n  $ starkfi lend-auto -p Prime --collateral-token ETH --borrow-token USDC --simulate`
 		)
 		.action(async (opts) => {
 			await withAuthenticatedWallet(

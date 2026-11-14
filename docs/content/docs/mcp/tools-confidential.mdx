@@ -5,6 +5,8 @@ description: 7 tools for privacy-preserving transfers via Tongo Cash — fund, t
 
 > **Prerequisite:** Confidential tools require an active authenticated session and Tongo configuration. Call `get_auth_status` first, then `confidential_setup`.
 
+> **Known issue in v0.7.2 and earlier:** the published package shipped a stub instead of the Tongo SDK, so every confidential tool except `confidential_setup` fails with a `… is not a constructor` error. Fixed on `main`; use the release after v0.7.2.
+
 ## Recommended Flow
 
 ```

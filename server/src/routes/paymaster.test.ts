@@ -1,7 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type * as PrivyNode from "@privy-io/node";
 import app from "../index.js";
 import { generateToken } from "../middleware/auth.js";
 import { PAYMASTER_LIMITS } from "./paymaster.js";
+
+// authMiddleware reads the user's session epoch from Privy.
+vi.mock("@privy-io/node", async (importOriginal) => ({
+	...(await importOriginal<typeof PrivyNode>()),
+	PrivyClient: class {
+		users = () => ({ _get: async (id: string) => ({ id, custom_metadata: {} }) });
+	},
+}));
 
 const upstream = vi.fn<typeof fetch>();
 let peer = 0;
@@ -29,6 +38,7 @@ async function client() {
 		userId: `did:privy:user-${peer}`,
 		walletId: `wallet-${peer}`,
 		walletAddress: "0x1",
+		sessionEpoch: 0,
 	});
 	const env = { incoming: { socket: { remoteAddress: `198.51.100.${peer}` } } };
 	return (body: unknown, auth = `Bearer ${token}`) =>

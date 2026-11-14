@@ -7,6 +7,48 @@ description: Sign in with your email to connect your Starknet wallet
 
 StarkFi uses **Privy** for authentication. When you sign in with your email, a Starknet smart contract wallet (ArgentX v0.5.0) is automatically created and managed for you — no browser extension or seed phrase required.
 
+Sign-in, transaction signing and gas sponsorship go through the StarkFi auth server ([`server/`](https://github.com/ahmetenesdur/starkfi/tree/main/server)), which holds the Privy credentials.
+
+> **The hosted auth server is offline.** The CLI defaults to the hosted instance at `https://starkfi-production.up.railway.app`, which currently answers `404 Application not found`. Until it returns, `auth login` and every transaction need an auth server you run yourself: follow [Self-hosting the auth server](#self-hosting-the-auth-server) below, then sign in.
+
+## Self-hosting the auth server
+
+**You need:** Node.js 22.12+, pnpm, and a [Privy](https://dashboard.privy.io) app with **email** login enabled. Copy its **App ID** and **App secret** from the dashboard.
+
+```bash
+git clone https://github.com/ahmetenesdur/starkfi.git
+cd starkfi/server
+pnpm install
+cp .env.example .env
+```
+
+Edit `.env`:
+
+| Variable           | Value                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| `PRIVY_APP_ID`     | Your Privy App ID                                                                     |
+| `PRIVY_APP_SECRET` | Your Privy App secret                                                                 |
+| `JWT_SECRET`       | At least 32 random characters, e.g. the output of `openssl rand -base64 32`           |
+| `AVNU_API_KEY`     | Optional. Needed only for gasfree (developer-sponsored) transactions                  |
+| `PUBLIC_URL`       | Optional. Sent as the `Origin` of OTP requests to Privy (default `http://localhost:3001`) |
+
+Start it and check that it answers:
+
+```bash
+pnpm dev                              # http://localhost:3001
+curl http://localhost:3001/health     # {"status":"ok"}
+```
+
+For a long-running deployment, use `pnpm build` and `node --env-file=.env dist/src/index.js`. All variables are listed in the [Auth Server](/docs/architecture/auth-server) reference.
+
+Point StarkFi at it in the shell where you sign in:
+
+```bash
+export STARKFI_API_URL=http://localhost:3001
+```
+
+`STARKFI_API_URL` selects the server for `auth login` and `auth verify`. The session then records that server, and every later command, including the MCP server, signs and sponsors transactions through it, so keep it running. A session only works with the server that issued it: sign in again after switching servers.
+
 ## Sign In (2 Steps)
 
 ### Step 1 — Request OTP
@@ -51,7 +93,9 @@ starkfi status
 starkfi auth logout
 ```
 
-Clears your stored session. You'll need to re-authenticate to use any commands.
+Deletes your stored session. You'll need to re-authenticate to use any commands.
+
+From the release after v0.7.2, `logout` first asks the auth server that issued the session to revoke it, which invalidates every session of your account on every device; if the server is unreachable, the local session is still deleted and `logout` tells you the token stays valid on the server until it expires. v0.7.2 and earlier only delete the local file: the token stays valid on the server for the rest of its 7-day lifetime.
 
 ## Session Details
 

@@ -1,9 +1,4 @@
-import {
-	AuthenticationError,
-	NotFoundError,
-	PermissionDeniedError,
-	PrivyClient,
-} from "@privy-io/node";
+import { NotFoundError, PrivyClient, type User } from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
 import { config } from "../lib/config.js";
 
@@ -79,14 +74,26 @@ export async function verifyOtp(
 	return { userId: data.user.id, userToken: data.privy_access_token };
 }
 
+export interface ServerWallet {
+	id: string;
+	address: string;
+	publicKey: string;
+	/**
+	 * Key quorum that owns the wallet, or null for an app-owned wallet. Privy
+	 * requires authorization signatures from the owner for every action with an
+	 * owned wallet (POST /v1/wallets/{id}/rpc, which rawSign uses), so the server
+	 * can sign with its app secret alone only when this is null.
+	 * https://docs.privy.io/api-reference/authorization-signatures
+	 */
+	ownerId: string | null;
+}
+
 /**
  * Returns the user's recorded server wallet, or null only when the user has no
  * wallet on record. Any failure to load a recorded wallet is an error: callers
  * create a wallet on null, and that must never silently replace an existing one.
  */
-export async function findExistingWallet(
-	email: string
-): Promise<{ id: string; address: string; publicKey: string } | null> {
+export async function findExistingWallet(email: string): Promise<ServerWallet | null> {
 	const privy = getPrivyClient();
 
 	let serverWalletId: unknown;
@@ -108,6 +115,7 @@ export async function findExistingWallet(
 			id: wallet.id,
 			address: wallet.address,
 			publicKey: wallet.public_key ?? wallet.address,
+			ownerId: wallet.owner_id,
 		};
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -120,11 +128,7 @@ export async function findExistingWallet(
 	}
 }
 
-export async function createAgentWallet(): Promise<{
-	id: string;
-	address: string;
-	publicKey: string;
-}> {
+export async function createAgentWallet(): Promise<ServerWallet> {
 	const privy = getPrivyClient();
 	try {
 		const wallet = await privy.wallets().create({
@@ -135,6 +139,7 @@ export async function createAgentWallet(): Promise<{
 			id: wallet.id,
 			address: wallet.address,
 			publicKey: wallet.public_key ?? wallet.address,
+			ownerId: wallet.owner_id,
 		};
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -146,8 +151,11 @@ export async function createAgentWallet(): Promise<{
 export async function saveWalletIdToUser(userId: string, walletId: string): Promise<void> {
 	const privy = getPrivyClient();
 	try {
+		// setCustomMetadata replaces the whole object; keep the session epoch.
+		const user = await privy.users()._get(userId);
 		await privy.users().setCustomMetadata(userId, {
 			custom_metadata: {
+				...user.custom_metadata,
 				server_wallet_id: walletId,
 			},
 		});
@@ -162,25 +170,57 @@ export async function saveWalletIdToUser(userId: string, walletId: string): Prom
 	}
 }
 
-// Tests if the server can sign with a wallet without the owner's authorization.
-// Returns false if Privy rejects the request as unauthorized (e.g. a user-owned
-// wallet that needs an authorization signature). Other failures (network, 5xx)
-// return true: login proceeds and signing will surface the real error later.
-export async function testWalletAccess(walletId: string): Promise<boolean> {
-	const privy = getPrivyClient();
+/**
+ * Session revocation. Each user's Privy custom metadata (where the server
+ * already records `server_wallet_id`) holds a session epoch; every JWT carries
+ * the epoch it was issued under. Logging out increments the epoch, which
+ * invalidates every token issued before it, on every server instance.
+ */
+const SESSION_EPOCH_KEY = "session_epoch";
+
+function sessionEpochOf(metadata: User["custom_metadata"]): number {
+	const epoch = metadata?.[SESSION_EPOCH_KEY];
+	return typeof epoch === "number" && Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;
+}
+
+async function getUserById(userId: string) {
 	try {
-		const testHash = "0x0000000000000000000000000000000000000000000000000000000000000001";
-		await privy.wallets().rawSign(walletId, {
-			params: { hash: testHash },
-		});
-		return true;
+		return await getPrivyClient().users()._get(userId);
 	} catch (error) {
-		if (error instanceof AuthenticationError || error instanceof PermissionDeniedError) {
-			return false;
+		if (error instanceof NotFoundError) {
+			throw new ApiError(401, "Unauthorized", "UNAUTHORIZED");
 		}
 		const msg = error instanceof Error ? error.message : String(error);
-		console.warn("[WALLET_ACCESS_CHECK_ERROR]", { walletId, error: msg });
-		return true;
+		console.error("[SESSION_CHECK_FAILED]", { userId, error: msg });
+		throw new ApiError(
+			502,
+			"Could not verify the session. Please try again.",
+			"SESSION_CHECK_FAILED"
+		);
+	}
+}
+
+/** The user's current session epoch; tokens issued under an older one are revoked. */
+export async function getSessionEpoch(userId: string): Promise<number> {
+	return sessionEpochOf((await getUserById(userId)).custom_metadata);
+}
+
+/** Revokes every token issued to the user so far. */
+export async function revokeSessions(userId: string): Promise<void> {
+	const user = await getUserById(userId);
+	try {
+		await getPrivyClient()
+			.users()
+			.setCustomMetadata(userId, {
+				custom_metadata: {
+					...user.custom_metadata,
+					[SESSION_EPOCH_KEY]: sessionEpochOf(user.custom_metadata) + 1,
+				},
+			});
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error("[SESSION_REVOKE_FAILED]", { userId, error: msg });
+		throw new ApiError(502, "Failed to revoke the session", "SESSION_REVOKE_FAILED");
 	}
 }
 

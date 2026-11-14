@@ -1,10 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { sign } from "hono/jwt";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { InternalServerError, NotFoundError } from "@privy-io/node";
+import type * as PrivyNode from "@privy-io/node";
 import { authMiddleware, generateToken, JWT_AUDIENCE, JWT_ISSUER } from "./auth.js";
 import { errorResponse } from "../lib/errors.js";
 import { config } from "../lib/config.js";
+
+const privyUsers = vi.hoisted(() => ({ _get: vi.fn() }));
+
+vi.mock("@privy-io/node", async (importOriginal) => ({
+	...(await importOriginal<typeof PrivyNode>()),
+	PrivyClient: class {
+		users = () => privyUsers;
+	},
+}));
+
+/** Sets the session epoch stored in the user's Privy metadata. */
+function storedEpoch(epoch: number | undefined) {
+	privyUsers._get.mockResolvedValue({
+		id: "did:privy:abc",
+		custom_metadata: epoch === undefined ? {} : { session_epoch: epoch },
+	});
+}
+
+beforeEach(() => {
+	privyUsers._get.mockReset();
+	storedEpoch(undefined);
+});
 
 const app = new Hono();
 app.use("/protected", authMiddleware);
@@ -36,12 +60,50 @@ describe("authMiddleware", () => {
 			userId: "did:privy:abc",
 			walletId: "wallet-1",
 			walletAddress: "0x1",
+			sessionEpoch: 0,
 		});
 
 		const res = await call(token);
 
 		expect(res.status).toBe(200);
 		expect(await res.json()).toMatchObject({ iss: JWT_ISSUER, aud: JWT_AUDIENCE });
+	});
+
+	it("rejects a token issued before the user logged out", async () => {
+		const token = await generateToken({ ...validClaims(), sessionEpoch: 2 });
+		storedEpoch(3);
+
+		const res = await call(token);
+
+		expect(res.status).toBe(401);
+		expect(await res.json()).toMatchObject({ error: { code: "SESSION_REVOKED" } });
+	});
+
+	it("accepts a token from before revocation existed until the user logs out", async () => {
+		const legacy = await sign(validClaims(), config.JWT_SECRET);
+
+		expect((await call(legacy)).status).toBe(200);
+		storedEpoch(1);
+		expect((await call(legacy)).status).toBe(401);
+	});
+
+	it("rejects a token whose user no longer exists", async () => {
+		privyUsers._get.mockRejectedValue(
+			new NotFoundError(404, undefined, "User not found", new Headers())
+		);
+
+		expect((await call(await sign(validClaims(), config.JWT_SECRET))).status).toBe(401);
+	});
+
+	it("fails closed when the session cannot be checked", async () => {
+		privyUsers._get.mockRejectedValue(
+			new InternalServerError(503, undefined, "unavailable", new Headers())
+		);
+
+		const res = await call(await sign(validClaims(), config.JWT_SECRET));
+
+		expect(res.status).toBe(502);
+		expect(await res.json()).toMatchObject({ error: { code: "SESSION_CHECK_FAILED" } });
 	});
 
 	it.each([

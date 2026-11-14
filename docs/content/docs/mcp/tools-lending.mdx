@@ -43,7 +43,7 @@ This is a **read-only** tool.
 
 ## get_lending_position
 
-Get the user's position in a lending pool — collateral value, debt value, Health Factor, and risk level.
+Get the user's position in a lending pool — collateral and debt amounts, the pair's max LTV, Health Factor, and risk level.
 
 | Param              | Type   | Required | Description                                                             |
 | ------------------ | ------ | -------- | ----------------------------------------------------------------------- |
@@ -53,12 +53,12 @@ Get the user's position in a lending pool — collateral value, debt value, Heal
 
 This is a **read-only** tool. Use it to monitor Health Factor before and after operations.
 
-> **Health Factor Guide:**
+> **Health Factor Guide:** health factor = collateral value × the pair's max LTV / debt value. **Below 1.0 Vesu can liquidate the position.** See [Health Factor](/docs/integrations/vesu#health-factor).
 >
 > - **Above 1.3** — Safe
 > - **1.1 – 1.3** — Warning (monitor closely)
-> - **1.05 – 1.1** — Danger (liquidation risk)
-> - **≤ 1.05** — Critical (imminent liquidation)
+> - **1.05 – 1.1** — Danger (close to liquidation)
+> - **≤ 1.05** — Critical (liquidation imminent; below 1.0 it can happen now)
 
 ---
 
@@ -128,7 +128,7 @@ Atomically close an active lending position. Repays all outstanding debt and wit
 | `collateral_token` | string | Yes      | Collateral token symbol (e.g., `STRK`, `ETH`) |
 | `debt_token`       | string | Yes      | Borrowed token symbol (e.g., `USDC`, `USDT`)  |
 
-> **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction.
+> **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction. Amounts come from the position's exact base units; the repayment approval and withdrawal request carry 1% head-room for interest accrued before execution, which Vesu caps at the real debt and collateral, so it is never charged.
 
 ---
 
@@ -147,7 +147,7 @@ This is a **read-only** tool — safe to call without user confirmation.
 
 Returns for each position:
 
-- Health factor value
+- Health factor value (collateral value × max LTV / debt value) and the pair's max LTV
 - Risk level (`SAFE`, `WARNING`, `DANGER`, `CRITICAL`)
 - Alert message (if risk is elevated)
 - Recommendation (repay amount or collateral to add)
@@ -187,7 +187,7 @@ Simulate the impact of a lending action on the position's Health Factor **withou
 
 This is a **read-only** tool — safe to call without user confirmation.
 
-Returns: current health factor, projected health factor, and risk change indicator (`IMPROVING`, `DECLINING`, `STABLE`).
+Returns: the pair's max LTV, current health factor, projected health factor, and risk change indicator (`IMPROVING`, `DECLINING`, `STABLE`, or `UNKNOWN`). Starkzap projects borrow and repay only; for deposit and withdraw, `projectedHealthFactor` is `"unavailable"`.
 
 ---
 

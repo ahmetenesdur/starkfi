@@ -8,6 +8,11 @@ import { withWallet, withReadonlyWallet } from "./context.js";
 import { jsonResult, simulationResult } from "./utils.js";
 import { resolveChainId } from "../../lib/resolve-network.js";
 import { sendWithPreflight } from "../../lib/send-with-preflight.js";
+import {
+	fixedHealthFactor,
+	fixedHealthFactorToNumber,
+	LTV_SCALE,
+} from "../../services/vesu/rebalance-math.js";
 
 export async function handleListLendingPools(args: { name?: string }) {
 	return withReadonlyWallet(async ({ wallet }) => {
@@ -268,32 +273,21 @@ export async function handleClosePosition(args: {
 	return withWallet(async ({ session, wallet }) => {
 		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const position = await lendingService.getPosition(
+		const { builder, position } = await lendingService.prepareClosePosition(
 			wallet,
 			pool.address,
 			args.collateral_token,
 			args.debt_token,
 			chainId
 		);
-		if (!position) {
-			throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
-		}
-
-		const collateralToken = resolveToken(args.collateral_token, chainId);
-		const debtToken = resolveToken(args.debt_token, chainId);
-		const builder = wallet.tx().lendRepay({
-			collateralToken,
-			debtToken,
-			amount: Amount.parse(position.debtAmount, debtToken),
-			withdrawCollateral: true,
-			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
-		});
 
 		if (args.simulate) {
 			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "close_position",
 				pool: pool.name ?? pool.address,
+				debt: `${position.debtAmount} ${position.debtAsset}`,
+				collateral: `${position.collateralAmount} ${position.collateralAsset}`,
 			});
 		}
 
@@ -366,22 +360,26 @@ export async function handleQuoteHealth(args: {
 								},
 							};
 
-		const quote = await wallet.lending().quoteHealth({
-			action: actionInput,
-			health: { collateralToken, debtToken, poolAddress: poolAddr },
-		});
+		const [quote, maxLtv] = await Promise.all([
+			wallet.lending().quoteHealth({
+				action: actionInput,
+				health: { collateralToken, debtToken, poolAddress: poolAddr },
+			}),
+			lendingService.getPairMaxLtv(wallet, pool.address, collateralToken, debtToken),
+		]);
 
-		const current = quote.current;
-		const projected = quote.projected;
-
-		const currentHF =
-			current && Number(current.debtValue) > 0
-				? Number(current.collateralValue) / Number(current.debtValue)
-				: null;
-		const projectedHF =
-			projected && Number(projected.debtValue) > 0
-				? Number(projected.collateralValue) / Number(projected.debtValue)
-				: null;
+		const currentHF = fixedHealthFactor(
+			quote.current.collateralValue,
+			quote.current.debtValue,
+			maxLtv
+		);
+		// Starkzap only projects borrow and repay; deposit and withdraw have no projection.
+		const projectedHF = quote.projected
+			? fixedHealthFactor(quote.projected.collateralValue, quote.projected.debtValue, maxLtv)
+			: undefined;
+		const format = (hf: bigint | null) =>
+			hf === null ? "∞" : fixedHealthFactorToNumber(hf).toFixed(4);
+		const change = projectedHF === undefined ? null : compareHealth(projectedHF, currentHF);
 
 		return jsonResult({
 			success: true,
@@ -389,16 +387,25 @@ export async function handleQuoteHealth(args: {
 			poolName: pool.name,
 			action: args.action,
 			amount: `${args.amount} ${token.symbol}`,
-			currentHealthFactor: currentHF?.toFixed(4) ?? "∞",
-			projectedHealthFactor: projectedHF?.toFixed(4) ?? "∞",
+			maxLtv: Number(maxLtv) / Number(LTV_SCALE),
+			currentHealthFactor: format(currentHF),
+			projectedHealthFactor: projectedHF === undefined ? "unavailable" : format(projectedHF),
 			riskChange:
-				currentHF && projectedHF
-					? projectedHF > currentHF
+				change === null
+					? "UNKNOWN"
+					: change > 0
 						? "IMPROVING"
-						: projectedHF < currentHF
+						: change < 0
 							? "DECLINING"
-							: "STABLE"
-					: "UNKNOWN",
+							: "STABLE",
 		});
 	});
+}
+
+/** Orders fixed-point health factors, where null (no debt) is unbounded. */
+function compareHealth(a: bigint | null, b: bigint | null): number {
+	if (a === b) return 0;
+	if (a === null) return 1;
+	if (b === null) return -1;
+	return a > b ? 1 : -1;
 }
