@@ -1,6 +1,6 @@
 {
 	"name": "starkfi",
-	"version": "0.7.2",
+	"version": "0.8.0",
 	"description": "AI-native Starknet DeFi CLI + MCP Server + Agent Skills — Swaps, multi-swap, batch (multicall), staking, liquid staking (LST), lending, DCA, Troves vaults, confidential transfers, simulation, portfolio, gas abstraction",
 	"type": "module",
 	"bin": {
@@ -12,6 +12,7 @@
 	},
 	"files": [
 		"dist",
+		"!dist/**/*.map",
 		"skills",
 		"README.md",
 		"MCP.md",
@@ -78,6 +79,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@fatsolutions/tongo-sdk": "^1.5.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@types/node": "^25.9.1",
 		"chalk": "^5.6.2",
@@ -96,8 +98,5 @@
 		"typescript-eslint": "^8.59.4",
 		"vitest": "^5.1.0",
 		"zod": "^4.4.3"
-	},
-	"dependencies": {
-		"@fatsolutions/tongo-sdk": "^1.5.0"
 	}
 }

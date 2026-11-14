@@ -60,7 +60,11 @@ export async function handleGetLendingPosition(args: {
 			);
 		}
 
-		if (!position && (!suppliedBalance || suppliedBalance === "0.0")) {
+		// getSuppliedBalance returns "0" for an empty supply, otherwise an amount
+		// already formatted with its symbol ("USDC 1,234.57").
+		const hasSupply = suppliedBalance !== null && suppliedBalance !== "0";
+
+		if (!position && !hasSupply) {
 			return jsonResult({
 				success: true,
 				position: null,
@@ -71,10 +75,7 @@ export async function handleGetLendingPosition(args: {
 
 		return jsonResult({
 			success: true,
-			suppliedYield:
-				suppliedBalance && suppliedBalance !== "0.0"
-					? `${suppliedBalance} ${args.collateral_token.toUpperCase()}`
-					: null,
+			suppliedYield: hasSupply ? suppliedBalance : null,
 			position,
 		});
 	});
@@ -286,8 +287,9 @@ export async function handleClosePosition(args: {
 			return simulationResult(sim, {
 				action: "close_position",
 				pool: pool.name ?? pool.address,
-				debt: `${position.debtAmount} ${position.debtAsset}`,
-				collateral: `${position.collateralAmount} ${position.collateralAsset}`,
+				// Amounts are already formatted with their symbol.
+				debt: position.debtAmount,
+				collateral: position.collateralAmount,
 			});
 		}
 

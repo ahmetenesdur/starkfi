@@ -112,14 +112,14 @@ export function registerLendStatusCommand(program: Command): void {
 					pool: pool.name ?? pool.address,
 				};
 
-				if (suppliedBalance && suppliedBalance !== "0.0") {
+				if (suppliedBalance && suppliedBalance !== "0") {
 					resultObj["suppliedYield"] = suppliedBalance;
 				}
 
 				if (position) {
-					resultObj["collateral"] =
-						`${position.collateralAmount} ${position.collateralAsset}`;
-					resultObj["debt"] = `${position.debtAmount} ${position.debtAsset}`;
+					// Amounts are already formatted with their symbol ("USDC 1,234.57").
+					resultObj["collateral"] = position.collateralAmount;
+					resultObj["debt"] = position.debtAmount;
 					resultObj["maxLtv"] = `${(position.maxLtv * 100).toFixed(2)}%`;
 
 					if (position.healthFactor !== undefined) {

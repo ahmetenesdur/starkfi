@@ -58,7 +58,7 @@ export function registerPortfolioCommand(program: Command): void {
 							const base = [
 								s.validator,
 								s.pool.slice(0, 10) + "…",
-								`${s.staked} ${s.token}`,
+								s.staked, // already formatted with its symbol
 								s.rewards,
 							];
 							if (hasUnpooling) {
