@@ -183,28 +183,13 @@ export function registerLendCloseCommand(program: Command): void {
 				"Preparing position close...",
 				async (ctx) => {
 					const pool = await resolvePoolAddress(ctx.wallet, opts.pool);
-					const position = await lendingService.getPosition(
+					const { builder, position } = await lendingService.prepareClosePosition(
 						ctx.wallet,
 						pool.address,
 						opts.collateralToken,
 						opts.borrowToken,
 						ctx.chainId
 					);
-					if (!position)
-						throw new StarkfiError(
-							ErrorCode.LENDING_FAILED,
-							"No active position found to close."
-						);
-
-					const collateralToken = resolveToken(opts.collateralToken, ctx.chainId);
-					const debtToken = resolveToken(opts.borrowToken, ctx.chainId);
-					const builder = ctx.wallet.tx().lendRepay({
-						collateralToken,
-						debtToken,
-						amount: Amount.parse(position.debtAmount, debtToken),
-						withdrawCollateral: true,
-						poolAddress: pool.address ? fromAddress(pool.address) : undefined,
-					});
 
 					if (opts.simulate) {
 						ctx.spinner.text = "Simulating transaction...";

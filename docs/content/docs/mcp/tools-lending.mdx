@@ -128,7 +128,7 @@ Atomically close an active lending position. Repays all outstanding debt and wit
 | `collateral_token` | string | Yes      | Collateral token symbol (e.g., `STRK`, `ETH`) |
 | `debt_token`       | string | Yes      | Borrowed token symbol (e.g., `USDC`, `USDT`)  |
 
-> **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction.
+> **Note:** This tool handles the full close flow atomically — repay debt + withdraw collateral in one transaction. Amounts come from the position's exact base units; the repayment approval and withdrawal request carry 1% head-room for interest accrued before execution, which Vesu caps at the real debt and collateral, so it is never charged.
 
 ---
 

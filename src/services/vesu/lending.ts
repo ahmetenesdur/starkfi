@@ -1,10 +1,9 @@
 import { Amount, fromAddress, vesuPresets } from "starkzap";
-import type { LendingPosition as SdkLendingPosition, ChainId, Token } from "starkzap";
+import type { LendingPosition as SdkLendingPosition, ChainId, Token, TxBuilder } from "starkzap";
 import type { StarkZapWallet } from "../starkzap/client.js";
 import { resolveToken } from "../tokens/tokens.js";
 import { ErrorCode, StarkfiError } from "../../lib/errors.js";
 import type { TxResult } from "../../lib/types.js";
-import { sendWithPreflight } from "../../lib/send-with-preflight.js";
 import { getTokenUsdPrice } from "../price/price.js";
 import { classifyRisk, resolveConfig, UNBOUNDED_HEALTH_FACTOR } from "./health.js";
 import {
@@ -147,36 +146,69 @@ export async function repay(
 	return { hash: tx.hash, explorerUrl: tx.explorerUrl };
 }
 
-export async function closePosition(
+/**
+ * Head-room added to the debt and collateral read when closing, in basis points.
+ * Interest keeps accruing between the read and execution, so repaying exactly the
+ * debt that was read would leave a remainder. Vesu V2 clamps a repayment to the
+ * position's outstanding debt and a withdrawal to its collateral shares, and only
+ * transfers the clamped amounts (apply_position_update_to_context in vesu-v2
+ * src/common.cairo), so the head-room is never charged: it only raises the
+ * approval and the requested withdrawal. 1% covers more than a day of interest
+ * even at a 300% APR.
+ */
+export const CLOSE_ACCRUAL_BUFFER_BPS = 100n;
+
+function withAccrualBuffer(amount: bigint): bigint {
+	return amount + (amount * CLOSE_ACCRUAL_BUFFER_BPS + 9_999n) / 10_000n;
+}
+
+export interface ClosePositionPlan {
+	/** Repays all debt and withdraws all collateral in one transaction. */
+	builder: TxBuilder;
+	position: LendingPosition;
+	/** Upper bound approved for the repayment; Vesu charges only the outstanding debt. */
+	repayAmount: Amount;
+	/** Upper bound requested for the withdrawal; Vesu returns all of the collateral. */
+	withdrawAmount: Amount;
+}
+
+/**
+ * Builds the close transaction from the position's exact base-unit amounts.
+ * Starkzap types offer `debtDenomination: "native"` (repay in nominal debt, which
+ * would be exact under accrual), but its Vesu provider rejects anything other than
+ * "assets", so the accrual head-room above is used instead.
+ */
+export async function prepareClosePosition(
 	wallet: StarkZapWallet,
 	poolAddress: string | undefined,
 	collateralTokenSymbol: string,
 	debtTokenSymbol: string,
 	chainId?: ChainId
-): Promise<TxResult> {
-	const position = await getPosition(
-		wallet,
-		poolAddress,
-		collateralTokenSymbol,
-		debtTokenSymbol,
-		chainId
-	);
-	if (!position) {
+): Promise<ClosePositionPlan> {
+	const collateralToken = resolveToken(collateralTokenSymbol, chainId);
+	const debtToken = resolveToken(debtTokenSymbol, chainId);
+
+	const snapshot = await readPosition(wallet, poolAddress, collateralToken, debtToken);
+	if (!snapshot) {
 		throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
 	}
 
-	const collateralToken = resolveToken(collateralTokenSymbol, chainId);
-	const debtToken = resolveToken(debtTokenSymbol, chainId);
+	const repayAmount = Amount.fromRaw(withAccrualBuffer(snapshot.debtAmount), debtToken);
+	const withdrawAmount = Amount.fromRaw(
+		withAccrualBuffer(snapshot.collateralAmount),
+		collateralToken
+	);
 
 	const builder = wallet.tx().lendRepay({
 		collateralToken,
 		debtToken,
-		amount: Amount.parse(position.debtAmount, debtToken),
+		amount: repayAmount,
+		collateralAmount: withdrawAmount,
 		withdrawCollateral: true,
 		poolAddress: resolveOptionalPool(poolAddress),
 	});
 
-	return sendWithPreflight(builder);
+	return { builder, position: toLendingPosition(snapshot), repayAmount, withdrawAmount };
 }
 
 export async function addCollateral(

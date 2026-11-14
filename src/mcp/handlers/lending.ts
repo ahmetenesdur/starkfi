@@ -273,32 +273,21 @@ export async function handleClosePosition(args: {
 	return withWallet(async ({ session, wallet }) => {
 		const chainId = resolveChainId(session);
 		const pool = await resolvePoolAddress(wallet, args.pool);
-		const position = await lendingService.getPosition(
+		const { builder, position } = await lendingService.prepareClosePosition(
 			wallet,
 			pool.address,
 			args.collateral_token,
 			args.debt_token,
 			chainId
 		);
-		if (!position) {
-			throw new StarkfiError(ErrorCode.LENDING_FAILED, "No active position found to close.");
-		}
-
-		const collateralToken = resolveToken(args.collateral_token, chainId);
-		const debtToken = resolveToken(args.debt_token, chainId);
-		const builder = wallet.tx().lendRepay({
-			collateralToken,
-			debtToken,
-			amount: Amount.parse(position.debtAmount, debtToken),
-			withdrawCollateral: true,
-			poolAddress: pool.address ? fromAddress(pool.address) : undefined,
-		});
 
 		if (args.simulate) {
 			const sim = await simulateTransaction(builder, chainId);
 			return simulationResult(sim, {
 				action: "close_position",
 				pool: pool.name ?? pool.address,
+				debt: `${position.debtAmount} ${position.debtAsset}`,
+				collateral: `${position.collateralAmount} ${position.collateralAsset}`,
 			});
 		}
 
